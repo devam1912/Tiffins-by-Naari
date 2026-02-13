@@ -1,9 +1,15 @@
 const express = require("express");
-const { getNearbyTiffins } = require("./tiffin.controller");
-const { protect } = require("../../middlewares/auth.middleware");
+const {
+  getNearbyTiffins,
+  createProviderRequest,
+} = require("./tiffin.controller");
+
+const { protect, authorize } = require("../../middlewares/auth.middleware");
 
 const router = express.Router();
 
-router.get("/nearby", protect, getNearbyTiffins);
+router.post("/register", protect, authorize("provider"), createProviderRequest);
+
+router.get("/nearby", getNearbyTiffins);
 
 module.exports = router;

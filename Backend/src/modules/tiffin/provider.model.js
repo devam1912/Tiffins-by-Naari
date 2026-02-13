@@ -2,6 +2,12 @@ const mongoose = require("mongoose");
 
 const providerSchema = new mongoose.Schema(
   {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
     businessName: {
       type: String,
       required: true,
@@ -16,13 +22,11 @@ const providerSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
     },
 
     phone: {
       type: String,
       required: true,
-      unique: true,
     },
 
     fssaiNumber: {
@@ -50,7 +54,7 @@ const providerSchema = new mongoose.Schema(
     },
 
     deliverySlots: {
-      type: [String], // ["lunch", "dinner"]
+      type: [String], // lunch, dinner
     },
 
     location: {
@@ -60,7 +64,7 @@ const providerSchema = new mongoose.Schema(
         required: true,
       },
       coordinates: {
-        type: [Number], // [lng, lat]
+        type: [Number],
         required: true,
       },
     },

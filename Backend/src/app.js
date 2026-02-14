@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-
 const app = express();
 
 // Middlewares
@@ -15,8 +14,8 @@ app.get("/api/health", (req, res) => {
 // Routes
 const authRoutes = require("./modules/auth/auth.routes");
 const tiffinRoutes = require("./modules/tiffin/tiffin.routes");
-
+const subscriptionRoutes = require("./modules/subscription/subscription.routes");
 app.use("/api/auth", authRoutes);
 app.use("/api/tiffins", tiffinRoutes);
-
+app.use("/api/subscriptions", subscriptionRoutes);
 module.exports = app;

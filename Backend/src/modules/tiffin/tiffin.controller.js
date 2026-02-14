@@ -69,7 +69,33 @@ const createProviderRequest = async (req, res) => {
 };
 
 
+const approveProvider = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+
+    const provider = await Provider.findById(providerId);
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    provider.isApproved = true;
+    await provider.save();
+
+    res.status(200).json({
+      message: "Provider approved successfully",
+      provider,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
-module.exports = { getNearbyTiffins, createProviderRequest };
+module.exports = {
+  getNearbyTiffins,
+  createProviderRequest,
+  approveProvider,
+};
+
 

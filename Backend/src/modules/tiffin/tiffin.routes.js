@@ -6,7 +6,8 @@ const {
 } = require("./tiffin.controller");
 const { createOrUpdateMenu, publishMenu } = require("./menu.controller");
 const { protect, authorize } = require("../../middlewares/auth.middleware");
-
+const upload = require("../../middlewares/upload.middleware");
+const { uploadImage } = require("./upload.controller");
 const router = express.Router();
 
 router.post("/register", protect, authorize("provider"), createProviderRequest);
@@ -16,5 +17,6 @@ router.patch("/menu/publish", protect, authorize("provider"), publishMenu);
 
 router.patch("/approve/:providerId", protect, authorize("admin"), approveProvider);
 router.get("/nearby", getNearbyTiffins);
+router.post("/upload-image", protect, authorize("provider"), upload.single("image"), uploadImage);
 
 module.exports = router;

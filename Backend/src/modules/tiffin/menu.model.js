@@ -1,7 +1,27 @@
 const mongoose = require("mongoose");
 
+const menuItemSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
+
+  description: {
+    type: String,
+  },
+
+  image: {
+    type: String, // URL of uploaded image
+  },
+
+  type: {
+    type: String, // dal, sabzi, rice, bread, dessert
+  },
+});
+
 const mealSchema = new mongoose.Schema({
-  items: [String],
+  items: [menuItemSchema],
+
   price: {
     type: Number,
     required: true,

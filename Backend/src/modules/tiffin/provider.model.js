@@ -68,6 +68,9 @@ const providerSchema = new mongoose.Schema(
         required: true,
       },
     },
+    fssaiCertificate: {
+      type: String
+    },
 
     isActive: {
       type: Boolean,

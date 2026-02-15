@@ -1,7 +1,9 @@
 const Subscription = require("./subscription.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
+const { deductCredit, addCredit } = require("../user/wallet.service");
 
+// ================= CREATE SUBSCRIPTION =================
 const createSubscription = async (req, res) => {
   try {
     const { providerId, planType, timeSlot } = req.body;
@@ -14,6 +16,7 @@ const createSubscription = async (req, res) => {
       });
     }
 
+    // ✅ Validate timeSlot
     if (!["lunch", "dinner"].includes(timeSlot)) {
       return res.status(400).json({
         message: "Invalid time slot",
@@ -49,17 +52,17 @@ const createSubscription = async (req, res) => {
       isPublished: true,
     });
 
-    if (!menu) {
+    if (!menu || menu.weekMenu.length === 0) {
       return res.status(400).json({
         message: "Provider menu not available",
       });
     }
 
-    // ✅ Get price from menu (using first day as reference)
+    // Use first day's pricing as base reference
     const firstDay = menu.weekMenu[0];
     const meal = firstDay[timeSlot];
 
-    if (!meal) {
+    if (!meal || !meal.price) {
       return res.status(400).json({
         message: "Selected time slot not available",
       });
@@ -67,25 +70,27 @@ const createSubscription = async (req, res) => {
 
     const basePrice = meal.price;
 
-    // ✅ Calculate duration & total price
     const startDate = new Date();
     let endDate = new Date();
-    let totalPrice = 0;
-    let remainingMeals = 0;
+    let totalDays = 0;
 
     if (planType === "weekly") {
-      endDate.setDate(startDate.getDate() + 7);
-      remainingMeals = 7;
-      totalPrice = basePrice * 7;
+      totalDays = 7;
+      endDate.setDate(startDate.getDate() + totalDays);
     } else if (planType === "monthly") {
-      endDate.setMonth(startDate.getMonth() + 1);
-      remainingMeals = 30;
-      totalPrice = basePrice * 30;
+      totalDays = 30;
+      endDate.setDate(startDate.getDate() + totalDays);
     } else if (planType === "yearly") {
-      endDate.setFullYear(startDate.getFullYear() + 1);
-      remainingMeals = 365;
-      totalPrice = basePrice * 365;
+      totalDays = 365;
+      endDate.setDate(startDate.getDate() + totalDays);
     }
+
+    const totalPrice = basePrice * totalDays;
+
+    // ✅ Deduct wallet first
+    const walletResult = await deductCredit(req.user._id, totalPrice);
+
+    const amountPaid = totalPrice - walletResult.remainingToPay;
 
     const subscription = await Subscription.create({
       user: req.user._id,
@@ -95,11 +100,14 @@ const createSubscription = async (req, res) => {
       startDate,
       endDate,
       totalPrice,
-      remainingMeals,
+      remainingMeals: totalDays,
+      amountPaid,
     });
 
     res.status(201).json({
       message: "Subscription created successfully",
+      walletUsed: walletResult.deducted,
+      remainingToPay: walletResult.remainingToPay,
       subscription,
     });
   } catch (error) {
@@ -108,4 +116,52 @@ const createSubscription = async (req, res) => {
   }
 };
 
-module.exports = { createSubscription };
+// ================= CANCEL SUBSCRIPTION (REFUND) =================
+const cancelSubscription = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+
+    const subscription = await Subscription.findById(subscriptionId);
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    if (subscription.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (subscription.status !== "active") {
+      return res.status(400).json({ message: "Subscription not active" });
+    }
+
+    const today = new Date();
+
+    const remainingDays = Math.max(
+      0,
+      Math.ceil(
+        (subscription.endDate - today) / (1000 * 60 * 60 * 24)
+      )
+    );
+
+    const perDayCost = subscription.totalPrice / subscription.remainingMeals;
+    const refundAmount = Math.round(perDayCost * remainingDays);
+
+    if (refundAmount > 0) {
+      await addCredit(req.user._id, refundAmount);
+    }
+
+    subscription.status = "cancelled";
+    await subscription.save();
+
+    res.status(200).json({
+      message: "Subscription cancelled successfully",
+      refundAmount,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { createSubscription, cancelSubscription };

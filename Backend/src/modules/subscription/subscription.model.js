@@ -59,6 +59,11 @@ const subscriptionSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    amountPaid: {
+      type: Number,
+      default: 0,
+    },
+
   },
   { timestamps: true }
 );

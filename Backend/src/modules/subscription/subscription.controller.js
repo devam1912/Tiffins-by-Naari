@@ -164,4 +164,104 @@ const cancelSubscription = async (req, res) => {
   }
 };
 
-module.exports = { createSubscription, cancelSubscription };
+
+const pauseSubscription = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const { pauseStart, pauseEnd } = req.body;
+
+    const subscription = await Subscription.findById(subscriptionId);
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    if (subscription.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (subscription.status !== "active") {
+      return res.status(400).json({
+        message: "Only active subscriptions can be paused",
+      });
+    }
+
+    const start = new Date(pauseStart);
+    const end = new Date(pauseEnd);
+
+    if (end <= start) {
+      return res.status(400).json({
+        message: "Invalid pause date range",
+      });
+    }
+
+    const pauseDuration = Math.ceil(
+      (end - start) / (1000 * 60 * 60 * 24)
+    );
+
+    // Extend subscription end date
+    subscription.endDate.setDate(
+      subscription.endDate.getDate() + pauseDuration
+    );
+
+    subscription.pauseStart = start;
+    subscription.pauseEnd = end;
+    subscription.status = "paused";
+
+    await subscription.save();
+
+    res.status(200).json({
+      message: "Subscription paused successfully",
+      extendedByDays: pauseDuration,
+      subscription,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const resumeSubscription = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+
+    const subscription = await Subscription.findById(subscriptionId);
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    if (subscription.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (subscription.status !== "paused") {
+      return res.status(400).json({
+        message: "Subscription is not paused",
+      });
+    }
+
+    subscription.status = "active";
+    subscription.pauseStart = null;
+    subscription.pauseEnd = null;
+
+    await subscription.save();
+
+    res.status(200).json({
+      message: "Subscription resumed successfully",
+      subscription,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+module.exports = {
+  createSubscription,
+  cancelSubscription,
+  pauseSubscription,
+  resumeSubscription,
+};
+

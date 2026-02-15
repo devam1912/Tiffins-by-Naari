@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema(
       enum: ["customer", "provider", "admin"],
       default: "customer",
     },
+    walletBalance: {
+      type: Number,
+      default: 0,
+    },
 
     isVerified: {
       type: Boolean,
@@ -41,7 +45,7 @@ const userSchema = new mongoose.Schema(
     otp: {
       type: String,
     },
-
+    
     otpExpiry: {
       type: Date,
     },
@@ -49,7 +53,6 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔥 Correct async pre-save hook (NO next parameter)
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
 

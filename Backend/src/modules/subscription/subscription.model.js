@@ -16,7 +16,7 @@ const subscriptionSchema = new mongoose.Schema(
 
     planType: {
       type: String,
-      enum: ["daily", "weekly", "monthly"],
+      enum: ["weekly", "monthly", "yearly"],
       required: true,
     },
 
@@ -33,23 +33,29 @@ const subscriptionSchema = new mongoose.Schema(
 
     endDate: {
       type: Date,
+      required: true,
     },
 
-    isPaused: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["active", "paused", "cancelled", "completed"],
+      default: "active",
     },
+
+    remainingMeals: {
+      type: Number,
+    },
+
+    skippedDates: [
+      {
+        type: Date,
+      },
+    ],
 
     pauseStart: Date,
     pauseEnd: Date,
 
-    status: {
-      type: String,
-      enum: ["active", "cancelled", "completed"],
-      default: "active",
-    },
-
-    price: {
+    totalPrice: {
       type: Number,
       required: true,
     },

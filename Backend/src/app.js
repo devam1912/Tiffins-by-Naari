@@ -15,7 +15,9 @@ app.get("/api/health", (req, res) => {
 const authRoutes = require("./modules/auth/auth.routes");
 const tiffinRoutes = require("./modules/tiffin/tiffin.routes");
 const subscriptionRoutes = require("./modules/subscription/subscription.routes");
+const mealSelectionRoutes = require("./modules/subscription/mealSelection.routes");
 app.use("/api/auth", authRoutes);
 app.use("/api/tiffins", tiffinRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
+app.use("/api/meal-selection", mealSelectionRoutes);
 module.exports = app;

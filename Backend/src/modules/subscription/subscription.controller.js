@@ -11,28 +11,21 @@ const createSubscription = async (req, res) => {
     // ✅ Validate planType
     const validPlans = ["weekly", "monthly", "yearly"];
     if (!validPlans.includes(planType)) {
-      return res.status(400).json({
-        message: "Invalid plan type",
-      });
+      return res.status(400).json({ message: "Invalid plan type" });
     }
 
     // ✅ Validate timeSlot
     if (!["lunch", "dinner"].includes(timeSlot)) {
-      return res.status(400).json({
-        message: "Invalid time slot",
-      });
+      return res.status(400).json({ message: "Invalid time slot" });
     }
 
-    // ✅ Check provider exists and approved
+    // ✅ Check provider
     const provider = await Provider.findById(providerId);
-
     if (!provider || !provider.isApproved) {
-      return res.status(400).json({
-        message: "Provider not available",
-      });
+      return res.status(400).json({ message: "Provider not available" });
     }
 
-    // ✅ Prevent duplicate active subscription
+    // ✅ Prevent duplicate subscription
     const existing = await Subscription.findOne({
       user: req.user._id,
       provider: providerId,
@@ -46,25 +39,31 @@ const createSubscription = async (req, res) => {
       });
     }
 
-    // ✅ Get published menu
+    // ✅ Fetch menu
     const menu = await Menu.findOne({
       provider: providerId,
       isPublished: true,
     });
 
-    if (!menu || menu.weekMenu.length === 0) {
+    if (!menu || !menu.weekMenu || menu.weekMenu.length === 0) {
       return res.status(400).json({
-        message: "Provider menu not available",
+        message: "Menu not configured properly",
       });
     }
 
-    // Use first day's pricing as base reference
     const firstDay = menu.weekMenu[0];
+
+    if (!firstDay[timeSlot]) {
+      return res.status(400).json({
+        message: "Time slot not available in menu",
+      });
+    }
+
     const meal = firstDay[timeSlot];
 
-    if (!meal || !meal.price) {
+    if (!meal.price || typeof meal.price !== "number") {
       return res.status(400).json({
-        message: "Selected time slot not available",
+        message: "Meal price not configured",
       });
     }
 
@@ -76,18 +75,23 @@ const createSubscription = async (req, res) => {
 
     if (planType === "weekly") {
       totalDays = 7;
-      endDate.setDate(startDate.getDate() + totalDays);
     } else if (planType === "monthly") {
       totalDays = 30;
-      endDate.setDate(startDate.getDate() + totalDays);
     } else if (planType === "yearly") {
       totalDays = 365;
-      endDate.setDate(startDate.getDate() + totalDays);
     }
+
+    if (!totalDays || !basePrice) {
+      return res.status(400).json({
+        message: "Subscription calculation error",
+      });
+    }
+
+    endDate.setDate(startDate.getDate() + totalDays);
 
     const totalPrice = basePrice * totalDays;
 
-    // ✅ Deduct wallet first
+    // ✅ Wallet deduction
     const walletResult = await deductCredit(req.user._id, totalPrice);
 
     const amountPaid = totalPrice - walletResult.remainingToPay;
@@ -102,6 +106,7 @@ const createSubscription = async (req, res) => {
       totalPrice,
       remainingMeals: totalDays,
       amountPaid,
+      status: "active",
     });
 
     res.status(201).json({
@@ -116,7 +121,7 @@ const createSubscription = async (req, res) => {
   }
 };
 
-// ================= CANCEL SUBSCRIPTION (REFUND) =================
+// ================= CANCEL SUBSCRIPTION =================
 const cancelSubscription = async (req, res) => {
   try {
     const { subscriptionId } = req.params;
@@ -132,7 +137,9 @@ const cancelSubscription = async (req, res) => {
     }
 
     if (subscription.status !== "active") {
-      return res.status(400).json({ message: "Subscription not active" });
+      return res.status(400).json({
+        message: "Subscription not active",
+      });
     }
 
     const today = new Date();
@@ -144,7 +151,11 @@ const cancelSubscription = async (req, res) => {
       )
     );
 
-    const perDayCost = subscription.totalPrice / subscription.remainingMeals;
+    const perDayCost =
+      subscription.remainingMeals > 0
+        ? subscription.totalPrice / subscription.remainingMeals
+        : 0;
+
     const refundAmount = Math.round(perDayCost * remainingDays);
 
     if (refundAmount > 0) {
@@ -164,7 +175,7 @@ const cancelSubscription = async (req, res) => {
   }
 };
 
-
+// ================= PAUSE SUBSCRIPTION =================
 const pauseSubscription = async (req, res) => {
   try {
     const { subscriptionId } = req.params;
@@ -189,7 +200,7 @@ const pauseSubscription = async (req, res) => {
     const start = new Date(pauseStart);
     const end = new Date(pauseEnd);
 
-    if (end <= start) {
+    if (isNaN(start) || isNaN(end) || end <= start) {
       return res.status(400).json({
         message: "Invalid pause date range",
       });
@@ -199,7 +210,6 @@ const pauseSubscription = async (req, res) => {
       (end - start) / (1000 * 60 * 60 * 24)
     );
 
-    // Extend subscription end date
     subscription.endDate.setDate(
       subscription.endDate.getDate() + pauseDuration
     );
@@ -221,6 +231,7 @@ const pauseSubscription = async (req, res) => {
   }
 };
 
+// ================= RESUME SUBSCRIPTION =================
 const resumeSubscription = async (req, res) => {
   try {
     const { subscriptionId } = req.params;
@@ -257,11 +268,9 @@ const resumeSubscription = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createSubscription,
   cancelSubscription,
   pauseSubscription,
   resumeSubscription,
 };
-

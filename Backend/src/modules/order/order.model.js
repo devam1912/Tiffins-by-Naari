@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const orderSchema = new mongoose.Schema(
   {
     user: {
@@ -26,12 +25,15 @@ const orderSchema = new mongoose.Schema(
     },
 
     items: [
-      {
-        name: String,
-        type: String,
-        price: Number,
-      },
-    ],
+  {
+    type: {
+      name: { type: String, required: true },
+      itemType: { type: String, default: "" },  // Renamed!
+      price: { type: Number, default: 0 },
+    },
+    _id: false,
+  },
+],
 
     totalPrice: {
       type: Number,

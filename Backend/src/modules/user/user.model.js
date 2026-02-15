@@ -45,10 +45,15 @@ const userSchema = new mongoose.Schema(
     otp: {
       type: String,
     },
-    
+
     otpExpiry: {
       type: Date,
     },
+    walletBalance: {
+      type: Number,
+      default: 0
+    },
+
   },
   { timestamps: true }
 );

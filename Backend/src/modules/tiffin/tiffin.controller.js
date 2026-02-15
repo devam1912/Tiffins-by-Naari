@@ -91,11 +91,34 @@ const approveProvider = async (req, res) => {
   }
 };
 
+const publishMenu = async (req, res) => {
+  try {
+    const { providerId } = req.params;
+
+    const menu = await Menu.findOne({ provider: providerId });
+
+    if (!menu) {
+      return res.status(404).json({ message: "Menu not found" });
+    }
+
+    menu.isPublished = true;
+    await menu.save();
+
+    res.status(200).json({
+      message: "Menu published successfully",
+      menu,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 module.exports = {
   getNearbyTiffins,
   createProviderRequest,
   approveProvider,
+  publishMenu,
 };
 
 

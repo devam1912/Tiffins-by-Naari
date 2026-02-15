@@ -49,11 +49,7 @@ const userSchema = new mongoose.Schema(
     otpExpiry: {
       type: Date,
     },
-    walletBalance: {
-      type: Number,
-      default: 0
-    },
-
+ 
   },
   { timestamps: true }
 );

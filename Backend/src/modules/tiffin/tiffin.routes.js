@@ -3,6 +3,8 @@ const {
   getNearbyTiffins,
   createProviderRequest,
   approveProvider,
+  deactivateTSP,
+  reactivateTSP,
 } = require("./tiffin.controller");
 const { createOrUpdateMenu, publishMenu } = require("./menu.controller");
 const { protect, authorize } = require("../../middlewares/auth.middleware");
@@ -17,6 +19,9 @@ router.patch("/menu/publish", protect, authorize("provider"), publishMenu);
 
 router.patch("/approve/:providerId", protect, authorize("admin"), approveProvider);
 router.get("/nearby", getNearbyTiffins);
+router.patch("/deactivate", protect, authorize("provider"), deactivateTSP);
+router.patch("/reactivate", protect, authorize("provider"), reactivateTSP);
+
 router.post("/upload-image", protect, authorize("provider"), upload.single("image"), uploadImage);
 router.patch("/:providerId/publish", protect, publishMenu);
 module.exports = router;

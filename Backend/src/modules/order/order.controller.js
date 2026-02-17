@@ -3,13 +3,121 @@ const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
 const { deductCredit } = require("../user/wallet.service");
 
+
+// ================= CUSTOMER: GET MY ORDERS =================
+const getMyOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user._id })
+      .populate("provider", "businessName phone")
+      .sort({ date: -1 });
+
+    res.status(200).json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= CUSTOMER: GET SINGLE ORDER =================
+const getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("provider", "businessName phone");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+// ================= TSP: GET ORDERS =================
+const getTSPOrders = async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    const orders = await Order.find({ provider: provider._id })
+      .populate("user", "name phone")
+      .sort({ date: -1 });
+
+    res.status(200).json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ================= TSP: UPDATE ORDER STATUS =================
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { status } = req.body;
+
+    const allowedStatuses = [
+      "preparing",
+      "ready",
+      "completed",
+      "cancelled",
+    ];
+
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.provider.toString() !== provider._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    order.status = status;
+    await order.save();
+
+    res.status(200).json({
+      message: "Order status updated",
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+
 const createOrder = async (req, res) => {
   try {
     const { providerId, date, timeSlot, selectedItems } = req.body;
 
+    const p1 = await Provider.findById(providerId);
+
+
     // ===== BASIC VALIDATION =====
     if (!providerId) {
       return res.status(400).json({ message: "Provider ID required" });
+    }
+
+    //TSP cannot accept orders when inactive
+    if (!p1.isActive) {
+      throw new Error("Provider currently unavailable");
     }
 
     if (!["lunch", "dinner"].includes(timeSlot)) {
@@ -99,4 +207,10 @@ const createOrder = async (req, res) => {
   }
 };
 
-module.exports = { createOrder };
+module.exports = { 
+  createOrder,
+  getMyOrders,
+  getOrderById,
+  getTSPOrders,
+  updateOrderStatus,
+};

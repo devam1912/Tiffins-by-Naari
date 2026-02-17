@@ -56,25 +56,18 @@ const loginUser = async (req, res) => {
   try {
     const { email, phone, password } = req.body;
 
-  if (!user.isVerified) {
-  return res.status(403).json({ message: "Please verify OTP first" });
-  }
-
-
     if (!password || (!email && !phone)) {
       return res.status(400).json({
         message: "Email or phone and password are required",
       });
     }
 
-    // Safe dynamic query
+    // Build query
     let loginQuery = [];
     if (email) loginQuery.push({ email });
     if (phone) loginQuery.push({ phone });
 
-    const user = await User.findOne({
-      $or: loginQuery,
-    });
+    const user = await User.findOne({ $or: loginQuery });
 
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -84,6 +77,10 @@ const loginUser = async (req, res) => {
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (!user.isVerified) {
+     return res.status(403).json({ message: "Please verify OTP first" });
     }
 
     const token = generateToken(user._id);
@@ -98,10 +95,11 @@ const loginUser = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("LOGIN ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 const generateOTP = () => Math.floor(100000 + Math.random()*900000).toString();
 

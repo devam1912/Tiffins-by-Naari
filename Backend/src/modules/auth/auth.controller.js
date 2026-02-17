@@ -56,6 +56,11 @@ const loginUser = async (req, res) => {
   try {
     const { email, phone, password } = req.body;
 
+  if (!user.isVerified) {
+  return res.status(403).json({ message: "Please verify OTP first" });
+  }
+
+
     if (!password || (!email && !phone)) {
       return res.status(400).json({
         message: "Email or phone and password are required",
@@ -98,4 +103,58 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+const generateOTP = () => Math.floor(100000 + Math.random()*900000).toString();
+
+const sendOTP = async (req, res) => {
+  try{
+    const {email , phone }= req.body;
+    if(!email && !phone){
+      return res.status(400).json({message: "Email or Phone required"});
+    }
+    const user = await User.findOne({
+      $or: [{email},{phone}],
+    });
+    if(!user){
+      return res.status(404).json({message: "User not found"});
+    }
+    const otp=generateOTP();
+    user.otp=otp;
+    user.otpExpiry = Date.now()+5*60*1000;
+    await User.save();
+
+    console.log("OTP (demo) : ",otp);
+    res.status(200).json({message: "OTP sent (demo Mode)"});
+  }
+  catch(error){
+    res.status(500).json({message: error.message});
+  }
+};
+
+const verifyOTP = async (req, res) => {
+  try {
+    const { email, phone, otp } = req.body;
+
+    const user = await User.findOne({
+      $or: [{ email }, { phone }],
+    });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (user.otp !== otp || user.otpExpiry < Date.now()) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    user.isVerified = true;
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+
+    await user.save();
+
+    res.status(200).json({ message: "Account verified successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
+module.exports = { registerUser, loginUser, generateOTP, sendOTP, verifyOTP };

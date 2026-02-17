@@ -52,6 +52,14 @@ const publishMenu = async (req, res) => {
         message: "Provider not eligible to publish menu",
       });
     }
+  
+  //enforcing menu completion
+  if (!provider.profileCompleted) {
+    return res.status(403).json({
+      message: "Complete profile before publishing menu",
+    });
+  }
+
 
     const menu = await Menu.findOne({ provider: provider._id });
 

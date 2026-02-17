@@ -91,6 +91,46 @@ const approveProvider = async (req, res) => {
   }
 };
 
+const deactivateTSP = async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider profile not found" });
+    }
+
+    provider.isActive = false;
+    await provider.save();
+
+    res.status(200).json({
+      message: "TSP deactivated successfully",
+      provider,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const reactivateTSP = async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider profile not found" });
+    }
+
+    provider.isActive = true;
+    await provider.save();
+
+    res.status(200).json({
+      message: "TSP reactivated successfully",
+      provider,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const publishMenu = async (req, res) => {
   try {
     const { providerId } = req.params;
@@ -119,6 +159,8 @@ module.exports = {
   createProviderRequest,
   approveProvider,
   publishMenu,
+  deactivateTSP,
+  reactivateTSP,
 };
 
 

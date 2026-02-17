@@ -12,12 +12,14 @@ app.get("/api/health", (req, res) => {
 });
 
 // Routes
+const adminRoutes = require("./modules/admin/admin.routes");
 const authRoutes = require("./modules/auth/auth.routes");
 const tiffinRoutes = require("./modules/tiffin/tiffin.routes");
 const subscriptionRoutes = require("./modules/subscription/subscription.routes");
 const mealSelectionRoutes = require("./modules/subscription/mealSelection.routes");
 const orderRoutes = require("./modules/order/order.routes");
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 app.use("/api/tiffins", tiffinRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/meal-selection", mealSelectionRoutes);

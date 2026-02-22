@@ -2,7 +2,13 @@ const Order = require("./order.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
 const { deductCredit } = require("../user/wallet.service");
+const crypto = require("crypto");
+const Razorpay = require("razorpay");
 
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 // ================= CUSTOMER: GET MY ORDERS =================
 const getMyOrders = async (req, res) => {
@@ -102,7 +108,7 @@ const updateOrderStatus = async (req, res) => {
 };
 
 
-
+// create order plus razorpay id if wallet bal not enough to fullfil the order amt
 const createOrder = async (req, res) => {
   try {
     const { providerId, date, timeSlot, selectedItems } = req.body;
@@ -181,31 +187,118 @@ const createOrder = async (req, res) => {
 
     // ===== WALLET =====
     const walletResult = await deductCredit(req.user._id, totalPrice);
-    const amountPaid = totalPrice - walletResult.remainingToPay;
+     const walletUsed = walletResult.deducted;
+    const remainingToPay = walletResult.remainingToPay;
 
-    // ===== CREATE ORDER =====
+    // 🟢 CASE 1 — FULL WALLET PAYMENT
+    if (remainingToPay === 0) {
+      const order = await Order.create({
+        user: req.user._id,
+        provider: providerId,
+        date: orderDate,
+        timeSlot,
+        items: validatedItems,
+        totalPrice,
+        amountPaid: totalPrice,
+        paymentStatus: "paid",
+        status: "confirmed",
+      });
+
+      return res.status(201).json({
+        message: "Order placed using wallet",
+        order,
+      });
+    }
+
+    // 🟡 CASE 2 — PARTIAL / FULL RAZORPAY NEEDED
+
+    const razorpayOrder = await razorpay.orders.create({
+      amount: remainingToPay * 100, // ₹ → paise
+      currency: "INR",
+      receipt: `ord_${Date.now()}`,
+    });
+
     const order = await Order.create({
       user: req.user._id,
       provider: providerId,
       date: orderDate,
       timeSlot,
-      items: validatedItems, // IMPORTANT: raw array, NOT string
+      items: validatedItems,
       totalPrice,
-      amountPaid,
+      amountPaid: walletUsed,
+      paymentStatus: walletUsed > 0 ? "partial" : "pending",
+      razorpayOrderId: razorpayOrder.id,
+      status: "pending",
     });
 
     return res.status(201).json({
-      message: "Order placed successfully",
-      walletUsed: walletResult.deducted,
-      remainingToPay: walletResult.remainingToPay,
+      message: "Razorpay payment required",
       order,
+      razorpayOrderId: razorpayOrder.id,
+      amountToPay: remainingToPay,
+      key: process.env.RAZORPAY_KEY_ID,
     });
-
   } catch (error) {
     console.error("ORDER ERROR:", error);
     return res.status(500).json({ message: error.message });
   }
 };
+
+// razorpay payment confirmationn
+const verifyOrderPayment = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { razorpay_payment_id, razorpay_signature } = req.body;
+
+    const order = await Order.findById(orderId);
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    // 🧪 TEST MODE BYPASS (Thunder testing ke liye)
+    if (process.env.NODE_ENV === "test") {
+      order.razorpayPaymentId = razorpay_payment_id;
+      order.paymentStatus = "paid";
+      order.amountPaid = order.totalPrice;
+      order.status = "confirmed";
+
+      await order.save();
+
+      return res.status(200).json({
+        message: "Order payment successful (test mode)",
+        order,
+      });
+    }
+
+    // 🔐 REAL SIGNATURE VERIFICATION BELOW
+    const body = order.razorpayOrderId + "|" + razorpay_payment_id;
+
+    const expected = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
+
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    order.razorpayPaymentId = razorpay_payment_id;
+    order.paymentStatus = "paid";
+    order.amountPaid = order.totalPrice;
+    order.status = "confirmed";
+
+    await order.save();
+
+    res.status(200).json({
+      message: "Order payment successful",
+      order,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 
 module.exports = { 
   createOrder,
@@ -213,4 +306,5 @@ module.exports = {
   getOrderById,
   getTSPOrders,
   updateOrderStatus,
+  verifyOrderPayment,
 };

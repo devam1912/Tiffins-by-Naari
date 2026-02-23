@@ -256,7 +256,7 @@ const verifyOrderPayment = async (req, res) => {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // 🧪 TEST MODE BYPASS (Thunder testing ke liye)
+    // TEST MODE BYPASS (Thunder testing)
     if (process.env.NODE_ENV === "test") {
       order.razorpayPaymentId = razorpay_payment_id;
       order.paymentStatus = "paid";

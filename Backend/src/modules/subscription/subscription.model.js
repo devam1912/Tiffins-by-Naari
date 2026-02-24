@@ -38,8 +38,8 @@ const subscriptionSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["active", "paused", "cancelled", "completed"],
-      default: "active",
+      enum: ["pending","active", "paused", "cancelled", "completed"],
+      default: "pending",
     },
 
     remainingMeals: {
@@ -63,6 +63,13 @@ const subscriptionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    paymentStatus: {
+    type: String,
+    enum: ["pending", "partial", "paid"],
+    default: "pending",
+  },
+  razorpayOrderId: String,
+  razorpayPaymentId: String,
 
   },
   { timestamps: true }

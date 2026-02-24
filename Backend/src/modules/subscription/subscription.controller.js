@@ -2,7 +2,10 @@ const Subscription = require("./subscription.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
 const { deductCredit, addCredit } = require("../user/wallet.service");
-
+const crypto = require("crypto");
+const razorpay = require("../../utils/razorpay");
+const { sendEmail } = require("../../utils/notification.service");
+const Order = require("../order/order.model");
 // ================= CREATE SUBSCRIPTION =================
 const createSubscription = async (req, res) => {
   try {
@@ -91,35 +94,129 @@ const createSubscription = async (req, res) => {
 
     const totalPrice = basePrice * totalDays;
 
-    // ✅ Wallet deduction
-    const walletResult = await deductCredit(req.user._id, totalPrice);
+   
+   // 💰 Wallet deduction
+const walletResult = await deductCredit(req.user._id, totalPrice);
 
-    const amountPaid = totalPrice - walletResult.remainingToPay;
+const walletUsed = walletResult.deducted;
+const remainingToPay = walletResult.remainingToPay;
 
-    const subscription = await Subscription.create({
-      user: req.user._id,
-      provider: providerId,
-      planType,
-      timeSlot,
-      startDate,
-      endDate,
-      totalPrice,
-      remainingMeals: totalDays,
-      amountPaid,
-      status: "active",
-    });
+// 🟢 FULL WALLET PAYMENT
+if (remainingToPay === 0) {
+  const subscription = await Subscription.create({
+    user: req.user._id,
+    provider: providerId,
+    planType,
+    timeSlot,
+    startDate,
+    endDate,
+    totalPrice,
+    remainingMeals: totalDays,
+    amountPaid: totalPrice,
+    paymentStatus: "paid",
+    status: "active",
+  });
 
-    res.status(201).json({
-      message: "Subscription created successfully",
-      walletUsed: walletResult.deducted,
-      remainingToPay: walletResult.remainingToPay,
-      subscription,
-    });
+  return res.status(201).json({
+    message: "Subscription activated using wallet",
+    subscription,
+  });
+}
+
+// 🟡 PARTIAL / FULL RAZORPAY
+const razorpayOrder = await razorpay.orders.create({
+  amount: remainingToPay * 100,
+  currency: "INR",
+  receipt: `sub_${Date.now()}`,
+});
+
+const subscription = await Subscription.create({
+  user: req.user._id,
+  provider: providerId,
+  planType,
+  timeSlot,
+  startDate,
+  endDate,
+  totalPrice,
+  remainingMeals: totalDays,
+  amountPaid: walletUsed,
+  paymentStatus: walletUsed > 0 ? "partial" : "pending",
+  razorpayOrderId: razorpayOrder.id,
+  status: "pending",
+});
+
+res.status(201).json({
+  message: "Razorpay payment required",
+  subscription,
+  razorpayOrderId: razorpayOrder.id,
+  amountToPay: remainingToPay,
+  key: process.env.RAZORPAY_KEY_ID,
+});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
+
+
+const verifySubscriptionPayment = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const { razorpay_payment_id, razorpay_signature } = req.body;
+
+    const subscription = await Subscription.findById(subscriptionId)
+    .populate("user", "name email")
+    .populate("provider", "businessName");
+
+    //  TEST MODE BYPASS (Thunder testing)
+    if (process.env.NODE_ENV === "test") {
+      subscription.razorpayPaymentId = razorpay_payment_id;
+      subscription.paymentStatus = "paid";
+      subscription.amountPaid = subscription.totalPrice;
+      subscription.status = "active";
+
+      await subscription.save();
+
+      await sendSubscriptionEmail(subscription);
+
+      return res.status(200).json({
+        message: "Subscription Activated (test Mode)",
+        subscription,
+      });
+    }
+
+    //real signature verification
+    const body =
+      subscription.razorpayOrderId + "|" + razorpay_payment_id;
+
+    const expected = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
+
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    subscription.razorpayPaymentId = razorpay_payment_id;
+    subscription.paymentStatus = "paid";
+    subscription.amountPaid = subscription.totalPrice;
+    subscription.status = "active";
+
+    await subscription.save();
+
+    await sendSubscriptionEmail(subscription);
+
+    res.status(200).json({
+      message: "Subscription activated",
+      subscription,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 
 // ================= CANCEL SUBSCRIPTION =================
 const cancelSubscription = async (req, res) => {
@@ -268,9 +365,69 @@ const resumeSubscription = async (req, res) => {
   }
 };
 
+const getOrderReceipt = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId)
+      .populate("user", "name email")
+      .populate("provider", "businessName");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const receipt = {
+      receiptId: `ORD-${order._id.toString().slice(-6)}`,
+      customer: order.user.name,
+      provider: order.provider.businessName,
+      date: order.date,
+      timeSlot: order.timeSlot,
+      total: order.totalPrice,
+      paid: order.amountPaid,
+      status: order.status,
+    };
+
+      res.json(receipt);
+  } catch (error) {
+    console.error("Receipt Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const sendSubscriptionEmail = async (subscription) => {
+  if (!subscription.user?.email) return;
+
+  const subId = `SUB-${subscription._id.toString().slice(-6)}`;
+
+  await sendEmail(
+    subscription.user.email,
+    "Subscription Activated Successfully",
+    `
+Hello ${subscription.user.name},
+
+Your subscription has been successfully activated 🎉
+
+Subscription ID: ${subId}
+Provider: ${subscription.provider.businessName}
+Plan: ${subscription.planType}
+Time Slot: ${subscription.timeSlot}
+
+Start Date: ${subscription.startDate.toDateString()}
+End Date: ${subscription.endDate.toDateString()}
+
+Amount Paid: ₹${subscription.amountPaid}
+Payment Status: ${subscription.paymentStatus}
+
+Enjoy your daily tiffins 🍱
+Thank you for choosing us ❤️
+    `
+  );
+};
+
 module.exports = {
   createSubscription,
   cancelSubscription,
   pauseSubscription,
   resumeSubscription,
+  verifySubscriptionPayment,
+  getOrderReceipt,
 };

@@ -42,9 +42,24 @@ const getAdminStats = async (req, res) => {
   });
 };
 
+
+const getPendingProviders = async (req, res) => {
+  try {
+    const providers = await Provider.find({ isApproved: false });
+
+    res.status(200).json({
+      count: providers.length,
+      providers,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getAllProviders,
   getAllOrders,
   getAdminStats,
+  getPendingProviders,
 };

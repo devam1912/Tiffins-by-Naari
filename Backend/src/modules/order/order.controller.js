@@ -1,9 +1,11 @@
 const Order = require("./order.model");
+const User = require("./user/user.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
 const { deductCredit } = require("../user/wallet.service");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
+const { sendEmail } = require("../../utils/notification.service");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -97,6 +99,18 @@ const updateOrderStatus = async (req, res) => {
 
     order.status = status;
     await order.save();
+    // order completion notification through mail
+    if (order.status === "completed") {
+      const user = await User.findById(order.user);
+
+      if (user.email) {
+        await sendEmail(
+          user.email,
+          "Order Status Update",
+          `Your order for ${order.timeSlot} on ${order.date.toDateString()} is now ${order.status}.`
+        );
+      }
+    }
 
     res.status(200).json({
       message: "Order status updated",

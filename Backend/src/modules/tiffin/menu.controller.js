@@ -43,7 +43,7 @@ const createOrUpdateMenu = async (req, res) => {
   }
 };
 
-const publishMenu = async (req, res) => {
+const submitForApproval = async (req, res) => {
   try {
     const provider = await Provider.findOne({ user: req.user._id });
 
@@ -67,11 +67,13 @@ const publishMenu = async (req, res) => {
       return res.status(404).json({ message: "Menu not found" });
     }
 
-    menu.isPublished = true;
+    menu.isApproved = false;
+    menu.isPublished = false;
+    menu.submittedForApproval = true;
     await menu.save();
 
     res.status(200).json({
-      message: "Menu published successfully",
+      message: "Menu submitted for approval successfully",
       menu,
     });
   } catch (error) {
@@ -79,4 +81,20 @@ const publishMenu = async (req, res) => {
   }
 };
 
-module.exports = { createOrUpdateMenu, publishMenu };
+const approveMenu = async (req, res) => {
+  const { menuId } = req.params;
+
+  const menu = await Menu.findById(menuId);
+  if (!menu) return res.status(404).json({ message: "Menu not found" });
+
+  menu.isApproved = true;
+  menu.isPublished = true;
+  menu.rejectionRemark = undefined;
+
+  await menu.save();
+
+  res.json({ message: "Menu approved & published" });
+};
+
+
+module.exports = { createOrUpdateMenu, submitForApproval, approveMenu };

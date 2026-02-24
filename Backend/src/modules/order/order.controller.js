@@ -264,7 +264,9 @@ const verifyOrderPayment = async (req, res) => {
     const { orderId } = req.params;
     const { razorpay_payment_id, razorpay_signature } = req.body;
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId)
+    .populate("user", "name email")
+    .populate("provider", "businessName");
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -278,6 +280,8 @@ const verifyOrderPayment = async (req, res) => {
       order.status = "confirmed";
 
       await order.save();
+
+      await sendReceiptEmail(order);
 
       return res.status(200).json({
         message: "Order payment successful (test mode)",
@@ -304,6 +308,8 @@ const verifyOrderPayment = async (req, res) => {
 
     await order.save();
 
+    await sendReceiptEmail(order);
+
     res.status(200).json({
       message: "Order payment successful",
       order,
@@ -314,6 +320,65 @@ const verifyOrderPayment = async (req, res) => {
 };
 
 
+const getOrderReceipt = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId)
+      .populate("user", "name email")
+      .populate("provider", "businessName");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const receipt = {
+      receiptId: `ORD-${order._id.toString().slice(-6)}`,
+      customer: order.user.name,
+      provider: order.provider.businessName,
+      date: order.date,
+      timeSlot: order.timeSlot,
+      total: order.totalPrice,
+      paid: order.amountPaid,
+      status: order.status,
+    };
+
+      res.json(receipt);
+  } catch (error) {
+    console.error("Receipt Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const sendReceiptEmail = async (order) => {
+  if (!order.user?.email) return;
+
+  const receiptId = `ORD-${order._id.toString().slice(-6)}`;
+
+  await sendEmail(
+    order.user.email,
+    "Your Order Receipt",
+    `
+Hello ${order.user.name},
+
+Thank you for your order!
+
+Here are your receipt details:
+
+Receipt ID: ${receiptId}
+Provider: ${order.provider.businessName}
+Date: ${order.date}
+Time Slot: ${order.timeSlot}
+
+Amount Paid: ₹${order.amountPaid}
+Payment Status: ${order.paymentStatus}
+Order Status: ${order.status}
+
+Your delicious tiffin will be delivered on time 🍱
+
+Thank you for choosing us ❤️
+    `
+  );
+};
+
 module.exports = { 
   createOrder,
   getMyOrders,
@@ -321,4 +386,5 @@ module.exports = {
   getTSPOrders,
   updateOrderStatus,
   verifyOrderPayment,
+  getOrderReceipt,
 };

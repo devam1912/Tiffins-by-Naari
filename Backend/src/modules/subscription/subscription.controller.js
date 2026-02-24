@@ -4,7 +4,8 @@ const Menu = require("../tiffin/menu.model");
 const { deductCredit, addCredit } = require("../user/wallet.service");
 const crypto = require("crypto");
 const razorpay = require("../../utils/razorpay");
-
+const { sendEmail } = require("../../utils/notification.service");
+const Order = require("../order/order.model");
 // ================= CREATE SUBSCRIPTION =================
 const createSubscription = async (req, res) => {
   try {
@@ -163,7 +164,9 @@ const verifySubscriptionPayment = async (req, res) => {
     const { subscriptionId } = req.params;
     const { razorpay_payment_id, razorpay_signature } = req.body;
 
-    const subscription = await Subscription.findById(subscriptionId);
+    const subscription = await Subscription.findById(subscriptionId)
+    .populate("user", "name email")
+    .populate("provider", "businessName");
 
     //  TEST MODE BYPASS (Thunder testing)
     if (process.env.NODE_ENV === "test") {
@@ -173,6 +176,8 @@ const verifySubscriptionPayment = async (req, res) => {
       subscription.status = "active";
 
       await subscription.save();
+
+      await sendSubscriptionEmail(subscription);
 
       return res.status(200).json({
         message: "Subscription Activated (test Mode)",
@@ -199,6 +204,8 @@ const verifySubscriptionPayment = async (req, res) => {
     subscription.status = "active";
 
     await subscription.save();
+
+    await sendSubscriptionEmail(subscription);
 
     res.status(200).json({
       message: "Subscription activated",
@@ -384,6 +391,36 @@ const getOrderReceipt = async (req, res) => {
     console.error("Receipt Error:", error);
     res.status(500).json({ message: "Server error" });
   }
+};
+
+const sendSubscriptionEmail = async (subscription) => {
+  if (!subscription.user?.email) return;
+
+  const subId = `SUB-${subscription._id.toString().slice(-6)}`;
+
+  await sendEmail(
+    subscription.user.email,
+    "Subscription Activated Successfully",
+    `
+Hello ${subscription.user.name},
+
+Your subscription has been successfully activated 🎉
+
+Subscription ID: ${subId}
+Provider: ${subscription.provider.businessName}
+Plan: ${subscription.planType}
+Time Slot: ${subscription.timeSlot}
+
+Start Date: ${subscription.startDate.toDateString()}
+End Date: ${subscription.endDate.toDateString()}
+
+Amount Paid: ₹${subscription.amountPaid}
+Payment Status: ${subscription.paymentStatus}
+
+Enjoy your daily tiffins 🍱
+Thank you for choosing us ❤️
+    `
+  );
 };
 
 module.exports = {

@@ -358,10 +358,39 @@ const resumeSubscription = async (req, res) => {
   }
 };
 
+const getOrderReceipt = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId)
+      .populate("user", "name email")
+      .populate("provider", "businessName");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const receipt = {
+      receiptId: `ORD-${order._id.toString().slice(-6)}`,
+      customer: order.user.name,
+      provider: order.provider.businessName,
+      date: order.date,
+      timeSlot: order.timeSlot,
+      total: order.totalPrice,
+      paid: order.amountPaid,
+      status: order.status,
+    };
+
+      res.json(receipt);
+  } catch (error) {
+    console.error("Receipt Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 module.exports = {
   createSubscription,
   cancelSubscription,
   pauseSubscription,
   resumeSubscription,
   verifySubscriptionPayment,
+  getOrderReceipt,
 };

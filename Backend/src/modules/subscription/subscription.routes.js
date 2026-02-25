@@ -1,7 +1,7 @@
 const express = require("express");
 const { createSubscription } = require("./subscription.controller");
 const { protect, authorize } = require("../../middlewares/auth.middleware");
-const {cancelSubscription, pauseSubscription, getOrderReceipt, resumeSubscription, verifySubscriptionPayment} = require("./subscription.controller");
+const {cancelSubscription, pauseSubscription, getOrderReceipt, resumeSubscription, verifySubscriptionPayment, markMealReady} = require("./subscription.controller");
 
 const router = express.Router();
 
@@ -11,6 +11,7 @@ router.post("/verify-payment/:subscriptionId",protect,authorize("customer"),veri
 
 router.get("/:id/receipt", protect,authorize("customer"),getOrderReceipt);
 
+router.patch("/:subscriptionId/mark-meal-ready",protect,authorize("provider"),markMealReady);
 router.patch("/:subscriptionId/cancel", protect, cancelSubscription);
 router.patch("/:subscriptionId/pause", protect, pauseSubscription);
 router.patch("/:subscriptionId/resume", protect, resumeSubscription);

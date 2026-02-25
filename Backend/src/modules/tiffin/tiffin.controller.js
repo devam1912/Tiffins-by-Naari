@@ -1,4 +1,5 @@
 const Provider = require("./provider.model");
+const Subscription = require("../subscription/subscription.model");
 
 const getNearbyTiffins = async (req, res) => {
   try {
@@ -102,9 +103,22 @@ const deactivateTSP = async (req, res) => {
     provider.isActive = false;
     await provider.save();
 
+    const today = new Date();
+
+    // ⏸ Pause all active subscriptions
+    await Subscription.updateMany(
+      {
+        provider: provider._id,
+        status: "active",
+      },
+      {
+        status: "paused",
+        pauseStart: today,
+      }
+    );
+
     res.status(200).json({
-      message: "TSP deactivated successfully",
-      provider,
+      message: "TSP deactivated and subscriptions paused",
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -122,9 +136,34 @@ const reactivateTSP = async (req, res) => {
     provider.isActive = true;
     await provider.save();
 
+    const today = new Date();
+
+    // 🔄 Get paused subscriptions
+    const pausedSubs = await Subscription.find({
+      provider: provider._id,
+      status: "paused",
+    });
+
+    for (const sub of pausedSubs) {
+      if (sub.pauseStart) {
+        const pauseDuration = Math.ceil(
+          (today - sub.pauseStart) / (1000 * 60 * 60 * 24)
+        );
+
+        // 📅 Extend endDate
+        sub.endDate.setDate(sub.endDate.getDate() + pauseDuration);
+      }
+
+      sub.status = "active";
+      sub.pauseStart = null;
+      sub.pauseEnd = null;
+
+      await sub.save();
+    }
+
     res.status(200).json({
-      message: "TSP reactivated successfully",
-      provider,
+      message: "TSP reactivated and subscriptions resumed",
+      resumedSubscriptions: pausedSubs.length,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

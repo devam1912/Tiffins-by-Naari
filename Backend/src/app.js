@@ -18,7 +18,10 @@ const tiffinRoutes = require("./modules/tiffin/tiffin.routes");
 const subscriptionRoutes = require("./modules/subscription/subscription.routes");
 const mealSelectionRoutes = require("./modules/subscription/mealSelection.routes");
 const orderRoutes = require("./modules/order/order.routes");
+const feedbackRoutes = require("./modules/feedback/feedback.routes");
+
 app.use("/api/auth", authRoutes);
+app.use("/api/feedback", feedbackRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/tiffins", tiffinRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);

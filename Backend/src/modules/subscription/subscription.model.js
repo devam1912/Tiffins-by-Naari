@@ -54,6 +54,7 @@ const subscriptionSchema = new mongoose.Schema(
 
     pauseStart: Date,
     pauseEnd: Date,
+    lastServedDate: Date,
 
     totalPrice: {
       type: Number,

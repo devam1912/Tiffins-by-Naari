@@ -423,6 +423,194 @@ Thank you for choosing us ❤️
   );
 };
 
+const markMealReady = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+
+    const subscription = await Subscription.findById(subscriptionId)
+      .populate("user", "name email")
+      .populate("provider", "businessName isActive");
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    await handleVacationResume(subscription);
+
+    // 🔒 Get provider of logged-in user
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(403).json({ message: "Provider not found" });
+    }
+
+    // 🔒 Ensure this provider owns the subscription
+    if (subscription.provider._id.toString() !== provider._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // 🛑 Provider must be active
+    if (!subscription.provider.isActive) {
+      return res.status(400).json({ message: "Provider is inactive" });
+    }
+
+    // ❌ Subscription must be active
+    if (subscription.status !== "active") {
+      return res.status(400).json({ message: "Subscription not active" });
+    }
+
+    // ⏸ Pause check
+    if (subscription.status === "paused") {
+      return res.status(400).json({ message: "Subscription is paused" });
+    }
+
+    // 📅 Expiry check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (today > subscription.endDate) {
+      return res.status(400).json({ message: "Subscription has expired" });
+    }
+
+    // 🚫 Prevent double serving on same day
+    if (
+      subscription.lastServedDate &&
+      new Date(subscription.lastServedDate).toDateString() ===
+        today.toDateString()
+    ) {
+      return res.status(400).json({
+        message: "Meal already marked as ready for today",
+      });
+    }
+
+    // ❌ No meals left
+    if (subscription.remainingMeals <= 0) {
+      return res.status(400).json({ message: "No meals remaining" });
+    }
+
+    // 🍱 Deduct meal
+    subscription.remainingMeals -= 1;
+    subscription.lastServedDate = today;
+
+    // ✅ Auto complete
+    if (subscription.remainingMeals === 0) {
+      subscription.status = "completed";
+    }
+
+    await subscription.save();
+
+    // 📧 Notify user
+    if (subscription.user?.email) {
+      await sendEmail(
+        subscription.user.email,
+        "Your Tiffin is Ready for Pickup 🍱",
+        `
+Hello ${subscription.user.name},
+
+Your ${subscription.timeSlot} meal from ${subscription.provider.businessName} is ready for pickup.
+
+Please collect it on time.
+
+Enjoy your meal 😋
+        `
+      );
+    }
+
+    res.status(200).json({
+      message: "Meal marked as ready and user notified",
+      remainingMeals: subscription.remainingMeals,
+      status: subscription.status,
+    });
+  } catch (error) {
+    console.error("Mark Meal Ready Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const setVacationMode = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const { pauseEnd } = req.body;
+
+    const subscription = await Subscription.findById(subscriptionId);
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    // 🔒 ownership check
+    if (subscription.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (subscription.status !== "active") {
+      return res.status(400).json({
+        message: "Only active subscriptions can set vacation",
+      });
+    }
+
+    if (!pauseEnd) {
+      return res.status(400).json({ message: "pauseEnd is required" });
+    }
+
+    // 📅 calculate pauseStart = next service day
+    let pauseStart;
+
+    if (subscription.lastServedDate) {
+      pauseStart = new Date(subscription.lastServedDate);
+      pauseStart.setDate(pauseStart.getDate() + 1);
+    } else {
+      pauseStart = new Date(); // no meals served yet
+    }
+
+    const end = new Date(pauseEnd);
+
+    if (isNaN(end) || end < pauseStart) {
+      return res.status(400).json({
+        message: "Invalid pauseEnd date",
+      });
+    }
+
+    subscription.pauseStart = pauseStart;
+    subscription.pauseEnd = end;
+
+    await subscription.save();
+
+    res.status(200).json({
+      message: "Vacation scheduled successfully",
+      pauseStart,
+      pauseEnd: end,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const handleVacationResume = async (subscription) => {
+  const today = new Date();
+
+  if (
+    subscription.status === "paused" &&
+    subscription.pauseEnd &&
+    today > subscription.pauseEnd
+  ) {
+    const pauseDuration = Math.ceil(
+      (subscription.pauseEnd - subscription.pauseStart) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    subscription.endDate.setDate(
+      subscription.endDate.getDate() + pauseDuration
+    );
+
+    subscription.status = "active";
+    subscription.pauseStart = null;
+    subscription.pauseEnd = null;
+
+    await subscription.save();
+  }
+};
+
 module.exports = {
   createSubscription,
   cancelSubscription,
@@ -430,4 +618,6 @@ module.exports = {
   resumeSubscription,
   verifySubscriptionPayment,
   getOrderReceipt,
+  markMealReady,
+  setVacationMode,
 };

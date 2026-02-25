@@ -435,6 +435,8 @@ const markMealReady = async (req, res) => {
       return res.status(404).json({ message: "Subscription not found" });
     }
 
+    await handleVacationResume(subscription);
+
     // 🔒 Get provider of logged-in user
     const provider = await Provider.findOne({ user: req.user._id });
 
@@ -525,7 +527,89 @@ Enjoy your meal 😋
   }
 };
 
+const setVacationMode = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const { pauseEnd } = req.body;
 
+    const subscription = await Subscription.findById(subscriptionId);
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    // 🔒 ownership check
+    if (subscription.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (subscription.status !== "active") {
+      return res.status(400).json({
+        message: "Only active subscriptions can set vacation",
+      });
+    }
+
+    if (!pauseEnd) {
+      return res.status(400).json({ message: "pauseEnd is required" });
+    }
+
+    // 📅 calculate pauseStart = next service day
+    let pauseStart;
+
+    if (subscription.lastServedDate) {
+      pauseStart = new Date(subscription.lastServedDate);
+      pauseStart.setDate(pauseStart.getDate() + 1);
+    } else {
+      pauseStart = new Date(); // no meals served yet
+    }
+
+    const end = new Date(pauseEnd);
+
+    if (isNaN(end) || end < pauseStart) {
+      return res.status(400).json({
+        message: "Invalid pauseEnd date",
+      });
+    }
+
+    subscription.pauseStart = pauseStart;
+    subscription.pauseEnd = end;
+
+    await subscription.save();
+
+    res.status(200).json({
+      message: "Vacation scheduled successfully",
+      pauseStart,
+      pauseEnd: end,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const handleVacationResume = async (subscription) => {
+  const today = new Date();
+
+  if (
+    subscription.status === "paused" &&
+    subscription.pauseEnd &&
+    today > subscription.pauseEnd
+  ) {
+    const pauseDuration = Math.ceil(
+      (subscription.pauseEnd - subscription.pauseStart) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    subscription.endDate.setDate(
+      subscription.endDate.getDate() + pauseDuration
+    );
+
+    subscription.status = "active";
+    subscription.pauseStart = null;
+    subscription.pauseEnd = null;
+
+    await subscription.save();
+  }
+};
 
 module.exports = {
   createSubscription,
@@ -535,4 +619,5 @@ module.exports = {
   verifySubscriptionPayment,
   getOrderReceipt,
   markMealReady,
+  setVacationMode,
 };

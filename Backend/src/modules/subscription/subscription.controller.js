@@ -2,7 +2,10 @@ const Subscription = require("./subscription.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
 const { deductCredit, addCredit } = require("../user/wallet.service");
-
+const crypto = require("crypto");
+const razorpay = require("../../utils/razorpay");
+const { sendEmail } = require("../../utils/notification.service");
+const Order = require("../order/order.model");
 // ================= CREATE SUBSCRIPTION =================
 const createSubscription = async (req, res) => {
   try {
@@ -91,35 +94,129 @@ const createSubscription = async (req, res) => {
 
     const totalPrice = basePrice * totalDays;
 
-    // ✅ Wallet deduction
-    const walletResult = await deductCredit(req.user._id, totalPrice);
+   
+   // 💰 Wallet deduction
+const walletResult = await deductCredit(req.user._id, totalPrice);
 
-    const amountPaid = totalPrice - walletResult.remainingToPay;
+const walletUsed = walletResult.deducted;
+const remainingToPay = walletResult.remainingToPay;
 
-    const subscription = await Subscription.create({
-      user: req.user._id,
-      provider: providerId,
-      planType,
-      timeSlot,
-      startDate,
-      endDate,
-      totalPrice,
-      remainingMeals: totalDays,
-      amountPaid,
-      status: "active",
-    });
+// 🟢 FULL WALLET PAYMENT
+if (remainingToPay === 0) {
+  const subscription = await Subscription.create({
+    user: req.user._id,
+    provider: providerId,
+    planType,
+    timeSlot,
+    startDate,
+    endDate,
+    totalPrice,
+    remainingMeals: totalDays,
+    amountPaid: totalPrice,
+    paymentStatus: "paid",
+    status: "active",
+  });
 
-    res.status(201).json({
-      message: "Subscription created successfully",
-      walletUsed: walletResult.deducted,
-      remainingToPay: walletResult.remainingToPay,
-      subscription,
-    });
+  return res.status(201).json({
+    message: "Subscription activated using wallet",
+    subscription,
+  });
+}
+
+// 🟡 PARTIAL / FULL RAZORPAY
+const razorpayOrder = await razorpay.orders.create({
+  amount: remainingToPay * 100,
+  currency: "INR",
+  receipt: `sub_${Date.now()}`,
+});
+
+const subscription = await Subscription.create({
+  user: req.user._id,
+  provider: providerId,
+  planType,
+  timeSlot,
+  startDate,
+  endDate,
+  totalPrice,
+  remainingMeals: totalDays,
+  amountPaid: walletUsed,
+  paymentStatus: walletUsed > 0 ? "partial" : "pending",
+  razorpayOrderId: razorpayOrder.id,
+  status: "pending",
+});
+
+res.status(201).json({
+  message: "Razorpay payment required",
+  subscription,
+  razorpayOrderId: razorpayOrder.id,
+  amountToPay: remainingToPay,
+  key: process.env.RAZORPAY_KEY_ID,
+});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
   }
 };
+
+
+const verifySubscriptionPayment = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const { razorpay_payment_id, razorpay_signature } = req.body;
+
+    const subscription = await Subscription.findById(subscriptionId)
+    .populate("user", "name email")
+    .populate("provider", "businessName");
+
+    //  TEST MODE BYPASS (Thunder testing)
+    if (process.env.NODE_ENV === "test") {
+      subscription.razorpayPaymentId = razorpay_payment_id;
+      subscription.paymentStatus = "paid";
+      subscription.amountPaid = subscription.totalPrice;
+      subscription.status = "active";
+
+      await subscription.save();
+
+      await sendSubscriptionEmail(subscription);
+
+      return res.status(200).json({
+        message: "Subscription Activated (test Mode)",
+        subscription,
+      });
+    }
+
+    //real signature verification
+    const body =
+      subscription.razorpayOrderId + "|" + razorpay_payment_id;
+
+    const expected = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
+
+    if (expected !== razorpay_signature) {
+      return res.status(400).json({ message: "Payment verification failed" });
+    }
+
+    subscription.razorpayPaymentId = razorpay_payment_id;
+    subscription.paymentStatus = "paid";
+    subscription.amountPaid = subscription.totalPrice;
+    subscription.status = "active";
+
+    await subscription.save();
+
+    await sendSubscriptionEmail(subscription);
+
+    res.status(200).json({
+      message: "Subscription activated",
+      subscription,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+
 
 // ================= CANCEL SUBSCRIPTION =================
 const cancelSubscription = async (req, res) => {
@@ -268,9 +365,259 @@ const resumeSubscription = async (req, res) => {
   }
 };
 
+const getOrderReceipt = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.orderId)
+      .populate("user", "name email")
+      .populate("provider", "businessName");
+
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const receipt = {
+      receiptId: `ORD-${order._id.toString().slice(-6)}`,
+      customer: order.user.name,
+      provider: order.provider.businessName,
+      date: order.date,
+      timeSlot: order.timeSlot,
+      total: order.totalPrice,
+      paid: order.amountPaid,
+      status: order.status,
+    };
+
+      res.json(receipt);
+  } catch (error) {
+    console.error("Receipt Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const sendSubscriptionEmail = async (subscription) => {
+  if (!subscription.user?.email) return;
+
+  const subId = `SUB-${subscription._id.toString().slice(-6)}`;
+
+  await sendEmail(
+    subscription.user.email,
+    "Subscription Activated Successfully",
+    `
+Hello ${subscription.user.name},
+
+Your subscription has been successfully activated 🎉
+
+Subscription ID: ${subId}
+Provider: ${subscription.provider.businessName}
+Plan: ${subscription.planType}
+Time Slot: ${subscription.timeSlot}
+
+Start Date: ${subscription.startDate.toDateString()}
+End Date: ${subscription.endDate.toDateString()}
+
+Amount Paid: ₹${subscription.amountPaid}
+Payment Status: ${subscription.paymentStatus}
+
+Enjoy your daily tiffins 🍱
+Thank you for choosing us ❤️
+    `
+  );
+};
+
+const markMealReady = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+
+    const subscription = await Subscription.findById(subscriptionId)
+      .populate("user", "name email")
+      .populate("provider", "businessName isActive");
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    await handleVacationResume(subscription);
+
+    // 🔒 Get provider of logged-in user
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(403).json({ message: "Provider not found" });
+    }
+
+    // 🔒 Ensure this provider owns the subscription
+    if (subscription.provider._id.toString() !== provider._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // 🛑 Provider must be active
+    if (!subscription.provider.isActive) {
+      return res.status(400).json({ message: "Provider is inactive" });
+    }
+
+    // ❌ Subscription must be active
+    if (subscription.status !== "active") {
+      return res.status(400).json({ message: "Subscription not active" });
+    }
+
+    // ⏸ Pause check
+    if (subscription.status === "paused") {
+      return res.status(400).json({ message: "Subscription is paused" });
+    }
+
+    // 📅 Expiry check
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (today > subscription.endDate) {
+      return res.status(400).json({ message: "Subscription has expired" });
+    }
+
+    // 🚫 Prevent double serving on same day
+    if (
+      subscription.lastServedDate &&
+      new Date(subscription.lastServedDate).toDateString() ===
+        today.toDateString()
+    ) {
+      return res.status(400).json({
+        message: "Meal already marked as ready for today",
+      });
+    }
+
+    // ❌ No meals left
+    if (subscription.remainingMeals <= 0) {
+      return res.status(400).json({ message: "No meals remaining" });
+    }
+
+    // 🍱 Deduct meal
+    subscription.remainingMeals -= 1;
+    subscription.lastServedDate = today;
+
+    // ✅ Auto complete
+    if (subscription.remainingMeals === 0) {
+      subscription.status = "completed";
+    }
+
+    await subscription.save();
+
+    // 📧 Notify user
+    if (subscription.user?.email) {
+      await sendEmail(
+        subscription.user.email,
+        "Your Tiffin is Ready for Pickup 🍱",
+        `
+Hello ${subscription.user.name},
+
+Your ${subscription.timeSlot} meal from ${subscription.provider.businessName} is ready for pickup.
+
+Please collect it on time.
+
+Enjoy your meal 😋
+        `
+      );
+    }
+
+    res.status(200).json({
+      message: "Meal marked as ready and user notified",
+      remainingMeals: subscription.remainingMeals,
+      status: subscription.status,
+    });
+  } catch (error) {
+    console.error("Mark Meal Ready Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const setVacationMode = async (req, res) => {
+  try {
+    const { subscriptionId } = req.params;
+    const { pauseEnd } = req.body;
+
+    const subscription = await Subscription.findById(subscriptionId);
+
+    if (!subscription) {
+      return res.status(404).json({ message: "Subscription not found" });
+    }
+
+    // 🔒 ownership check
+    if (subscription.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    if (subscription.status !== "active") {
+      return res.status(400).json({
+        message: "Only active subscriptions can set vacation",
+      });
+    }
+
+    if (!pauseEnd) {
+      return res.status(400).json({ message: "pauseEnd is required" });
+    }
+
+    // 📅 calculate pauseStart = next service day
+    let pauseStart;
+
+    if (subscription.lastServedDate) {
+      pauseStart = new Date(subscription.lastServedDate);
+      pauseStart.setDate(pauseStart.getDate() + 1);
+    } else {
+      pauseStart = new Date(); // no meals served yet
+    }
+
+    const end = new Date(pauseEnd);
+
+    if (isNaN(end) || end < pauseStart) {
+      return res.status(400).json({
+        message: "Invalid pauseEnd date",
+      });
+    }
+
+    subscription.pauseStart = pauseStart;
+    subscription.pauseEnd = end;
+
+    await subscription.save();
+
+    res.status(200).json({
+      message: "Vacation scheduled successfully",
+      pauseStart,
+      pauseEnd: end,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const handleVacationResume = async (subscription) => {
+  const today = new Date();
+
+  if (
+    subscription.status === "paused" &&
+    subscription.pauseEnd &&
+    today > subscription.pauseEnd
+  ) {
+    const pauseDuration = Math.ceil(
+      (subscription.pauseEnd - subscription.pauseStart) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    subscription.endDate.setDate(
+      subscription.endDate.getDate() + pauseDuration
+    );
+
+    subscription.status = "active";
+    subscription.pauseStart = null;
+    subscription.pauseEnd = null;
+
+    await subscription.save();
+  }
+};
+
 module.exports = {
   createSubscription,
   cancelSubscription,
   pauseSubscription,
   resumeSubscription,
+  verifySubscriptionPayment,
+  getOrderReceipt,
+  markMealReady,
+  setVacationMode,
 };

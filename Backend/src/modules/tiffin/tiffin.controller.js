@@ -1,4 +1,5 @@
 const Provider = require("./provider.model");
+const Subscription = require("../subscription/subscription.model");
 
 const getNearbyTiffins = async (req, res) => {
   try {
@@ -91,6 +92,84 @@ const approveProvider = async (req, res) => {
   }
 };
 
+const deactivateTSP = async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider profile not found" });
+    }
+
+    provider.isActive = false;
+    await provider.save();
+
+    const today = new Date();
+
+    // ⏸ Pause all active subscriptions
+    await Subscription.updateMany(
+      {
+        provider: provider._id,
+        status: "active",
+      },
+      {
+        status: "paused",
+        pauseStart: today,
+      }
+    );
+
+    res.status(200).json({
+      message: "TSP deactivated and subscriptions paused",
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const reactivateTSP = async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider profile not found" });
+    }
+
+    provider.isActive = true;
+    await provider.save();
+
+    const today = new Date();
+
+    // 🔄 Get paused subscriptions
+    const pausedSubs = await Subscription.find({
+      provider: provider._id,
+      status: "paused",
+    });
+
+    for (const sub of pausedSubs) {
+      if (sub.pauseStart) {
+        const pauseDuration = Math.ceil(
+          (today - sub.pauseStart) / (1000 * 60 * 60 * 24)
+        );
+
+        // 📅 Extend endDate
+        sub.endDate.setDate(sub.endDate.getDate() + pauseDuration);
+      }
+
+      sub.status = "active";
+      sub.pauseStart = null;
+      sub.pauseEnd = null;
+
+      await sub.save();
+    }
+
+    res.status(200).json({
+      message: "TSP reactivated and subscriptions resumed",
+      resumedSubscriptions: pausedSubs.length,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const publishMenu = async (req, res) => {
   try {
     const { providerId } = req.params;
@@ -119,6 +198,8 @@ module.exports = {
   createProviderRequest,
   approveProvider,
   publishMenu,
+  deactivateTSP,
+  reactivateTSP,
 };
 
 

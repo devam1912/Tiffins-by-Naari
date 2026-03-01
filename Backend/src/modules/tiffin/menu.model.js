@@ -61,6 +61,15 @@ const menuSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isApproved: { 
+      type: Boolean,
+      default: false
+    },
+    submittedForApproval: {
+      type: Boolean,
+      default: false
+    },
+    rejectionRemark: String,
   },
   { timestamps: true }
 );

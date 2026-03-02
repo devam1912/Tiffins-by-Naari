@@ -6,6 +6,8 @@ const crypto = require("crypto");
 const razorpay = require("../../utils/razorpay");
 const { sendEmail } = require("../../utils/notification.service");
 const Order = require("../order/order.model");
+const mongoose = require("mongoose");
+
 // ================= CREATE SUBSCRIPTION =================
 const createSubscription = async (req, res) => {
   try {
@@ -437,34 +439,34 @@ const markMealReady = async (req, res) => {
 
     await handleVacationResume(subscription);
 
-    // 🔒 Get provider of logged-in user
+    // Get provider of logged-in user
     const provider = await Provider.findOne({ user: req.user._id });
 
     if (!provider) {
       return res.status(403).json({ message: "Provider not found" });
     }
 
-    // 🔒 Ensure this provider owns the subscription
+    // Ensure this provider owns the subscription
     if (subscription.provider._id.toString() !== provider._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // 🛑 Provider must be active
+    // Provider must be active
     if (!subscription.provider.isActive) {
       return res.status(400).json({ message: "Provider is inactive" });
     }
 
-    // ❌ Subscription must be active
+    // Subscription must be active
     if (subscription.status !== "active") {
       return res.status(400).json({ message: "Subscription not active" });
     }
 
-    // ⏸ Pause check
+    // Pause check
     if (subscription.status === "paused") {
       return res.status(400).json({ message: "Subscription is paused" });
     }
 
-    // 📅 Expiry check
+    // Expiry check
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -472,7 +474,7 @@ const markMealReady = async (req, res) => {
       return res.status(400).json({ message: "Subscription has expired" });
     }
 
-    // 🚫 Prevent double serving on same day
+    // Prevent double serving on same day
     if (
       subscription.lastServedDate &&
       new Date(subscription.lastServedDate).toDateString() ===
@@ -483,23 +485,23 @@ const markMealReady = async (req, res) => {
       });
     }
 
-    // ❌ No meals left
+    //  No meals left
     if (subscription.remainingMeals <= 0) {
       return res.status(400).json({ message: "No meals remaining" });
     }
 
-    // 🍱 Deduct meal
+    // Deduct meal
     subscription.remainingMeals -= 1;
     subscription.lastServedDate = today;
 
-    // ✅ Auto complete
+    //  Auto complete
     if (subscription.remainingMeals === 0) {
       subscription.status = "completed";
     }
 
     await subscription.save();
 
-    // 📧 Notify user
+    //  Notify user
     if (subscription.user?.email) {
       await sendEmail(
         subscription.user.email,
@@ -538,7 +540,7 @@ const setVacationMode = async (req, res) => {
       return res.status(404).json({ message: "Subscription not found" });
     }
 
-    // 🔒 ownership check
+    //  ownership check
     if (subscription.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -553,7 +555,7 @@ const setVacationMode = async (req, res) => {
       return res.status(400).json({ message: "pauseEnd is required" });
     }
 
-    // 📅 calculate pauseStart = next service day
+    // calculate pauseStart = next service day
     let pauseStart;
 
     if (subscription.lastServedDate) {
@@ -611,6 +613,87 @@ const handleVacationResume = async (subscription) => {
   }
 };
 
+const getProviderDashboard = async (req, res) => {
+  try {
+    const providerDoc = await Provider.findOne({ user: req.user._id });
+
+    if (!providerDoc) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    const providerId = providerDoc._id;
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const monthStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), 1);
+
+    const activeSubscribers = await Subscription.countDocuments({
+      provider: providerId,
+      status: "active",
+    });
+
+    const lunchCount = await Subscription.countDocuments({
+      provider: providerId,
+      status: "active",
+      timeSlot: "lunch",
+      startDate: { $lte: todayEnd },
+      endDate: { $gte: todayStart },
+    });
+
+    const dinnerCount = await Subscription.countDocuments({
+      provider: providerId,
+      status: "active",
+      timeSlot: "dinner",
+      startDate: { $lte: todayEnd },
+      endDate: { $gte: todayStart },
+    });
+
+    const todaysMeals = lunchCount + dinnerCount;
+
+    const monthlyRevenueAgg = await Subscription.aggregate([
+      {
+        $match: {
+          provider: providerId,
+          paymentStatus: "paid",
+          createdAt: { $gte: monthStart },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amountPaid" },
+        },
+      },
+    ]);
+
+    const monthlyRevenue = monthlyRevenueAgg[0]?.total || 0;
+
+    const recentActivity = await Subscription.find({ provider: providerId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .populate("user", "name");
+
+    res.json({
+      success: true,
+      data: {
+        todaysMeals,
+        lunchCount,
+        dinnerCount,
+        activeSubscribers,
+        monthlyRevenue,
+        recentActivity,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Dashboard fetch failed" });
+  }
+};
+
 module.exports = {
   createSubscription,
   cancelSubscription,
@@ -620,4 +703,5 @@ module.exports = {
   getOrderReceipt,
   markMealReady,
   setVacationMode,
+  getProviderDashboard,
 };

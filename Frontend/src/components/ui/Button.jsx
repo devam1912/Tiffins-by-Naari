@@ -1,12 +1,7 @@
 import React from "react";
 import { cn } from "../../lib/utils";
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: "primary" | "secondary" | "outline" | "ghost";
-    size?: "sm" | "md" | "lg";
-}
-
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = React.forwardRef(
     ({ className, variant = "primary", size = "md", ...props }, ref) => {
         const variants = {
             primary: "bg-[var(--primary)] text-[var(--primary-foreground)] hover:bg-[var(--accent)]",

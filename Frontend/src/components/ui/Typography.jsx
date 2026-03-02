@@ -1,18 +1,13 @@
 import React from "react";
 import { cn } from "../../lib/utils";
 
-interface TypographyProps extends React.HTMLAttributes<HTMLElement> {
-    variant?: "h1" | "h2" | "h3" | "h4" | "body" | "small" | "lead";
-    as?: React.ElementType;
-}
-
 export const Typography = ({
     variant = "body",
     as,
     className,
     children,
     ...props
-}: TypographyProps) => {
+}) => {
     const Component = as || (variant.startsWith("h") ? variant : "p");
 
     const variants = {
@@ -26,7 +21,7 @@ export const Typography = ({
     };
 
     return (
-        <Component className={cn(variants[variant as keyof typeof variants], className)} {...props}>
+        <Component className={cn(variants[variant], className)} {...props}>
             {children}
         </Component>
     );

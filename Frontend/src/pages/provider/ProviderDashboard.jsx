@@ -15,10 +15,10 @@ import {
     Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { Typography } from "../components/ui/Typography";
-import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import { cn } from "../lib/utils";
+import { Typography } from "../../components/ui/Typography";
+import { Button } from "../../components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
+import { cn } from "../../lib/utils";
 
 // --- Placeholder Sub-components ---
 
@@ -83,7 +83,7 @@ const DashboardOverview = () => (
     </div>
 );
 
-const ViewPlaceholder = ({ title }: { title: string }) => (
+const ViewPlaceholder = ({ title }) => (
     <div className="bg-white p-20 rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center">
         <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
             <Settings className="text-primary animate-spin-slow" size={40} />
@@ -98,11 +98,7 @@ const ViewPlaceholder = ({ title }: { title: string }) => (
 
 // --- Main Dashboard Component ---
 
-interface ProviderDashboardProps {
-    onLogout?: () => void;
-}
-
-export const ProviderDashboard = ({ onLogout = () => console.log("Logout triggered") }: ProviderDashboardProps) => {
+export const ProviderDashboard = ({ onLogout = () => console.log("Logout triggered") }) => {
     const [activeTab, setActiveTab] = useState("Dashboard");
     const [isServiceActive, setIsServiceActive] = useState(true);
 

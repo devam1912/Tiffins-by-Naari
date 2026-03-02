@@ -5,7 +5,7 @@ import Signup from "./pages/Signup";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import CustomerProfile from "./pages/CustomerProfile";
 import VerifyOtp from "./pages/VerifyOtp";
-import { ProviderDashboard } from "./pages/ProviderDashboard";
+import { ProviderDashboard } from "./pages/provider/ProviderDashboard";
 export default function App() {
   return (
     <BrowserRouter>

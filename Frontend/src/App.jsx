@@ -5,6 +5,7 @@ import Signup from "./pages/Signup";
 import CustomerDashboard from "./pages/CustomerDashboard";
 import CustomerProfile from "./pages/CustomerProfile";
 import VerifyOtp from "./pages/VerifyOtp";
+import { ProviderDashboard } from "./pages/ProviderDashboard";
 export default function App() {
   return (
     <BrowserRouter>
@@ -12,9 +13,10 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/CustomerDashboard" element={<CustomerDashboard/>}/>
-        <Route path="/CustomerProfile" element={<CustomerProfile/>}/>
+        <Route path="/CustomerDashboard" element={<CustomerDashboard />} />
+        <Route path="/CustomerProfile" element={<CustomerProfile />} />
         <Route path="/verify-otp" element={<VerifyOtp />} />
+        <Route path="/ProviderDashboard" element={<ProviderDashboard />} />
       </Routes>
     </BrowserRouter>
   );

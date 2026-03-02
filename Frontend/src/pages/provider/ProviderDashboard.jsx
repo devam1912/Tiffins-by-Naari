@@ -96,6 +96,8 @@ const ViewPlaceholder = ({ title }) => (
     </div>
 );
 
+import { ProviderMenu } from "../../components/ProviderMenu";
+
 // --- Main Dashboard Component ---
 
 export const ProviderDashboard = ({ onLogout = () => console.log("Logout triggered") }) => {
@@ -201,7 +203,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                 </header>
 
                 {/* View Render */}
-                <div className="p-10 max-w-7xl mx-auto">
+                <div className="p-10 max-w-7xl mx-auto text-left">
                     <Typography variant="h2" className="mb-8 font-serif">{activeTab}</Typography>
 
                     <AnimatePresence mode="wait">
@@ -212,7 +214,13 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.3 }}
                         >
-                            {activeTab === "Dashboard" ? <DashboardOverview /> : <ViewPlaceholder title={activeTab} />}
+                            {activeTab === "Dashboard" ? (
+                                <DashboardOverview />
+                            ) : activeTab === "Menu Management" ? (
+                                <ProviderMenu />
+                            ) : (
+                                <ViewPlaceholder title={activeTab} />
+                            )}
                         </motion.div>
                     </AnimatePresence>
                 </div>

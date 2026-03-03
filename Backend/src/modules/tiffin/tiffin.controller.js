@@ -1,4 +1,5 @@
 const Provider = require("./provider.model");
+const User = require("../user/user.model");
 const Subscription = require("../subscription/subscription.model");
 
 const getNearbyTiffins = async (req, res) => {
@@ -82,6 +83,10 @@ const approveProvider = async (req, res) => {
 
     provider.isApproved = true;
     await provider.save();
+
+    await User.findByIdAndUpdate(provider.user, {
+    role: "provider"
+  });
 
     res.status(200).json({
       message: "Provider approved successfully",

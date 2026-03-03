@@ -12,7 +12,7 @@ const upload = require("../../middlewares/upload.middleware");
 const { uploadImage } = require("./upload.controller");
 const router = express.Router();
 
-router.post("/register", protect, authorize("provider"), createProviderRequest);
+router.post("/register", protect, createProviderRequest);
 router.post("/menu", protect, authorize("provider"), createOrUpdateMenu);
 
 

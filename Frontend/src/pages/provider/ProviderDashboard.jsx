@@ -97,6 +97,7 @@ const ViewPlaceholder = ({ title }) => (
 );
 
 import { ProviderMenu } from "../../components/ProviderMenu";
+import { ActiveSubscriptions } from "../../components/ActiveSubscriptions";
 
 // --- Main Dashboard Component ---
 
@@ -218,6 +219,8 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                                 <DashboardOverview />
                             ) : activeTab === "Menu Management" ? (
                                 <ProviderMenu />
+                            ) : activeTab === "Active Subscriptions" ? (
+                                <ActiveSubscriptions />
                             ) : (
                                 <ViewPlaceholder title={activeTab} />
                             )}

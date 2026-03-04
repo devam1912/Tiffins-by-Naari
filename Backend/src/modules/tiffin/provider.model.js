@@ -41,7 +41,7 @@ const providerSchema = new mongoose.Schema(
 
     profileCompleted: {
       type: Boolean,
-      default: false,
+      default: true,
     },
 
     cuisineType: {

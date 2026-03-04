@@ -73,7 +73,7 @@ export default function Sidebar({
 
         <button
           className="nav-btn kitchen-cta"
-          onClick={() => navigate("/list-kitchen")}
+          onClick={() => navigate("/RegisterProvider")}
           title={collapsed ? "List Your Kitchen" : ""}
           style={{ justifyContent: collapsed ? "center" : "flex-start", marginTop: "20px" }}
         >

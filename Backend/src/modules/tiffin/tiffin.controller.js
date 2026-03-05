@@ -1,6 +1,7 @@
 const Provider = require("./provider.model");
 const User = require("../user/user.model");
 const Subscription = require("../subscription/subscription.model");
+const { sendEmail } = require("../../utils/notification.service");
 
 const getNearbyTiffins = async (req, res) => {
   try {
@@ -61,6 +62,14 @@ const createProviderRequest = async (req, res) => {
       location,
     });
 
+    if (email) {
+        await sendEmail(
+          email,
+          "Application Submitted",
+          `Thankyouu for Apply to List Your kitchen in out Platform, Your application will be reviewed Shortly!`
+        );
+      }
+
     res.status(201).json({
       message: "Provider registration request submitted",
       provider,
@@ -87,6 +96,7 @@ const approveProvider = async (req, res) => {
     await User.findByIdAndUpdate(provider.user, {
     role: "provider"
   });
+
 
     res.status(200).json({
       message: "Provider approved successfully",

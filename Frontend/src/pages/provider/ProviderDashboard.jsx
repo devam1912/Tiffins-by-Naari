@@ -99,12 +99,32 @@ const ViewPlaceholder = ({ title }) => (
 import { ProviderMenu } from "../../components/ProviderMenu";
 import { ActiveSubscriptions } from "../../components/ActiveSubscriptions";
 import { OrdersToday } from "../../components/OrdersToday";
+import { ProfileSettings } from "../../components/ProfileSettings";
+import api from "../../services/api";
 
 // --- Main Dashboard Component ---
 
 export const ProviderDashboard = ({ onLogout = () => console.log("Logout triggered") }) => {
     const [activeTab, setActiveTab] = useState("Dashboard");
     const [isServiceActive, setIsServiceActive] = useState(true);
+    const [isStatusLoading, setIsStatusLoading] = useState(false);
+
+    const toggleServiceStatus = async () => {
+        setIsStatusLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const endpoint = isServiceActive ? "/api/tiffin/deactivate" : "/api/tiffin/reactivate";
+            await api.patch(endpoint, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setIsServiceActive(!isServiceActive);
+        } catch (error) {
+            console.error("Failed to toggle service status:", error);
+            alert("Failed to update service status. Please try again.");
+        } finally {
+            setIsStatusLoading(false);
+        }
+    };
 
     const menuItems = [
         { name: "Dashboard", icon: LayoutDashboard },
@@ -150,9 +170,10 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                             <span className="text-sm font-semibold">{isServiceActive ? "Active" : "Paused"}</span>
                         </div>
                         <button
-                            onClick={() => setIsServiceActive(!isServiceActive)}
+                            onClick={toggleServiceStatus}
+                            disabled={isStatusLoading}
                             className={cn(
-                                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none",
+                                "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50",
                                 isServiceActive ? "bg-[var(--accent)]" : "bg-white/20"
                             )}
                         >
@@ -224,6 +245,12 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                                 <ActiveSubscriptions />
                             ) : activeTab === "Orders Today" ? (
                                 <OrdersToday />
+                            ) : activeTab === "Profile Settings" ? (
+                                <ProfileSettings
+                                    isServiceActive={isServiceActive}
+                                    toggleServiceStatus={toggleServiceStatus}
+                                    isStatusLoading={isStatusLoading}
+                                />
                             ) : (
                                 <ViewPlaceholder title={activeTab} />
                             )}

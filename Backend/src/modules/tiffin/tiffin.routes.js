@@ -13,7 +13,7 @@ const upload = require("../../middlewares/upload.middleware");
 const { uploadImage } = require("./upload.controller");
 const router = express.Router();
 
-router.post("/register", protect, createProviderRequest);
+router.post("/register", protect, upload.single("fssaiCertificate"), createProviderRequest);
 router.post("/menu", protect, authorize("provider"), createOrUpdateMenu);
 
 

@@ -3,6 +3,7 @@ const User = require("../user/user.model");
 const Menu = require("../menu/menu.model");
 const Subscription = require("../subscription/subscription.model");
 const { sendEmail } = require("../../utils/notification.service");
+const cloudinary = require("../../config/cloudinary");
 
 const getNearbyTiffins = async (req, res) => {
   try {
@@ -45,6 +46,7 @@ const createProviderRequest = async (req, res) => {
       location,
     } = req.body;
 
+    // ===== Check existing provider =====
     const existing = await Provider.findOne({ user: req.user._id });
 
     if (existing) {
@@ -53,6 +55,26 @@ const createProviderRequest = async (req, res) => {
       });
     }
 
+    // ===== Upload FSSAI certificate =====
+    let certificateUrl = null;
+
+    if (req.file) {
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: "tiffins/fssai" },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        stream.end(req.file.buffer);
+      });
+
+      certificateUrl = uploadResult.secure_url;
+    }
+
+    // ===== Create provider =====
     const provider = await Provider.create({
       user: req.user._id,
       businessName,
@@ -61,6 +83,7 @@ const createProviderRequest = async (req, res) => {
       phone,
       fssaiNumber,
       location,
+      fssaiCertificate: certificateUrl,
     });
 
     if (email) {
@@ -76,7 +99,9 @@ const createProviderRequest = async (req, res) => {
       message: "Provider registration request submitted",
       provider,
     });
+
   } catch (error) {
+    console.error("PROVIDER REGISTER ERROR:", error);
     res.status(500).json({ message: error.message });
   }
 };

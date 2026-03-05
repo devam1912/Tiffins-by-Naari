@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
+import { AdminOverview } from "../../components/AdminOverview";
+import { AdminUsers } from "../../components/AdminUsers";
 
 /* ══════════════════════════════════════════
    MINI SPARKLINE — pure SVG
@@ -49,7 +51,7 @@ function ApproveModal({ provider, onClose, onApprove, loading }) {
           >Cancel</button>
           <button onClick={onApprove} disabled={loading}
             style={{ flex: 1, padding: "13px", background: loading ? "#d4d4bc" : "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 4px 16px rgba(143,174,142,0.4)", transition: "all 0.25s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-            onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; }}}
+            onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
             onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "none"; }}
           >
             {loading ? <><span style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} /> Approving...</> : "✓ Approve Kitchen"}
@@ -75,7 +77,7 @@ function RejectModal({ provider, onClose, onReject }) {
       <div style={{ background: "#fff", borderRadius: 28, padding: "52px 44px 44px", maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 48px 96px rgba(20,35,20,0.28)", animation: "modalIn 0.45s cubic-bezier(.22,.68,0,1.2)", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 5, background: "linear-gradient(90deg,#ef5350,#e57373,#ffcdd2)", borderRadius: "28px 28px 0 0" }} />
         <div style={{ width: 88, height: 88, borderRadius: "50%", background: "linear-gradient(135deg,#ef5350,#e57373)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 16px 48px rgba(239,83,80,0.35)", animation: "iconPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.15s both" }}>
-          <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M12 12l14 14M26 12L12 26" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"/></svg>
+          <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M12 12l14 14M26 12L12 26" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" /></svg>
         </div>
         <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#ef5350", marginBottom: 10 }}>Reject Application</p>
         <h2 style={{ fontFamily: "'Lora',serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.25, marginBottom: 10 }}>Reject this kitchen?</h2>
@@ -103,25 +105,25 @@ function RejectModal({ provider, onClose, onReject }) {
    MAIN — ADMIN DASHBOARD
 ══════════════════════════════════════════ */
 export default function AdminDashboard() {
-  const navigate  = useNavigate();
-  const token     = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
-  const [loaded,    setLoaded]    = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
 
-  const [stats,        setStats]        = useState(null);
+  const [stats, setStats] = useState(null);
   const [allProviders, setAllProviders] = useState([]);
-  const [pending,      setPending]      = useState([]);
-  const [allUsers,     setAllUsers]     = useState([]);
-  const [allOrders,    setAllOrders]    = useState([]);
-  const [dataLoading,  setDataLoading]  = useState(true);
+  const [pending, setPending] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   const [approveTarget, setApproveTarget] = useState(null);
-  const [rejectTarget,  setRejectTarget]  = useState(null);
-  const [approving,     setApproving]     = useState(false);
-  const [search,        setSearch]        = useState("");
-  const [filterStatus,  setFilterStatus]  = useState("all");
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [approving, setApproving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
   const headers = { Authorization: `Bearer ${token}` };
 
@@ -138,11 +140,11 @@ export default function AdminDashboard() {
   const loadAll = async () => {
     try {
       const [statsR, provR, pendR, usersR, ordersR] = await Promise.all([
-        axios.get("http://localhost:5000/api/admin/stats",              { headers }),
-        axios.get("http://localhost:5000/api/admin/providers",          { headers }),
-        axios.get("http://localhost:5000/api/admin/providers/pending",  { headers }),
-        axios.get("http://localhost:5000/api/admin/users",              { headers }),
-        axios.get("http://localhost:5000/api/admin/orders",             { headers }),
+        axios.get("http://localhost:5000/api/admin/stats", { headers }),
+        axios.get("http://localhost:5000/api/admin/providers", { headers }),
+        axios.get("http://localhost:5000/api/admin/providers/pending", { headers }),
+        axios.get("http://localhost:5000/api/admin/users", { headers }),
+        axios.get("http://localhost:5000/api/admin/orders", { headers }),
       ]);
       setStats(statsR.data);
       setAllProviders(provR.data);
@@ -197,11 +199,11 @@ export default function AdminDashboard() {
 
   /* ── Nav items ── */
   const navItems = [
-    { id: "dashboard",  icon: "⊞",  label: "Dashboard"        },
-    { id: "providers",  icon: "🍳",  label: "All Kitchens"     },
-    { id: "pending",    icon: "⏳",  label: "Pending",   badge: pending.length },
-    { id: "users",      icon: "👥",  label: "Users"            },
-    { id: "orders",     icon: "📦",  label: "Orders"           },
+    { id: "dashboard", icon: "⊞", label: "Dashboard" },
+    { id: "providers", icon: "🍳", label: "All Kitchens" },
+    { id: "pending", icon: "⏳", label: "Pending", badge: pending.length },
+    { id: "users", icon: "👥", label: "Users" },
+    { id: "orders", icon: "📦", label: "Orders" },
   ];
 
   /* ── Filter providers ── */
@@ -214,10 +216,10 @@ export default function AdminDashboard() {
 
   /* ── Stat cards ── */
   const statCards = stats ? [
-    { label: "Total Users",    value: (stats.totalUsers || 0) + (stats.totalProviders || 0), sub: `${stats.totalUsers || 0} customers · ${stats.totalProviders || 0} kitchens`, icon: "👥", grad: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.45)", textLight: true },
-    { label: "Active Kitchens", value: stats.totalProviders || 0,  sub: `${pending.length} pending approval`,          icon: "🍳", grad: "linear-gradient(135deg,#a8c5a0,#6b9e5e)", shadow: "rgba(107,158,94,0.38)",  textLight: true },
-    { label: "Total Orders",   value: stats.totalOrders || 0,    sub: "All-time platform orders",                   icon: "📦", grad: "rgba(255,255,255,0.85)",  shadow: "rgba(143,174,142,0.18)", textLight: false, border: "1.5px solid rgba(143,174,142,0.3)" },
-    { label: "Gross Revenue",  value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, sub: "Total amount collected", icon: "💰", grad: "linear-gradient(135deg,#D9D9A8,#c5ce88)", shadow: "rgba(180,190,100,0.32)", textLight: false },
+    { label: "Total Users", value: (stats.totalUsers || 0) + (stats.totalProviders || 0), sub: `${stats.totalUsers || 0} customers · ${stats.totalProviders || 0} kitchens`, icon: "👥", grad: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.45)", textLight: true },
+    { label: "Active Kitchens", value: stats.totalProviders || 0, sub: `${pending.length} pending approval`, icon: "🍳", grad: "linear-gradient(135deg,#a8c5a0,#6b9e5e)", shadow: "rgba(107,158,94,0.38)", textLight: true },
+    { label: "Total Orders", value: stats.totalOrders || 0, sub: "All-time platform orders", icon: "📦", grad: "rgba(255,255,255,0.85)", shadow: "rgba(143,174,142,0.18)", textLight: false, border: "1.5px solid rgba(143,174,142,0.3)" },
+    { label: "Gross Revenue", value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, sub: "Total amount collected", icon: "💰", grad: "linear-gradient(135deg,#D9D9A8,#c5ce88)", shadow: "rgba(180,190,100,0.32)", textLight: false },
   ] : [];
 
   const SIDEBAR_W = collapsed ? 72 : 240;
@@ -357,88 +359,7 @@ export default function AdminDashboard() {
             {/* ══ DASHBOARD HOME ══ */}
             {activeNav === "dashboard" && (
               <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-
-                {/* Header */}
-                <div style={{ marginBottom: 32, ...anim(0) }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Admin Command Centre</p>
-                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.1, marginBottom: 6 }}>
-                    System <em>Insights</em>
-                  </h1>
-                  <p style={{ color: "#999", fontSize: 15 }}>Welcome back, Admin. Here's what's happening on the platform.</p>
-                </div>
-
-                {/* Stat cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 18, marginBottom: 36 }}>
-                  {statCards.map(({ label, value, sub, icon, grad, shadow, textLight, border }, i) => (
-                    <div key={i} className="stat-card"
-                      style={{ background: grad, borderRadius: 22, padding: "24px 22px", boxShadow: `0 8px 28px ${shadow}`, border: border || "none", transition: "all 0.3s cubic-bezier(.22,.68,0,1.2)", cursor: "default", ...anim(80 + i * 70) }}>
-                      <div style={{ fontSize: 28, marginBottom: 10 }}>{icon}</div>
-                      <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", color: textLight ? "rgba(255,255,255,0.7)" : "#8FA873", marginBottom: 6 }}>{label}</p>
-                      <h2 style={{ fontFamily: "'Lora',serif", fontSize: 34, fontWeight: 700, color: textLight ? "#fff" : "#2d3b2d", lineHeight: 1, marginBottom: 8 }}>{value}</h2>
-                      <p style={{ fontSize: 12, color: textLight ? "rgba(255,255,255,0.65)" : "#aaa", fontWeight: 600 }}>{sub}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pending alert banner */}
-                {pending.length > 0 && (
-                  <div style={{ background: "linear-gradient(135deg,rgba(255,152,0,0.12),rgba(255,193,7,0.08))", border: "1.5px solid rgba(255,152,0,0.3)", borderRadius: 18, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 32, ...anim(320) }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 14, background: "rgba(255,152,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>⏳</div>
-                      <div>
-                        <p style={{ fontWeight: 800, fontSize: 14, color: "#7a4f00", marginBottom: 2 }}>{pending.length} kitchen{pending.length > 1 ? "s" : ""} awaiting approval</p>
-                        <p style={{ fontSize: 13, color: "#a06020", fontWeight: 600 }}>Review and approve pending provider applications</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setActiveNav("pending")}
-                      style={{ background: "linear-gradient(135deg,#ff9800,#ffa726)", color: "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 4px 14px rgba(255,152,0,0.35)", whiteSpace: "nowrap", transition: "all 0.2s" }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
-                      onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-                    >
-                      Review Now →
-                    </button>
-                  </div>
-                )}
-
-                {/* Recent providers mini table */}
-                <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)", ...anim(360) }}>
-                  <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div>
-                      <h3 style={{ fontFamily: "'Lora',serif", fontSize: 18, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>Recent Kitchens</h3>
-                      <p style={{ fontSize: 13, color: "#aaa", fontWeight: 600 }}>{allProviders.length} total registered</p>
-                    </div>
-                    <button onClick={() => setActiveNav("providers")}
-                      style={{ background: "rgba(143,174,142,0.15)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 12, padding: "8px 18px", fontSize: 13, fontWeight: 700, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg,#8FAE8E,#8FA873)"; e.currentTarget.style.color = "#fff"; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "rgba(143,174,142,0.15)"; e.currentTarget.style.color = "#5a7a50"; }}
-                    >View all →</button>
-                  </div>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Kitchen", "Owner", "Status"].map(h => (
-                          <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allProviders.slice(0, 5).map((p) => (
-                        <tr key={p._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                          <td style={{ padding: "14px 20px", fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{p.businessName}</td>
-                          <td style={{ padding: "14px 20px" }}>
-                            <p style={{ fontWeight: 700, fontSize: 13, color: "#555" }}>{p.ownerName}</p>
-                            <p style={{ fontSize: 12, color: "#bbb" }}>{p.phone}</p>
-                          </td>
-                          <td style={{ padding: "14px 20px" }}>
-                            <span style={{ background: p.isApproved ? "rgba(76,175,80,0.12)" : "rgba(255,152,0,0.12)", color: p.isApproved ? "#388e3c" : "#e65100", border: `1.5px solid ${p.isApproved ? "rgba(76,175,80,0.3)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                              {p.isApproved ? "✓ Active" : "⏳ Pending"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <AdminOverview />
               </div>
             )}
 
@@ -458,7 +379,7 @@ export default function AdminDashboard() {
                     <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search kitchens, owners..."
                       style={{ border: "none", background: "none", outline: "none", fontSize: 14, fontFamily: "'Nunito',sans-serif", color: "#2d3b2d", flex: 1 }} />
                   </div>
-                  {["all","active","pending"].map(f => (
+                  {["all", "active", "pending"].map(f => (
                     <button key={f} className="tab-btn" onClick={() => setFilterStatus(f)}
                       style={{ padding: "10px 20px", borderRadius: 14, border: `1.5px solid ${filterStatus === f ? "#8FAE8E" : "#e0e0d0"}`, background: filterStatus === f ? "linear-gradient(135deg,#8FAE8E,#8FA873)" : "rgba(255,255,255,0.7)", color: filterStatus === f ? "#fff" : "#888", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s", textTransform: "capitalize" }}>
                       {f === "all" ? "All" : f === "active" ? "✓ Active" : "⏳ Pending"}
@@ -470,7 +391,7 @@ export default function AdminDashboard() {
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Kitchen / Business","Owner","Contact","Status","Action"].map(h => (
+                        {["Kitchen / Business", "Owner", "Contact", "Status", "Action"].map(h => (
                           <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
                         ))}
                       </tr>
@@ -567,41 +488,7 @@ export default function AdminDashboard() {
             {/* ══ USERS ══ */}
             {activeNav === "users" && (
               <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-                <div style={{ marginBottom: 28 }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>User Management</p>
-                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Users</h1>
-                  <p style={{ color: "#999", fontSize: 14 }}>{allUsers.length} registered customers</p>
-                </div>
-                <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Name","Email","Phone","Role","Joined"].map(h => (
-                          <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allUsers.length === 0 ? (
-                        <tr><td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15 }}>No users found</td></tr>
-                      ) : allUsers.map((u) => (
-                        <tr key={u._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                          <td style={{ padding: "14px 20px", fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{u.name}</td>
-                          <td style={{ padding: "14px 20px", fontSize: 13, color: "#666", fontWeight: 600 }}>{u.email}</td>
-                          <td style={{ padding: "14px 20px", fontSize: 13, color: "#888" }}>{u.phone || "—"}</td>
-                          <td style={{ padding: "14px 20px" }}>
-                            <span style={{ background: "rgba(143,174,142,0.12)", color: "#4a7040", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 20, padding: "3px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>
-                              {u.role || "customer"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "14px 20px", fontSize: 12, color: "#bbb", fontWeight: 600 }}>
-                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <AdminUsers />
               </div>
             )}
 
@@ -617,7 +504,7 @@ export default function AdminDashboard() {
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Order ID","Customer","Kitchen","Amount","Status","Date"].map(h => (
+                        {["Order ID", "Customer", "Kitchen", "Amount", "Status", "Date"].map(h => (
                           <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
                         ))}
                       </tr>
@@ -634,7 +521,7 @@ export default function AdminDashboard() {
                           <td style={{ padding: "14px 20px" }}>
                             <span style={{
                               background: o.status === "delivered" ? "rgba(76,175,80,0.12)" : o.status === "cancelled" ? "rgba(239,83,80,0.1)" : "rgba(255,152,0,0.1)",
-                              color:      o.status === "delivered" ? "#388e3c"              : o.status === "cancelled" ? "#c62828"               : "#e65100",
+                              color: o.status === "delivered" ? "#388e3c" : o.status === "cancelled" ? "#c62828" : "#e65100",
                               border: `1.5px solid ${o.status === "delivered" ? "rgba(76,175,80,0.3)" : o.status === "cancelled" ? "rgba(239,83,80,0.25)" : "rgba(255,152,0,0.3)"}`,
                               borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "capitalize",
                             }}>

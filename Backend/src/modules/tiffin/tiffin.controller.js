@@ -1,6 +1,6 @@
 const Provider = require("./provider.model");
 const User = require("../user/user.model");
-const Menu = require("../menu/menu.model");
+
 const Subscription = require("../subscription/subscription.model");
 const { sendEmail } = require("../../utils/notification.service");
 const cloudinary = require("../../config/cloudinary");
@@ -128,7 +128,7 @@ const approveProvider = async (req, res) => {
         await sendEmail(
           provider.email,
           "Application Accepted",
-          `Congratualations you now eligible to post reach your customers through our Platform!`
+          `Congratualations you now eligible to reach your customers through our Platform!`
         );
       }
 

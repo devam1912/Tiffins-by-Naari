@@ -76,6 +76,7 @@ const providerSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    rejectReason: String,
   },
   { timestamps: true }
 );

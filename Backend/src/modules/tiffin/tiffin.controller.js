@@ -1,5 +1,6 @@
 const Provider = require("./provider.model");
 const User = require("../user/user.model");
+const Menu = require("../menu/menu.model");
 const Subscription = require("../subscription/subscription.model");
 const { sendEmail } = require("../../utils/notification.service");
 
@@ -66,7 +67,8 @@ const createProviderRequest = async (req, res) => {
         await sendEmail(
           email,
           "Application Submitted",
-          `Thankyouu for Apply to List Your kitchen in out Platform, Your application will be reviewed Shortly!`
+          `Thank you for applying to list your kitchen on our platform.
+            Your application will be reviewed shortly.`
         );
       }
 
@@ -97,6 +99,13 @@ const approveProvider = async (req, res) => {
     role: "provider"
   });
 
+  if (provider.email) {
+        await sendEmail(
+          provider.email,
+          "Application Accepted",
+          `Congratualations you now eligible to post reach your customers through our Platform!`
+        );
+      }
 
     res.status(200).json({
       message: "Provider approved successfully",
@@ -106,6 +115,48 @@ const approveProvider = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+const rejectProvider = async (req, res) => {
+try {
+const { providerId } = req.params;
+const { reason } = req.body;
+
+
+const provider = await Provider.findById(providerId).populate("user");
+
+if (!provider) {
+  return res.status(404).json({ message: "Provider request not found" });
+}
+
+provider.isApproved = false;
+provider.isActive = false;
+provider.rejectionReason = reason || "Application did not meet our requirements.";
+
+await provider.save();
+
+if (provider.email) {
+  await sendEmail(
+    provider.email,
+    "Provider Application Rejected",
+    `We regret to inform you that your application to list your kitchen "${provider.businessName}" on our platform has been rejected.
+
+Reason: ${provider.rejectionReason}
+
+You may reapply after correcting the mentioned issues.`
+);
+}
+
+
+res.status(200).json({
+  message: "Provider application rejected successfully",
+  provider,
+});
+
+} catch (error) {
+res.status(500).json({ message: error.message });
+}
+};
+
 
 const deactivateTSP = async (req, res) => {
   try {
@@ -120,6 +171,12 @@ const deactivateTSP = async (req, res) => {
 
     const today = new Date();
 
+    // Get all active subscriptions
+    const activeSubs = await Subscription.find({
+      provider: provider._id,
+      status: "active",
+    }).populate("user");
+
     // ⏸ Pause all active subscriptions
     await Subscription.updateMany(
       {
@@ -132,9 +189,23 @@ const deactivateTSP = async (req, res) => {
       }
     );
 
+    // Notify users
+    for (const sub of activeSubs) {
+      if (sub.user?.email) {
+        await sendEmail(
+          sub.user.email,
+          "Tiffin Service Temporarily Unavailable",
+          `Your subscribed tiffin provider "${provider.businessName}" is temporarily unavailable. 
+Your subscription has been paused and will resume once the provider is back.`
+        );
+      }
+    }
+
     res.status(200).json({
       message: "TSP deactivated and subscriptions paused",
+      notifiedUsers: activeSubs.length,
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -153,19 +224,18 @@ const reactivateTSP = async (req, res) => {
 
     const today = new Date();
 
-    // 🔄 Get paused subscriptions
     const pausedSubs = await Subscription.find({
       provider: provider._id,
       status: "paused",
-    });
+    }).populate("user");
 
     for (const sub of pausedSubs) {
+
       if (sub.pauseStart) {
         const pauseDuration = Math.ceil(
           (today - sub.pauseStart) / (1000 * 60 * 60 * 24)
         );
 
-        // 📅 Extend endDate
         sub.endDate.setDate(sub.endDate.getDate() + pauseDuration);
       }
 
@@ -174,12 +244,23 @@ const reactivateTSP = async (req, res) => {
       sub.pauseEnd = null;
 
       await sub.save();
+
+      // Notify user
+      if (sub.user?.email) {
+        await sendEmail(
+          sub.user.email,
+          "Tiffin Service Resumed",
+          `Good news! Your tiffin provider "${provider.businessName}" is back.
+Your subscription has resumed and deliveries will continue as scheduled.`
+        );
+      }
     }
 
     res.status(200).json({
       message: "TSP reactivated and subscriptions resumed",
       resumedSubscriptions: pausedSubs.length,
     });
+
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -215,6 +296,7 @@ module.exports = {
   publishMenu,
   deactivateTSP,
   reactivateTSP,
+  rejectProvider
 };
 
 

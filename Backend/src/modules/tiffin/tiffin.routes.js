@@ -3,6 +3,7 @@ const {
   getNearbyTiffins,
   createProviderRequest,
   approveProvider,
+  rejectProvider,
   deactivateTSP,
   reactivateTSP,
 } = require("./tiffin.controller");
@@ -22,6 +23,7 @@ router.patch("/menu/:menuId/reject",protect,authorize("admin"),rejectMenu);
 
 
 router.patch("/approve/:providerId", protect, authorize("admin"), approveProvider);
+router.patch("/reject/:providerId", protect, authorize("admin"), rejectProvider);
 router.get("/nearby", getNearbyTiffins);
 router.patch("/deactivate", protect, authorize("provider"), deactivateTSP);
 router.patch("/reactivate", protect, authorize("provider"), reactivateTSP);

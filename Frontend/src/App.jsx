@@ -8,7 +8,7 @@ import VerifyOtp from "./pages/VerifyOtp";
 import { ProviderDashboard } from "./pages/provider/ProviderDashboard";
 import RegisterProvider from "./pages/provider/RegisterProvider";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
-import ProviderRequests from "./pages/Admin/ProviderRequests";
+import BrowseTiffins from "./pages/Customer/BrowseTiffins";
 
 export default function App() {
   return (
@@ -23,7 +23,7 @@ export default function App() {
         <Route path="/ProviderDashboard" element={<ProviderDashboard />} />
         <Route path="/RegisterProvider" element={<RegisterProvider />} />
         <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/admin/provider-requests" element={<ProviderRequests />} />
+        <Route path="/tiffins" element={<BrowseTiffins />} />
       </Routes>
     </BrowserRouter>
   );

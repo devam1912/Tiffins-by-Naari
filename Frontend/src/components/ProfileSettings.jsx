@@ -15,7 +15,6 @@ import { Typography } from "./ui/Typography";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
-import { Textarea } from "./ui/Textarea";
 import { toast } from "sonner";
 import { cn } from "../lib/utils";
 

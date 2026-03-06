@@ -16,11 +16,41 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
 import { cn } from "../lib/utils";
+import api from "../services/api";
 
 export const AdminMenu = () => {
-    // Initializing with empty array as requested "no mock data"
-    const [tiffins, setTiffins] = useState([]);
+    // Initializing with mock data for viewing as no backend listing endpoint exists
+    const [tiffins, setTiffins] = useState([
+        {
+            id: '65e7d5678a1234567890abcd',
+            name: 'Standard Veg Thali',
+            price: 120,
+            providerName: 'Annapurna Kitchen',
+            category: 'Veg',
+            status: 'Pending',
+            createdAt: '2024-03-05'
+        },
+        {
+            id: '65e7d5678a1234567890abce',
+            name: 'Special Chicken Tiffin',
+            price: 180,
+            providerName: 'Flavors of Punjab',
+            category: 'Non-Veg',
+            status: 'Approved',
+            createdAt: '2024-03-04'
+        },
+        {
+            id: '65e7d5678a1234567890abcf',
+            name: 'Daily North Indian Meal',
+            price: 150,
+            providerName: 'South Soul',
+            category: 'Mixed',
+            status: 'Pending',
+            createdAt: '2024-03-06'
+        }
+    ]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [loading, setLoading] = useState({});
 
     const filteredTiffins = tiffins.filter(
         (tiffin) =>
@@ -28,16 +58,33 @@ export const AdminMenu = () => {
             tiffin.providerName.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleStatusChange = (tiffinId, newStatus) => {
-        setTiffins(
-            tiffins.map((t) =>
-                t.id === tiffinId ? { ...t, status: newStatus } : t
-            )
-        );
+    const handleStatusChange = async (tiffinId, newStatus) => {
+        setLoading(prev => ({ ...prev, [tiffinId]: true }));
+        try {
+            const token = localStorage.getItem("token");
+            const action = newStatus === 'Approved' ? 'approve' : 'reject';
+            // Backend endpoint: PATCH /api/tiffins/menu/:menuId/approve|reject
+            // We use tiffin.id as the menuId in the backend call
+            await api.patch(`/api/tiffins/menu/${tiffinId}/${action}`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setTiffins(
+                tiffins.map((t) =>
+                    t.id === tiffinId ? { ...t, status: newStatus } : t
+                )
+            );
+            alert(`Menu ${action}d successfully!`);
+        } catch (error) {
+            console.error(`Failed to ${newStatus.toLowerCase()} menu:`, error);
+            alert(error.response?.data?.message || `Failed to ${newStatus.toLowerCase()} menu. Please try again.`);
+        } finally {
+            setLoading(prev => ({ ...prev, [tiffinId]: false }));
+        }
     };
 
     const handleDelete = (tiffinId) => {
-        if (window.confirm("Are you sure you want to delete this menu item?")) {
+        if (window.confirm("Are you sure you want to delete this menu item from the view? (This will not affect the backend)")) {
             setTiffins(tiffins.filter((t) => t.id !== tiffinId));
         }
     };
@@ -124,31 +171,37 @@ export const AdminMenu = () => {
                                     </td>
                                     <td className="px-8 py-5 text-right">
                                         <div className="flex items-center justify-end gap-1 opacity-100 transition-opacity">
-                                            {tiffin.status !== 'Approved' && (
-                                                <button
-                                                    onClick={() => handleStatusChange(tiffin.id, 'Approved')}
-                                                    className="p-2 text-green-500 hover:bg-green-50 rounded-xl transition-all"
-                                                    title="Approve"
-                                                >
-                                                    <CheckCircle2 size={18} />
-                                                </button>
+                                            {loading[tiffin.id] ? (
+                                                <Clock className="animate-spin text-gray-400 mr-4" size={18} />
+                                            ) : (
+                                                <>
+                                                    {tiffin.status !== 'Approved' && (
+                                                        <button
+                                                            onClick={() => handleStatusChange(tiffin.id, 'Approved')}
+                                                            className="p-2 text-green-500 hover:bg-green-50 rounded-xl transition-all"
+                                                            title="Approve"
+                                                        >
+                                                            <CheckCircle2 size={18} />
+                                                        </button>
+                                                    )}
+                                                    {tiffin.status !== 'Rejected' && (
+                                                        <button
+                                                            onClick={() => handleStatusChange(tiffin.id, 'Rejected')}
+                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                                            title="Reject"
+                                                        >
+                                                            <XCircle size={18} />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={() => handleDelete(tiffin.id)}
+                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                                                        title="Delete (UI only)"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </>
                                             )}
-                                            {tiffin.status !== 'Rejected' && (
-                                                <button
-                                                    onClick={() => handleStatusChange(tiffin.id, 'Rejected')}
-                                                    className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                                    title="Reject"
-                                                >
-                                                    <XCircle size={18} />
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={() => handleDelete(tiffin.id)}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                                title="Delete"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
                                         </div>
                                     </td>
                                 </tr>

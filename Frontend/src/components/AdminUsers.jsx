@@ -15,34 +15,14 @@ import { Typography } from "./ui/Typography";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
-import { mockUsers } from "../data/adminMockData";
-import { cn } from "../lib/utils";
-
-export const AdminUsers = () => {
-    const [users, setUsers] = useState(mockUsers);
+export const AdminUsers = ({ users = [] }) => {
     const [searchTerm, setSearchTerm] = useState("");
 
     const filteredUsers = users.filter(
         (user) =>
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase())
+            (user.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (user.email || "").toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    const handleBlock = (userId) => {
-        setUsers(
-            users.map((u) =>
-                u.id === userId
-                    ? { ...u, status: u.status === 'Blocked' ? 'Active' : 'Blocked' }
-                    : u
-            )
-        );
-    };
-
-    const handleDelete = (userId) => {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-            setUsers(users.filter((u) => u.id !== userId));
-        }
-    };
 
     return (
         <div className="space-y-8">
@@ -82,7 +62,7 @@ export const AdminUsers = () => {
                         </thead>
                         <tbody className="divide-y divide-gray-50/50">
                             {filteredUsers.map((user) => (
-                                <tr key={user.id} className="hover:bg-gray-50/30 transition-colors group">
+                                <tr key={user._id} className="hover:bg-gray-50/30 transition-colors group">
                                     <td className="px-8 py-5">
                                         <div className="flex items-center gap-4">
                                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-400 shadow-sm border border-white">
@@ -97,7 +77,7 @@ export const AdminUsers = () => {
                                     <td className="px-6 py-5">
                                         <span className={cn(
                                             "text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border",
-                                            user.role === 'Provider' ? "bg-purple-50 text-purple-600 border-purple-100" : "bg-blue-50 text-blue-600 border-blue-100"
+                                            user.role === 'provider' ? "bg-purple-50 text-purple-600 border-purple-100" : "bg-blue-50 text-blue-600 border-blue-100"
                                         )}>
                                             {user.role}
                                         </span>
@@ -106,16 +86,13 @@ export const AdminUsers = () => {
                                         <div className="flex items-center gap-2">
                                             <span className={cn(
                                                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                user.status === 'Active' ? "bg-green-50 text-green-600 border border-green-100" :
-                                                    user.status === 'Blocked' ? "bg-red-50 text-red-600 border border-red-100" :
-                                                        "bg-gray-50 text-gray-600 border border-gray-100"
+                                                "bg-green-50 text-green-600 border border-green-100"
                                             )}>
                                                 <div className={cn(
                                                     "w-1.5 h-1.5 rounded-full",
-                                                    user.status === 'Active' ? "bg-green-500" :
-                                                        user.status === 'Blocked' ? "bg-red-500" : "bg-gray-400"
+                                                    "bg-green-500"
                                                 )} />
-                                                {user.status}
+                                                Active
                                             </span>
                                         </div>
                                     </td>
@@ -123,11 +100,11 @@ export const AdminUsers = () => {
                                         <div className="flex items-center gap-2 text-gray-500">
                                             <Clock size={14} className="opacity-50" />
                                             <Typography className="text-xs font-bold">
-                                                {new Date(user.joinedDate).toLocaleDateString('en-IN', {
+                                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN', {
                                                     year: 'numeric',
                                                     month: 'short',
                                                     day: 'numeric',
-                                                })}
+                                                }) : "—"}
                                             </Typography>
                                         </div>
                                     </td>
@@ -135,21 +112,6 @@ export const AdminUsers = () => {
                                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button className="p-2 text-gray-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-xl transition-all">
                                                 <Eye size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleBlock(user.id)}
-                                                className={cn(
-                                                    "p-2 rounded-xl transition-all",
-                                                    user.status === 'Blocked' ? "text-green-500 hover:bg-green-50" : "text-amber-500 hover:bg-amber-50"
-                                                )}
-                                            >
-                                                <Ban size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(user.id)}
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                            >
-                                                <Trash2 size={18} />
                                             </button>
                                         </div>
                                     </td>

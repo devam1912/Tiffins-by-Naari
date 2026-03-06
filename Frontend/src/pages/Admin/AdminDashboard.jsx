@@ -488,7 +488,7 @@ export default function AdminDashboard() {
             {/* ══ USERS ══ */}
             {activeNav === "users" && (
               <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-                <AdminUsers />
+                <AdminUsers users={allUsers} />
               </div>
             )}
 

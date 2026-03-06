@@ -40,11 +40,13 @@ const createProviderRequest = async (req, res) => {
     const {
       businessName,
       ownerName,
-      email,
-      phone,
+      address,
       fssaiNumber,
       location,
     } = req.body;
+
+  const email = req.user.email;
+  const phone = req.user.phone;
 
     // ===== Check existing provider =====
     const existing = await Provider.findOne({ user: req.user._id });
@@ -81,6 +83,7 @@ const createProviderRequest = async (req, res) => {
       ownerName,
       email,
       phone,
+      address,
       fssaiNumber,
       location,
       fssaiCertificate: certificateUrl,

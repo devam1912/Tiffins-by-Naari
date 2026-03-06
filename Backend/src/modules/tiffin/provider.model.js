@@ -29,6 +29,8 @@ const providerSchema = new mongoose.Schema(
       required: true,
     },
 
+    address: String,
+
     fssaiNumber: {
       type: String,
       required: true,

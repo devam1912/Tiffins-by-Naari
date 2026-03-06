@@ -2,9 +2,6 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-/* ══════════════════════════════
-   MODAL DIALOG
-══════════════════════════════ */
 function Modal({ variant, title, message, onClose }) {
   useEffect(() => {
     const fn = (e) => { if (e.key === "Escape") onClose(); };
@@ -13,122 +10,28 @@ function Modal({ variant, title, message, onClose }) {
   }, []);
 
   const cfg = {
-    success:  {
-      bar:    "linear-gradient(90deg,#4caf50,#66bb6a,#a5d6a7)",
-      circle: "linear-gradient(135deg,#4caf50,#66bb6a)",
-      glow:   "rgba(76,175,80,0.38)",
-      tag:    "Application Submitted",
-      tagClr: "#4caf50",
-      btn:    "linear-gradient(135deg,#4caf50,#66bb6a)",
-    },
-    error: {
-      bar:    "linear-gradient(90deg,#ef5350,#e57373,#ffcdd2)",
-      circle: "linear-gradient(135deg,#ef5350,#e57373)",
-      glow:   "rgba(239,83,80,0.35)",
-      tag:    "Something Went Wrong",
-      tagClr: "#ef5350",
-      btn:    "linear-gradient(135deg,#8FAE8E,#8FA873)",
-    },
-    location: {
-      bar:    "linear-gradient(90deg,#1976d2,#42a5f5,#bbdefb)",
-      circle: "linear-gradient(135deg,#1976d2,#42a5f5)",
-      glow:   "rgba(25,118,210,0.35)",
-      tag:    "Location Captured",
-      tagClr: "#1976d2",
-      btn:    "linear-gradient(135deg,#8FAE8E,#8FA873)",
-    },
+    success: { bar: "linear-gradient(90deg,#4caf50,#66bb6a,#a5d6a7)", circle: "linear-gradient(135deg,#4caf50,#66bb6a)", glow: "rgba(76,175,80,0.38)", tag: "Application Submitted", tagClr: "#4caf50", btn: "linear-gradient(135deg,#4caf50,#66bb6a)" },
+    error:   { bar: "linear-gradient(90deg,#ef5350,#e57373,#ffcdd2)", circle: "linear-gradient(135deg,#ef5350,#e57373)", glow: "rgba(239,83,80,0.35)",  tag: "Something Went Wrong",   tagClr: "#ef5350", btn: "linear-gradient(135deg,#8FAE8E,#8FA873)" },
+    location:{ bar: "linear-gradient(90deg,#1976d2,#42a5f5,#bbdefb)", circle: "linear-gradient(135deg,#1976d2,#42a5f5)", glow: "rgba(25,118,210,0.35)",  tag: "Location Captured",      tagClr: "#1976d2", btn: "linear-gradient(135deg,#8FAE8E,#8FA873)" },
   };
   const c = cfg[variant] || cfg.error;
 
   return (
-    <div
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      style={{
-        position: "fixed", inset: 0, zIndex: 9999,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(20,35,20,0.6)",
-        backdropFilter: "blur(14px)",
-        padding: 20,
-        animation: "overlayIn 0.25s ease",
-      }}
-    >
-      {/* Confetti on success */}
-      {variant === "success" && (
-        ["#8FAE8E","#D9D9A8","#8FA873","#fff","#4caf50","#c5d490","#a5d6a7","#ffeb3b"].map((col, i) => (
-          <div key={i} style={{
-            position: "absolute", pointerEvents: "none",
-            width: i % 2 === 0 ? 11 : 7,
-            height: i % 2 === 0 ? 11 : 7,
-            borderRadius: i % 3 === 0 ? "50%" : 3,
-            background: col,
-            top: `${28 + (i % 5) * 5}%`,
-            left: `${28 + i * 5.5}%`,
-            animation: `confetti ${0.85 + i * 0.18}s ease forwards`,
-            animationDelay: `${i * 0.06}s`,
-          }} />
-        ))
-      )}
-
-      <div style={{
-        background: "#fff", borderRadius: 28,
-        padding: "56px 44px 44px",
-        maxWidth: 430, width: "100%",
-        textAlign: "center",
-        boxShadow: "0 48px 96px rgba(20,35,20,0.28)",
-        animation: "modalIn 0.45s cubic-bezier(.22,.68,0,1.2)",
-        position: "relative", overflow: "hidden",
-      }}>
-        {/* Accent bar */}
+    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,35,20,0.6)", backdropFilter: "blur(14px)", padding: 20, animation: "overlayIn 0.25s ease" }}>
+      {variant === "success" && ["#8FAE8E","#D9D9A8","#8FA873","#fff","#4caf50","#c5d490","#a5d6a7","#ffeb3b"].map((col, i) => (
+        <div key={i} style={{ position: "absolute", pointerEvents: "none", width: i%2===0?11:7, height: i%2===0?11:7, borderRadius: i%3===0?"50%":3, background: col, top: `${28+(i%5)*5}%`, left: `${28+i*5.5}%`, animation: `confetti ${0.85+i*0.18}s ease forwards`, animationDelay: `${i*0.06}s` }} />
+      ))}
+      <div style={{ background: "#fff", borderRadius: 28, padding: "56px 44px 44px", maxWidth: 430, width: "100%", textAlign: "center", boxShadow: "0 48px 96px rgba(20,35,20,0.28)", animation: "modalIn 0.45s cubic-bezier(.22,.68,0,1.2)", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 5, background: c.bar, borderRadius: "28px 28px 0 0" }} />
-
-        {/* Icon circle */}
-        <div style={{
-          width: 88, height: 88, borderRadius: "50%",
-          background: c.circle,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          margin: "0 auto 24px",
-          boxShadow: `0 16px 48px ${c.glow}`,
-          animation: "iconPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.15s both",
-        }}>
-          {variant === "success" && (
-            <svg width="44" height="44" viewBox="0 0 44 44" fill="none">
-              <path d="M10 22l9 9 16-18" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-          {variant === "error" && (
-            <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-              <path d="M12 12l14 14M26 12L12 26" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" />
-            </svg>
-          )}
-          {variant === "location" && (
-            <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
-              <path d="M19 4C13.477 4 9 8.477 9 14c0 8.25 10 20 10 20s10-11.75 10-20c0-5.523-4.477-10-10-10zm0 13.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="#fff" />
-            </svg>
-          )}
+        <div style={{ width: 88, height: 88, borderRadius: "50%", background: c.circle, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: `0 16px 48px ${c.glow}`, animation: "iconPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.15s both" }}>
+          {variant === "success" && <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><path d="M10 22l9 9 16-18" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+          {variant === "error"   && <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M12 12l14 14M26 12L12 26" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" /></svg>}
+          {variant === "location"&& <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M19 4C13.477 4 9 8.477 9 14c0 8.25 10 20 10 20s10-11.75 10-20c0-5.523-4.477-10-10-10zm0 13.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="#fff" /></svg>}
         </div>
-
-        {/* Tag */}
-        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: c.tagClr, marginBottom: 10 }}>
-          {c.tag}
-        </p>
-
-        {/* Title */}
-        <h2 style={{ fontFamily: "'Lora',serif", fontSize: 26, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.25, marginBottom: 14 }}>
-          {title}
-        </h2>
-
-        {/* Message */}
-        <p style={{ color: "#777", fontSize: 15, lineHeight: 1.8, marginBottom: 32, whiteSpace: "pre-line" }}>
-          {message}
-        </p>
-
-        {/* Button */}
-        <button
-          onClick={onClose}
-          style={{ width: "100%", padding: "15px", background: c.btn, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 20px ${c.glow}`, transition: "all 0.25s ease" }}
-          onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-          onMouseLeave={e => { e.currentTarget.style.opacity = "1";   e.currentTarget.style.transform = "none"; }}
-        >
+        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: c.tagClr, marginBottom: 10 }}>{c.tag}</p>
+        <h2 style={{ fontFamily: "'Lora',serif", fontSize: 26, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.25, marginBottom: 14 }}>{title}</h2>
+        <p style={{ color: "#777", fontSize: 15, lineHeight: 1.8, marginBottom: 32, whiteSpace: "pre-line" }}>{message}</p>
+        <button onClick={onClose} style={{ width: "100%", padding: "15px", background: c.btn, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 20px ${c.glow}`, transition: "all 0.25s ease" }} onMouseEnter={e => { e.currentTarget.style.opacity="0.9"; e.currentTarget.style.transform="translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.opacity="1"; e.currentTarget.style.transform="none"; }}>
           {variant === "success" ? "Go to Dashboard →" : "Got it"}
         </button>
       </div>
@@ -136,22 +39,15 @@ function Modal({ variant, title, message, onClose }) {
   );
 }
 
-/* ══════════════════════════════
-   MAIN COMPONENT
-══════════════════════════════ */
 export default function RegisterProvider() {
-  const navigate  = useNavigate();
+  const navigate   = useNavigate();
   const [loaded,   setLoaded]   = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [locating, setLocating] = useState(false);
   const [modal,    setModal]    = useState(null);
   const [focused,  setFocused]  = useState("");
-
-  const [form, setForm] = useState({
-    businessName: "", ownerName: "",
-    email: "", phone: "", fssaiNumber: "", address: "",
-  });
-  const [coords, setCoords] = useState(null);
+  const [form,     setForm]     = useState({ businessName: "", ownerName: "", fssaiNumber: "", address: "" });
+  const [coords,   setCoords]   = useState(null); // [lng, lat] — from GPS only
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -161,33 +57,24 @@ export default function RegisterProvider() {
     setTimeout(() => setLoaded(true), 80);
   }, []);
 
-  const anim = (d = 0) => ({
-    opacity: loaded ? 1 : 0,
-    transform: loaded ? "translateY(0)" : "translateY(20px)",
-    transition: `opacity 0.6s ease ${d}ms, transform 0.6s cubic-bezier(.22,.68,0,1.2) ${d}ms`,
-  });
+  const anim = (d = 0) => ({ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(20px)", transition: `opacity 0.6s ease ${d}ms, transform 0.6s cubic-bezier(.22,.68,0,1.2) ${d}ms` });
 
+  // ✅ address typing GPS ko affect nahi karta
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const iStyle = (name) => ({
-    width: "100%",
-    padding: "14px 16px 14px 44px",
+    width: "100%", padding: "14px 16px 14px 44px",
     border: `2px solid ${focused === name ? "#8FAE8E" : "#e0e0d0"}`,
-    borderRadius: 14, fontSize: 15,
-    fontFamily: "'Nunito',sans-serif", color: "#2d3b2d",
+    borderRadius: 14, fontSize: 15, fontFamily: "'Nunito',sans-serif", color: "#2d3b2d",
     background: focused === name ? "#fafff8" : "#fff",
     outline: "none", transition: "all 0.25s ease",
     boxShadow: focused === name ? "0 0 0 4px rgba(143,174,142,0.12)" : "none",
   });
 
-  /* ── Auto-locate (exact original logic, alerts → modals) ── */
+  // ✅ GPS — sirf coords set karta hai, address field ko touch nahi karta
   const handleAutoLocate = () => {
     if (!navigator.geolocation) {
-      setModal({
-        variant: "error",
-        title: "Not Supported",
-        message: "Geolocation is not supported by your browser.\nPlease type your kitchen address manually.",
-      });
+      setModal({ variant: "error", title: "Not Supported", message: "Geolocation is not supported by your browser." });
       return;
     }
     setLocating(true);
@@ -195,42 +82,29 @@ export default function RegisterProvider() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18`,
-            { headers: { "User-Agent": "TiffinsByNaari/1.0" } }
-          );
+          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18`, { headers: { "User-Agent": "TiffinsByNaari/1.0" } });
           const data = await res.json();
-          if (data && data.display_name) {
-            setForm((prev) => ({ ...prev, address: data.display_name }));
-            setCoords([longitude, latitude]);
-            setModal({
-              variant: "location",
-              title: "Location Captured!",
-              message: `Your kitchen has been pinned on the map.\n\n"${data.display_name.length > 110 ? data.display_name.slice(0, 110) + "…" : data.display_name}"`,
-            });
-          }
-        } catch {
+          // ✅ Sirf coords save karo — address field untouched rehta hai
+          setCoords([longitude, latitude]);
           setModal({
-            variant: "error",
-            title: "Couldn't Fetch Address",
-            message: "Something went wrong while fetching your location details.\nPlease check your connection and try again, or type your address manually.",
+            variant: "location",
+            title: "Location Pinned!",
+            message: `GPS coordinates captured successfully.\n\nYour typed address will be saved as-is, and GPS coordinates will be used for delivery matching.`,
           });
+        } catch {
+          setModal({ variant: "error", title: "Couldn't Capture Location", message: "Something went wrong fetching your location.\nPlease check your connection and try again." });
         } finally {
           setLocating(false);
         }
       },
       () => {
         setLocating(false);
-        setModal({
-          variant: "error",
-          title: "Permission Denied",
-          message: "Location access was blocked by your browser.\n\nPlease allow location permission in your browser settings, or type your kitchen address manually.",
-        });
+        setModal({ variant: "error", title: "Permission Denied", message: "Location access was blocked.\n\nPlease allow location in your browser settings." });
       }
     );
   };
 
-  /* ── Submit (exact original logic, alerts → modals) ── */
+  // ✅ Submit — GPS coords use karo agar hain, warna address geocode karo
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -238,63 +112,44 @@ export default function RegisterProvider() {
       const token = localStorage.getItem("token");
       if (!token) {
         setLoading(false);
-        setModal({
-          variant: "error",
-          title: "Session Expired",
-          message: "Your login session has expired.\nPlease log in again to continue.",
-          nav: "/login",
-        });
+        setModal({ variant: "error", title: "Session Expired", message: "Your login session has expired.\nPlease log in again.", nav: "/login" });
         return;
       }
 
       let finalLocation = null;
-      if (!coords) {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(form.address)}&limit=1`,
-          { headers: { "User-Agent": "TiffinsByNaari/1.0" } }
-        );
+
+      if (coords) {
+        // GPS pin hai — directly use karo
+        finalLocation = { type: "Point", coordinates: coords };
+      } else if (form.address.trim()) {
+        // GPS nahi — address se geocode karo
+        const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(form.address)}&limit=1`, { headers: { "User-Agent": "TiffinsByNaari/1.0" } });
         const data = await res.json();
         if (data && data.length > 0) {
-          finalLocation = {
-            type: "Point",
-            coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)],
-          };
+          finalLocation = { type: "Point", coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)] };
         } else {
-          throw new Error("We couldn't find this address on the map.\nPlease be more specific or use the 📍 GPS button.");
+          throw new Error("We couldn't locate this address on the map.\nPlease be more specific or use the 📍 GPS button.");
         }
       } else {
-        finalLocation = { type: "Point", coordinates: coords };
+        throw new Error("Please enter your kitchen address or use the GPS locator.");
       }
 
+      // ✅ Plain JSON — location as proper nested object
       const payload = { ...form, location: finalLocation };
-      await axios.post(
-        "http://localhost:5000/api/tiffins/register",
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
 
-      setModal({
-        variant: "success",
-        title: "Application Submitted!",
-        message: "You're on the list! 🎉\n\nOur team will review your kitchen details and notify you via email within 24–48 hours once approved.",
-        nav: "/CustomerDashboard",
+      await axios.post("http://localhost:5000/api/tiffins/register", payload, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
+      setModal({ variant: "success", title: "Application Submitted!", message: "You're on the list! 🎉\n\nOur team will review your kitchen details and notify you via email within 24–48 hours once approved.", nav: "/CustomerDashboard" });
     } catch (err) {
-      setModal({
-        variant: "error",
-        title: "Submission Failed",
-        message: err.response?.data?.message || err.message || "Something went wrong. Please check your details and try again.",
-      });
+      setModal({ variant: "error", title: "Submission Failed", message: err.response?.data?.message || err.message || "Something went wrong. Please check your details and try again." });
     } finally {
       setLoading(false);
     }
   };
 
-  const closeModal = () => {
-    if (modal?.nav) navigate(modal.nav);
-    setModal(null);
-  };
+  const closeModal = () => { if (modal?.nav) navigate(modal.nav); setModal(null); };
 
   return (
     <div style={{ minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif", display: "flex", overflow: "hidden" }}>
@@ -302,7 +157,6 @@ export default function RegisterProvider() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         input::placeholder, textarea::placeholder { color: #bbb; }
         textarea { resize: none; font-family: 'Nunito',sans-serif; }
-
         @keyframes floatY    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
         @keyframes spinSlow  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
         @keyframes spinRev   { from{transform:rotate(360deg)} to{transform:rotate(0deg)} }
@@ -312,50 +166,31 @@ export default function RegisterProvider() {
         @keyframes modalIn   { from{opacity:0;transform:scale(0.88) translateY(32px)} to{opacity:1;transform:scale(1) translateY(0)} }
         @keyframes iconPop   { 0%{transform:scale(0) rotate(-15deg);opacity:0} 65%{transform:scale(1.2) rotate(4deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
         @keyframes confetti  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-120px) rotate(420deg);opacity:0} }
-        @keyframes fadeUp    { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-
         .btn-submit:not(:disabled):hover { opacity:0.9 !important; transform:translateY(-2px) !important; box-shadow:0 12px 36px rgba(143,174,142,0.55) !important; }
         .btn-cancel:hover  { border-color:#ef9a9a !important; color:#ef5350 !important; background:#fff5f5 !important; }
-        .btn-locate:hover  { background:rgba(143,174,142,0.2) !important; border-color:#8FAE8E !important; }
-        .link-h:hover      { color:#5a7a50 !important; }
+        .btn-locate:hover:not(:disabled) { background:rgba(143,174,142,0.22) !important; border-color:#8FAE8E !important; }
+        .link-h:hover { color:#5a7a50 !important; }
       `}</style>
 
-      {/* ══ MODAL ══ */}
       {modal && <Modal variant={modal.variant} title={modal.title} message={modal.message} onClose={closeModal} />}
 
-      {/* ════════════════════════
-          LEFT PANEL
-      ════════════════════════ */}
+      {/* ════════ LEFT PANEL ════════ */}
       <div style={{ flex: 1, background: "linear-gradient(145deg,#8FA873,#6b8a5e)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", position: "relative", overflow: "hidden" }}>
-
-        {/* Rings */}
         <div style={{ position: "absolute", width: 480, height: 480, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.08)", top: "-130px", left: "-130px" }} />
         <div style={{ position: "absolute", width: 320, height: 320, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.06)", bottom: "-90px", right: "-90px" }} />
         <div style={{ position: "absolute", width: 220, height: 220, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.14)", top: "50%", left: "50%", transform: "translate(-50%,-50%)", animation: "spinSlow 28s linear infinite" }} />
         <div style={{ position: "absolute", width: 130, height: 130, borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.1)", top: "16%", right: "10%", animation: "spinRev 20s linear infinite" }} />
         <div style={{ position: "absolute", width: 13, height: 13, borderRadius: "50%", background: "rgba(255,255,255,0.15)", top: "25%", left: "13%", animation: "floatY 4.5s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", width: 8,  height: 8,  borderRadius: "50%", background: "rgba(255,255,255,0.1)",  bottom: "28%", right: "16%", animation: "floatY 6s ease-in-out infinite 1.5s" }} />
+        <div style={{ position: "absolute", width: 8, height: 8, borderRadius: "50%", background: "rgba(255,255,255,0.1)", bottom: "28%", right: "16%", animation: "floatY 6s ease-in-out infinite 1.5s" }} />
 
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
-
-          {/* Icon */}
           <div style={{ position: "relative", margin: "0 auto 32px", width: 96, height: 96 }}>
             <div style={{ position: "absolute", inset: -12, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.18)", animation: "pulseRing 2.5s ease-in-out infinite" }} />
-            <div style={{ width: 96, height: 96, borderRadius: 28, background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite", boxShadow: "0 16px 48px rgba(0,0,0,0.12)" }}>
-              👩‍🍳
-            </div>
+            <div style={{ width: 96, height: 96, borderRadius: 28, background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite", boxShadow: "0 16px 48px rgba(0,0,0,0.12)" }}>👩‍🍳</div>
           </div>
-
           <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 4, textTransform: "uppercase", color: "rgba(255,255,255,0.6)", marginBottom: 12 }}>For Home Chefs</p>
-
-          <h2 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 18, ...anim(100) }}>
-            List Your<br /><em>Kitchen Today</em>
-          </h2>
-
-          <p style={{ color: "rgba(255,255,255,0.78)", fontSize: 15, lineHeight: 1.8, marginBottom: 32, ...anim(180) }}>
-            Turn your passion for cooking into a steady income. Reach subscribers who crave real, home-cooked food every day.
-          </p>
-
+          <h2 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 18, ...anim(100) }}>List Your<br /><em>Kitchen Today</em></h2>
+          <p style={{ color: "rgba(255,255,255,0.78)", fontSize: 15, lineHeight: 1.8, marginBottom: 32, ...anim(180) }}>Turn your passion for cooking into a steady income. Reach subscribers who crave real, home-cooked food every day.</p>
           {[
             { icon: "💰", title: "Earn on your terms",   sub: "Set your own menu, pricing & schedule"    },
             { icon: "🔒", title: "FSSAI verified badge", sub: "Build trust with a certified kitchen tag"  },
@@ -363,13 +198,9 @@ export default function RegisterProvider() {
           ].map(({ icon, title, sub }, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 12, textAlign: "left", background: "rgba(255,255,255,0.1)", borderRadius: 16, padding: "12px 16px", backdropFilter: "blur(6px)", border: "1px solid rgba(255,255,255,0.15)", ...anim(260 + i * 90) }}>
               <span style={{ fontSize: 20, flexShrink: 0 }}>{icon}</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginBottom: 2 }}>{title}</div>
-                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{sub}</div>
-              </div>
+              <div><div style={{ fontSize: 13, fontWeight: 800, color: "#fff", marginBottom: 2 }}>{title}</div><div style={{ fontSize: 12, color: "rgba(255,255,255,0.65)", fontWeight: 600 }}>{sub}</div></div>
             </div>
           ))}
-
           <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 20, padding: "8px 18px", marginTop: 14, ...anim(640) }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
             <span style={{ color: "#fff", fontWeight: 700, fontSize: 12 }}>Approval within 24–48 hours</span>
@@ -377,77 +208,43 @@ export default function RegisterProvider() {
         </div>
       </div>
 
-      {/* ════════════════════════
-          RIGHT PANEL — FORM
-      ════════════════════════ */}
+      {/* ════════ RIGHT PANEL ════════ */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "48px", background: "#E7E6B6", position: "relative", overflowY: "auto" }}>
-
-        {/* Bg blobs */}
         <div style={{ position: "absolute", width: 380, height: 380, borderRadius: "50%", background: "radial-gradient(circle,rgba(143,168,115,0.15),transparent 70%)", bottom: "-80px", right: "-80px", pointerEvents: "none" }} />
         <div style={{ position: "absolute", width: 240, height: 240, borderRadius: "50%", background: "radial-gradient(circle,rgba(217,217,168,0.35),transparent 70%)", top: "8%", left: "-40px", pointerEvents: "none" }} />
 
         <div style={{ width: "100%", maxWidth: 460, position: "relative", zIndex: 1 }}>
+          <a href="/" className="link-h" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 32, transition: "color 0.2s", ...anim(0) }}>← Back to home</a>
 
-          {/* Back link */}
-          <a href="/" className="link-h" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 32, transition: "color 0.2s", ...anim(0) }}>
-            ← Back to home
-          </a>
-
-          {/* Header */}
           <div style={{ ...anim(80) }}>
             <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 10 }}>Provider Registration</p>
-            <h1 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15, marginBottom: 6 }}>
-              Register Your Kitchen
-            </h1>
+            <h1 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15, marginBottom: 6 }}>Register Your Kitchen</h1>
             <p style={{ color: "#999", fontSize: 15, marginBottom: 32 }}>Join our community of home chefs.</p>
           </div>
 
-          {/* ── FORM ── */}
           <form onSubmit={handleSubmit}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
 
               {/* Business Name */}
               <div style={{ position: "relative", ...anim(140) }}>
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>🏠</span>
-                <input name="businessName" placeholder="Business Name" onChange={handleChange} required
-                  onFocus={() => setFocused("businessName")} onBlur={() => setFocused("")}
-                  style={iStyle("businessName")} />
+                <input name="businessName" placeholder="Business Name" value={form.businessName} onChange={handleChange} required onFocus={() => setFocused("businessName")} onBlur={() => setFocused("")} style={iStyle("businessName")} />
               </div>
 
               {/* Owner Name */}
-              <div style={{ position: "relative", ...anim(180) }}>
+              <div style={{ position: "relative", ...anim(175) }}>
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>👤</span>
-                <input name="ownerName" placeholder="Owner Name" onChange={handleChange} required
-                  onFocus={() => setFocused("ownerName")} onBlur={() => setFocused("")}
-                  style={iStyle("ownerName")} />
+                <input name="ownerName" placeholder="Owner Name" value={form.ownerName} onChange={handleChange} required onFocus={() => setFocused("ownerName")} onBlur={() => setFocused("")} style={iStyle("ownerName")} />
               </div>
 
-              {/* Email + Phone grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, ...anim(220) }}>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, pointerEvents: "none", zIndex: 1 }}>📧</span>
-                  <input name="email" type="email" placeholder="Email" onChange={handleChange} required
-                    onFocus={() => setFocused("email")} onBlur={() => setFocused("")}
-                    style={iStyle("email")} />
-                </div>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 16, pointerEvents: "none", zIndex: 1 }}>📱</span>
-                  <input name="phone" placeholder="Phone" onChange={handleChange} required
-                    onFocus={() => setFocused("phone")} onBlur={() => setFocused("")}
-                    style={iStyle("phone")} />
-                </div>
-              </div>
-
-              {/* FSSAI */}
-              <div style={{ position: "relative", ...anim(260) }}>
+              {/* FSSAI Number */}
+              <div style={{ position: "relative", ...anim(210) }}>
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>📋</span>
-                <input name="fssaiNumber" placeholder="FSSAI License Number" onChange={handleChange} required
-                  onFocus={() => setFocused("fssaiNumber")} onBlur={() => setFocused("")}
-                  style={iStyle("fssaiNumber")} />
+                <input name="fssaiNumber" placeholder="FSSAI License Number" value={form.fssaiNumber} onChange={handleChange} required onFocus={() => setFocused("fssaiNumber")} onBlur={() => setFocused("")} style={iStyle("fssaiNumber")} />
               </div>
 
               {/* FSSAI hint */}
-              <div style={{ background: "rgba(143,174,142,0.1)", border: "1.5px solid rgba(143,174,142,0.25)", borderRadius: 14, padding: "11px 16px", display: "flex", alignItems: "flex-start", gap: 10, ...anim(285) }}>
+              <div style={{ background: "rgba(143,174,142,0.1)", border: "1.5px solid rgba(143,174,142,0.25)", borderRadius: 14, padding: "11px 16px", display: "flex", alignItems: "flex-start", gap: 10, ...anim(225) }}>
                 <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>ℹ️</span>
                 <p style={{ fontSize: 13, color: "#5a6a50", lineHeight: 1.6, fontWeight: 600 }}>
                   Don't have a FSSAI licence yet?{" "}
@@ -455,84 +252,82 @@ export default function RegisterProvider() {
                 </p>
               </div>
 
-              {/* Address + GPS */}
-              <div style={{ position: "relative", ...anim(310) }}>
+              {/* ── KITCHEN LOCATION SECTION ── */}
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4, ...anim(240) }}>
+                <div style={{ flex: 1, height: 1, background: "#ddddc8" }} />
+                <span style={{ fontSize: 11, fontWeight: 800, color: "#bbb", letterSpacing: 2.5, textTransform: "uppercase" }}>Kitchen Location</span>
+                <div style={{ flex: 1, height: 1, background: "#ddddc8" }} />
+              </div>
+
+              {/* ✅ Address — fully independent, GPS se koi connection nahi */}
+              <div style={{ position: "relative", ...anim(255) }}>
                 <span style={{ position: "absolute", left: 14, top: 15, fontSize: 18, pointerEvents: "none", zIndex: 1 }}>🗺️</span>
                 <textarea
                   name="address"
-                  placeholder="Full Kitchen Address"
+                  placeholder="Type your full kitchen address here…"
                   value={form.address}
                   onChange={handleChange}
                   required
                   onFocus={() => setFocused("address")} onBlur={() => setFocused("")}
-                  style={{ ...iStyle("address"), padding: "14px 52px 14px 44px", minHeight: 100 }}
+                  style={{ ...iStyle("address"), padding: "14px 16px 14px 44px", minHeight: 90 }}
                 />
-                {/* GPS pinned badge */}
-                {coords && (
-                  <div style={{ position: "absolute", top: 10, right: 10, background: "rgba(76,175,80,0.15)", border: "1.5px solid rgba(76,175,80,0.4)", borderRadius: 8, padding: "3px 10px", display: "flex", alignItems: "center", gap: 5, animation: "fadeUp 0.3s ease", pointerEvents: "none" }}>
-                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
-                    <span style={{ fontSize: 11, fontWeight: 800, color: "#2d5a2d" }}>GPS pinned</span>
+              </div>
+
+              {/* OR divider */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, ...anim(270) }}>
+                <div style={{ flex: 1, height: 1, background: "#ddddc8" }} />
+                <span style={{ fontSize: 12, fontWeight: 800, color: "#bbb", letterSpacing: 2, textTransform: "uppercase" }}>or use GPS</span>
+                <div style={{ flex: 1, height: 1, background: "#ddddc8" }} />
+              </div>
+
+              {/* ✅ GPS card — sirf coords capture karta hai, address independent rehta hai */}
+              <div style={{ ...anim(285), borderRadius: 14, border: `1.5px solid ${coords ? "rgba(76,175,80,0.4)" : "rgba(143,174,142,0.35)"}`, background: coords ? "rgba(76,175,80,0.06)" : "rgba(143,174,142,0.07)", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, transition: "all 0.3s ease" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: coords ? "rgba(76,175,80,0.15)" : "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📍</div>
+                  <div>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: coords ? "#2d6a2d" : "#2d3b2d", marginBottom: 2 }}>
+                      {coords ? "GPS Pinned!" : "Pin My Exact Location"}
+                    </p>
+                    <p style={{ fontSize: 12, color: coords ? "#4caf50" : "#999", fontWeight: 600 }}>
+                      {coords
+                        ? `${coords[1].toFixed(5)}° N, ${coords[0].toFixed(5)}° E — used for delivery matching`
+                        : "Accurate GPS coordinates for better delivery matching"}
+                    </p>
                   </div>
-                )}
-                {/* GPS button */}
-                <button type="button" onClick={handleAutoLocate} className="btn-locate"
-                  title="Fetch current location"
-                  style={{ position: "absolute", right: 12, bottom: 12, width: 36, height: 36, borderRadius: 10, border: "1.5px solid rgba(143,174,142,0.3)", background: "rgba(143,174,142,0.1)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, transition: "all 0.2s ease" }}>
+                </div>
+                <button type="button" onClick={handleAutoLocate} className="btn-locate" disabled={locating} style={{ flexShrink: 0, padding: "10px 18px", borderRadius: 10, border: `1.5px solid ${coords ? "rgba(76,175,80,0.45)" : "rgba(143,174,142,0.4)"}`, background: coords ? "rgba(76,175,80,0.12)" : "rgba(143,174,142,0.12)", cursor: locating ? "wait" : "pointer", fontSize: 13, fontWeight: 800, color: coords ? "#2d6a2d" : "#5a7a50", fontFamily: "'Nunito',sans-serif", display: "flex", alignItems: "center", gap: 7, transition: "all 0.2s ease", whiteSpace: "nowrap" }}>
                   {locating
-                    ? <span style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid rgba(143,174,142,0.3)", borderTopColor: "#8FA873", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} />
-                    : "📍"}
+                    ? <><span style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(143,174,142,0.3)", borderTopColor: "#8FA873", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} /> Locating…</>
+                    : coords ? "✓ Re-pin" : "Pin Location"}
                 </button>
               </div>
 
-              {/* GPS tip */}
-              {!coords && (
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", background: "rgba(255,193,7,0.08)", border: "1.5px solid rgba(255,193,7,0.25)", borderRadius: 14, ...anim(330) }}>
-                  <span style={{ fontSize: 15, flexShrink: 0 }}>💡</span>
-                  <p style={{ fontSize: 13, color: "#7a6020", fontWeight: 600, lineHeight: 1.5 }}>
-                    Tap 📍 to auto-fill with GPS — more accurate for delivery matching.
-                  </p>
-                </div>
-              )}
+              {/* Info tip */}
+              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 14px", background: "rgba(255,193,7,0.07)", border: "1.5px solid rgba(255,193,7,0.22)", borderRadius: 12, ...anim(295) }}>
+                <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
+                <p style={{ fontSize: 12, color: "#7a6020", fontWeight: 600, lineHeight: 1.5 }}>
+                  Type your address above <strong>and</strong> optionally pin GPS for the most accurate delivery matching.
+                </p>
+              </div>
 
-              {/* Divider */}
-              <div style={{ height: 1, background: "#ddddc8", borderRadius: 2, margin: "4px 0", ...anim(350) }} />
+              <div style={{ height: 1, background: "#ddddc8", borderRadius: 2, margin: "4px 0", ...anim(305) }} />
 
               {/* Cancel + Submit */}
-              <div style={{ display: "flex", gap: 12, ...anim(370) }}>
-                <button
-                  type="button"
-                  className="btn-cancel"
-                  onClick={() => navigate("/CustomerDashboard")}
-                  style={{ flex: "0 0 auto", padding: "15px 24px", background: "transparent", border: "2px solid #ddddc8", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", color: "#999", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s ease" }}
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="btn-submit"
-                  style={{ flex: 1, padding: "15px", background: loading ? "#d4d4bc" : "linear-gradient(135deg,#8FAE8E,#8FA873)", color: loading ? "#aaa9a0" : "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: loading ? "none" : "0 4px 20px rgba(143,174,142,0.4)", transition: "all 0.35s ease", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}
-                >
-                  {loading
-                    ? <><span style={{ width: 17, height: 17, borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} /> Processing...</>
-                    : "Submit Application →"}
+              <div style={{ display: "flex", gap: 12, ...anim(320) }}>
+                <button type="button" className="btn-cancel" onClick={() => navigate("/CustomerDashboard")} style={{ flex: "0 0 auto", padding: "15px 24px", background: "transparent", border: "2px solid #ddddc8", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", color: "#999", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s ease" }}>Cancel</button>
+                <button type="submit" disabled={loading} className="btn-submit" style={{ flex: 1, padding: "15px", background: loading ? "#d4d4bc" : "linear-gradient(135deg,#8FAE8E,#8FA873)", color: loading ? "#aaa9a0" : "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: loading ? "none" : "0 4px 20px rgba(143,174,142,0.4)", transition: "all 0.35s ease", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
+                  {loading ? <><span style={{ width: 17, height: 17, borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} /> Processing...</> : "Submit Application →"}
                 </button>
               </div>
 
-              <p style={{ textAlign: "center", fontSize: 12, color: "#bbb", fontWeight: 600, ...anim(390) }}>
-                Our team reviews applications within 24–48 hours
-              </p>
-
+              <p style={{ textAlign: "center", fontSize: 12, color: "#bbb", fontWeight: 600, ...anim(335) }}>Our team reviews applications within 24–48 hours</p>
             </div>
           </form>
 
-          {/* Footer pulse */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 24, ...anim(420) }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 24, ...anim(350) }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
             <span style={{ fontSize: 13, color: "#bbb", fontWeight: 600 }}>Free to list · No commission on first month</span>
           </div>
-
         </div>
       </div>
     </div>

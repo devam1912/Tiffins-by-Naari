@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+<<<<<<< HEAD
+=======
+import { AdminOverview } from "../../components/AdminOverview";
+import { AdminUsers } from "../../components/AdminUsers";
+import { AdminMenu } from "../../components/AdminMenu";
+>>>>>>> origin/main
 
 function ApproveModal({ provider, onClose, onApprove, loading }) {
   useEffect(() => {
@@ -170,6 +176,7 @@ export default function AdminDashboard() {
     { id: "dashboard", icon: "⊞", label: "Dashboard" },
     { id: "providers", icon: "🍳", label: "All Kitchens" },
     { id: "pending", icon: "⏳", label: "Pending", badge: pending.length },
+    { id: "menus", icon: "🍱", label: "Menus" },
     { id: "users", icon: "👥", label: "Users" },
     { id: "orders", icon: "📦", label: "Orders" },
   ];
@@ -371,6 +378,7 @@ export default function AdminDashboard() {
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
                         {u.name?.[0]?.toUpperCase() || "?"}
                       </div>
+<<<<<<< HEAD
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <p style={{ fontWeight: 700, fontSize: 13, color: "#2d3b2d", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</p>
                         <p style={{ fontSize: 11, color: "#bbb", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</p>
@@ -380,6 +388,35 @@ export default function AdminDashboard() {
                       </span>
                     </div>
                   ))}
+=======
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ══ USERS ══ */}
+            {activeNav === "users" && (
+              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+                <AdminUsers users={allUsers} />
+              </div>
+            )}
+
+            {/* ══ MENUS ══ */}
+            {activeNav === "menus" && (
+              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+                <AdminMenu />
+              </div>
+            )}
+
+            {/* ══ ORDERS ══ */}
+            {activeNav === "orders" && (
+              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+                <div style={{ marginBottom: 28 }}>
+                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Order Management</p>
+                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Orders</h1>
+                  <p style={{ color: "#999", fontSize: 14 }}>{allOrders.length} orders processed on the platform</p>
+>>>>>>> origin/main
                 </div>
 
               </div>

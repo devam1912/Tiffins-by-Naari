@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { AdminOverview } from "../../components/AdminOverview";
 import { AdminUsers } from "../../components/AdminUsers";
+import { AdminMenu } from "../../components/AdminMenu";
 
 /* ══════════════════════════════════════════
    MINI SPARKLINE — pure SVG
@@ -202,6 +203,7 @@ export default function AdminDashboard() {
     { id: "dashboard", icon: "⊞", label: "Dashboard" },
     { id: "providers", icon: "🍳", label: "All Kitchens" },
     { id: "pending", icon: "⏳", label: "Pending", badge: pending.length },
+    { id: "menus", icon: "🍱", label: "Menus" },
     { id: "users", icon: "👥", label: "Users" },
     { id: "orders", icon: "📦", label: "Orders" },
   ];
@@ -489,6 +491,13 @@ export default function AdminDashboard() {
             {activeNav === "users" && (
               <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
                 <AdminUsers users={allUsers} />
+              </div>
+            )}
+
+            {/* ══ MENUS ══ */}
+            {activeNav === "menus" && (
+              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+                <AdminMenu />
               </div>
             )}
 

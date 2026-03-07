@@ -3,6 +3,8 @@ import { AdminMenu } from "../../components/AdminMenu";
 import { AdminFeedback } from "../../components/AdminFeedback";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import axios from "axios";
+
 function ApproveModal({ provider, onClose, onApprove, loading }) {
   useEffect(() => {
     const fn = (e) => { if (e.key === "Escape") onClose(); };
@@ -75,6 +77,137 @@ function RejectModal({ provider, onClose, onReject, loading }) {
   );
 }
 
+// ══════════════════════════════════════════
+// VIEW APPLICATION MODAL
+// ══════════════════════════════════════════
+function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
+  useEffect(() => {
+    const fn = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", fn);
+    return () => document.removeEventListener("keydown", fn);
+  }, []);
+
+  const isPdf = provider?.fssaiCertificate?.toLowerCase().includes(".pdf");
+
+  const Row = ({ label, value }) => (
+    <div style={{ display: "flex", gap: 12, padding: "12px 0", borderBottom: "1px solid rgba(143,174,142,0.12)" }}>
+      <span style={{ fontSize: 12, fontWeight: 800, color: "#aaa", letterSpacing: 1, textTransform: "uppercase", minWidth: 130, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontSize: 14, fontWeight: 600, color: "#2d3b2d", wordBreak: "break-word" }}>{value || "—"}</span>
+    </div>
+  );
+
+  return (
+    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.65)", backdropFilter: "blur(16px)", padding: 20, animation: "overlayIn 0.25s ease" }}>
+      <div style={{ background: "#fff", borderRadius: 28, width: "100%", maxWidth: 580, maxHeight: "90vh", overflowY: "auto", boxShadow: "0 48px 96px rgba(20,35,20,0.32)", animation: "modalIn 0.45s cubic-bezier(.22,.68,0,1.2)", position: "relative" }}>
+
+        {/* Top bar */}
+        <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#fff", borderRadius: "28px 28px 0 0", padding: "24px 28px 18px", borderBottom: "1px solid rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 48, height: 48, borderRadius: 16, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>👩‍🍳</div>
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 2 }}>Application Review</p>
+              <h2 style={{ fontFamily: "'Lora',serif", fontSize: 20, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.2 }}>{provider?.businessName}</h2>
+            </div>
+          </div>
+          <button onClick={onClose} style={{ width: 36, height: 36, borderRadius: "50%", border: "1.5px solid #e0e0d0", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "#aaa", transition: "all 0.2s" }}
+            onMouseEnter={e => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.borderColor = "#ef9a9a"; e.currentTarget.style.color = "#ef5350"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "#e0e0d0"; e.currentTarget.style.color = "#aaa"; }}>✕</button>
+        </div>
+
+        <div style={{ padding: "24px 28px" }}>
+
+          {/* Status badge */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+            <span style={{ background: provider?.isApproved ? "rgba(76,175,80,0.12)" : "rgba(255,152,0,0.12)", color: provider?.isApproved ? "#388e3c" : "#e65100", border: `1.5px solid ${provider?.isApproved ? "rgba(76,175,80,0.3)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "5px 14px", fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
+              {provider?.isApproved ? "✓ Active" : "⏳ Pending Review"}
+            </span>
+            {provider?.createdAt && (
+              <span style={{ fontSize: 12, color: "#bbb", fontWeight: 600 }}>
+                Applied {new Date(provider.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            )}
+          </div>
+
+          {/* Business Info */}
+          <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 12 }}>Business Details</p>
+          <div style={{ background: "rgba(143,174,142,0.05)", borderRadius: 16, padding: "4px 16px", marginBottom: 24, border: "1px solid rgba(143,174,142,0.15)" }}>
+            <Row label="Business Name" value={provider?.businessName} />
+            <Row label="Owner Name" value={provider?.ownerName} />
+            <Row label="FSSAI Number" value={provider?.fssaiNumber} />
+          </div>
+
+          {/* Contact Info */}
+          <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 12 }}>Contact Details</p>
+          <div style={{ background: "rgba(143,174,142,0.05)", borderRadius: 16, padding: "4px 16px", marginBottom: 24, border: "1px solid rgba(143,174,142,0.15)" }}>
+            <Row label="Email" value={provider?.email} />
+            <Row label="Phone" value={provider?.phone} />
+          </div>
+
+          {/* Kitchen Address */}
+          <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 12 }}>Kitchen Location</p>
+          <div style={{ background: "rgba(143,174,142,0.05)", borderRadius: 16, padding: "4px 16px", marginBottom: 24, border: "1px solid rgba(143,174,142,0.15)" }}>
+            <Row label="Address" value={provider?.address} />
+            {provider?.location?.coordinates && (
+              <Row label="GPS Coordinates" value={`${provider.location.coordinates[1].toFixed(5)}° N, ${provider.location.coordinates[0].toFixed(5)}° E`} />
+            )}
+          </div>
+
+          {/* FSSAI Certificate */}
+          <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 12 }}>FSSAI Certificate</p>
+          {provider?.fssaiCertificate ? (
+            <div style={{ background: "rgba(143,174,142,0.05)", borderRadius: 16, padding: 16, marginBottom: 24, border: "1px solid rgba(143,174,142,0.15)" }}>
+              {isPdf ? (
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 14, background: "rgba(239,83,80,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>📄</div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d", marginBottom: 4 }}>FSSAI Certificate (PDF)</p>
+                    <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer"
+                      style={{ fontSize: 13, color: "#8FA873", fontWeight: 700, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      Open PDF →
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <img src={provider.fssaiCertificate} alt="FSSAI Certificate"
+                    style={{ width: "100%", maxHeight: 320, objectFit: "contain", borderRadius: 12, border: "1px solid rgba(143,174,142,0.2)", background: "#f9f9f5" }} />
+                  <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer"
+                    style={{ display: "block", textAlign: "center", marginTop: 10, fontSize: 13, color: "#8FA873", fontWeight: 700, textDecoration: "none" }}>
+                    Open Full Size →
+                  </a>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div style={{ background: "rgba(239,83,80,0.05)", borderRadius: 16, padding: "16px", marginBottom: 24, border: "1.5px dashed rgba(239,83,80,0.25)", textAlign: "center" }}>
+              <p style={{ fontSize: 13, color: "#ef5350", fontWeight: 700 }}>⚠️ No certificate uploaded</p>
+            </div>
+          )}
+
+          {/* Action Buttons — only show for pending */}
+          {!provider?.isApproved && (
+            <div style={{ display: "flex", gap: 12, paddingTop: 8 }}>
+              <button onClick={() => { onClose(); onReject(provider); }}
+                style={{ flex: 1, padding: "14px", background: "rgba(239,83,80,0.06)", border: "1.5px solid rgba(239,83,80,0.3)", borderRadius: 14, fontSize: 14, fontWeight: 800, color: "#ef5350", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s" }}
+                onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg,#ef5350,#e57373)"; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(239,83,80,0.06)"; e.currentTarget.style.color = "#ef5350"; }}>
+                ✕ Reject
+              </button>
+              <button onClick={() => { onClose(); onApprove(provider); }}
+                style={{ flex: 1, padding: "14px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", border: "none", borderRadius: 14, fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 4px 16px rgba(143,174,142,0.4)", transition: "all 0.25s" }}
+                onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "none"; }}>
+                ✓ Approve Kitchen
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -91,6 +224,7 @@ export default function AdminDashboard() {
   const [dataLoading, setDataLoading] = useState(true);
   const [approveTarget, setApproveTarget] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
+  const [viewTarget, setViewTarget] = useState(null); // ← NEW: view application
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [search, setSearch] = useState("");
@@ -119,13 +253,13 @@ export default function AdminDashboard() {
         axios.get("http://localhost:5000/api/feedback", { headers }),
       ]);
       setStats(statsR.data);
-      setAllProviders(provR.data);
-      setPending(pendR.data.providers || []);
-      setAllUsers(usersR.data);
-      setAllOrders(ordersR.data);
+      setAllProviders(Array.isArray(provR.data) ? provR.data : []);
+      setPending(pendR.data.providers || pendR.data || []);
+      setAllUsers(Array.isArray(usersR.data) ? usersR.data : []);
+      setAllOrders(Array.isArray(ordersR.data) ? ordersR.data : []);
       setAllFeedbacks(feedbackR.data.feedbacks || []);
     } catch (err) {
-      console.error("Admin load error:", err);
+      console.error("Admin load error:", err.response?.data || err.message);
     } finally {
       setDataLoading(false);
     }
@@ -196,6 +330,26 @@ export default function AdminDashboard() {
 
   const SIDEBAR_W = collapsed ? 72 : 240;
 
+  // Reusable action buttons for pending cards and table
+  const ActionButtons = ({ p, compact = false }) => (
+    <div style={{ display: "flex", gap: compact ? 6 : 8 }}>
+      <button onClick={() => setViewTarget(p)}
+        style={{ ...(compact ? { padding: "7px 12px", fontSize: 11 } : { flex: 1, padding: "11px", fontSize: 13 }), background: "rgba(143,174,142,0.08)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: compact ? 10 : 12, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s", whiteSpace: "nowrap" }}
+        onMouseEnter={e => { e.currentTarget.style.background = "rgba(143,174,142,0.18)"; e.currentTarget.style.borderColor = "#8FA873"; }}
+        onMouseLeave={e => { e.currentTarget.style.background = "rgba(143,174,142,0.08)"; e.currentTarget.style.borderColor = "rgba(143,174,142,0.3)"; }}>
+        {compact ? "👁" : "👁 View"}
+      </button>
+      <button className="approve-btn" onClick={() => setApproveTarget(p)}
+        style={{ ...(compact ? { padding: "7px 12px", fontSize: 12 } : { flex: 1, padding: "11px", fontSize: 13 }), background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.35)", borderRadius: compact ? 10 : 12, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}>
+        ✓
+      </button>
+      <button className="reject-btn" onClick={() => setRejectTarget(p)}
+        style={{ ...(compact ? { padding: "7px 12px", fontSize: 12 } : { flex: 1, padding: "11px", fontSize: 13 }), background: "rgba(239,83,80,0.06)", border: "1.5px solid rgba(239,83,80,0.25)", borderRadius: compact ? 10 : 12, fontWeight: 800, color: "#ef5350", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}>
+        ✕
+      </button>
+    </div>
+  );
+
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
       <style>{`
@@ -220,9 +374,17 @@ export default function AdminDashboard() {
         .search-wrap:focus-within{box-shadow:0 0 0 3px rgba(143,174,142,0.18)!important;border-color:#8FAE8E!important}
       `}</style>
 
-      {/* MODALS — outside overflow div */}
+      {/* MODALS */}
       {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={handleApprove} loading={approving} />}
       {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={handleReject} loading={rejecting} />}
+      {viewTarget && (
+        <ViewApplicationModal
+          provider={viewTarget}
+          onClose={() => setViewTarget(null)}
+          onApprove={(p) => setApproveTarget(p)}
+          onReject={(p) => setRejectTarget(p)}
+        />
+      )}
 
       {/* SIDEBAR */}
       <div style={{ width: SIDEBAR_W, minHeight: "100vh", flexShrink: 0, background: "linear-gradient(170deg,#8FA873,#6b8a5e)", display: "flex", flexDirection: "column", transition: "width 0.32s cubic-bezier(.22,.68,0,1.2)", position: "sticky", top: 0, overflow: "hidden", boxShadow: "4px 0 32px rgba(90,120,70,0.18)", zIndex: 100 }}>
@@ -327,85 +489,47 @@ export default function AdminDashboard() {
                 </table>
               </div>
 
-              {/* Recent Activity — Orders + Users side by side */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18, marginTop: 18, ...anim(420) }}>
-
-                {/* Recent Orders */}
                 <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.08)" }}>
                   <div style={{ padding: "18px 22px", borderBottom: "1px solid rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div>
-                      <h3 style={{ fontFamily: "'Lora',serif", fontSize: 16, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>Recent Orders</h3>
-                      <p style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>{allOrders.length} total orders</p>
-                    </div>
+                    <div><h3 style={{ fontFamily: "'Lora',serif", fontSize: 16, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>Recent Orders</h3><p style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>{allOrders.length} total orders</p></div>
                     <button onClick={() => setActiveNav("orders")} style={{ background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.25)", borderRadius: 10, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
                       onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg,#8FAE8E,#8FA873)"; e.currentTarget.style.color = "#fff"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "rgba(143,174,142,0.12)"; e.currentTarget.style.color = "#5a7a50"; }}>View all →</button>
                   </div>
-                  {allOrders.length === 0 ? (
-                    <div style={{ padding: "32px", textAlign: "center", color: "#ccc", fontSize: 13, fontWeight: 600 }}>📦 No orders yet</div>
-                  ) : allOrders.slice(0, 5).map(o => (
-                    <div key={o._id} className="row-hover" style={{ padding: "14px 22px", borderBottom: "1px solid rgba(143,174,142,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "background 0.2s" }}>
-                      <div>
-                        <p style={{ fontWeight: 700, fontSize: 13, color: "#2d3b2d", marginBottom: 2 }}>{o.user?.name || "—"}</p>
-                        <p style={{ fontSize: 11, color: "#bbb", fontWeight: 600 }}>{o.provider?.businessName || "—"} · <span style={{ fontFamily: "monospace" }}>#{o._id?.slice(-6).toUpperCase()}</span></p>
+                  {allOrders.length === 0 ? <div style={{ padding: "32px", textAlign: "center", color: "#ccc", fontSize: 13, fontWeight: 600 }}>📦 No orders yet</div>
+                    : allOrders.slice(0, 5).map(o => (
+                      <div key={o._id} className="row-hover" style={{ padding: "14px 22px", borderBottom: "1px solid rgba(143,174,142,0.08)", display: "flex", alignItems: "center", justifyContent: "space-between", transition: "background 0.2s" }}>
+                        <div><p style={{ fontWeight: 700, fontSize: 13, color: "#2d3b2d", marginBottom: 2 }}>{o.user?.name || "—"}</p><p style={{ fontSize: 11, color: "#bbb", fontWeight: 600 }}>{o.provider?.businessName || "—"} · <span style={{ fontFamily: "monospace" }}>#{o._id?.slice(-6).toUpperCase()}</span></p></div>
+                        <div style={{ textAlign: "right" }}><p style={{ fontWeight: 800, fontSize: 13, color: "#2d3b2d", marginBottom: 4 }}>₹{o.amountPaid?.toLocaleString() || "—"}</p><span style={{ background: o.status === "delivered" ? "rgba(76,175,80,0.12)" : o.status === "cancelled" ? "rgba(239,83,80,0.1)" : "rgba(255,152,0,0.1)", color: o.status === "delivered" ? "#388e3c" : o.status === "cancelled" ? "#c62828" : "#e65100", borderRadius: 20, padding: "2px 10px", fontSize: 9, fontWeight: 800, textTransform: "capitalize" }}>{o.status || "processing"}</span></div>
                       </div>
-                      <div style={{ textAlign: "right" }}>
-                        <p style={{ fontWeight: 800, fontSize: 13, color: "#2d3b2d", marginBottom: 4 }}>₹{o.amountPaid?.toLocaleString() || "—"}</p>
-                        <span style={{ background: o.status === "delivered" ? "rgba(76,175,80,0.12)" : o.status === "cancelled" ? "rgba(239,83,80,0.1)" : "rgba(255,152,0,0.1)", color: o.status === "delivered" ? "#388e3c" : o.status === "cancelled" ? "#c62828" : "#e65100", border: `1px solid ${o.status === "delivered" ? "rgba(76,175,80,0.3)" : o.status === "cancelled" ? "rgba(239,83,80,0.25)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "2px 10px", fontSize: 9, fontWeight: 800, textTransform: "capitalize" }}>
-                          {o.status || "processing"}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
-
-                {/* Recent Users */}
                 <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.08)" }}>
                   <div style={{ padding: "18px 22px", borderBottom: "1px solid rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div>
-                      <h3 style={{ fontFamily: "'Lora',serif", fontSize: 16, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>Recent Users</h3>
-                      <p style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>{allUsers.length} total registered</p>
-                    </div>
+                    <div><h3 style={{ fontFamily: "'Lora',serif", fontSize: 16, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>Recent Users</h3><p style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>{allUsers.length} total registered</p></div>
                     <button onClick={() => setActiveNav("users")} style={{ background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.25)", borderRadius: 10, padding: "6px 14px", fontSize: 12, fontWeight: 700, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
                       onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg,#8FAE8E,#8FA873)"; e.currentTarget.style.color = "#fff"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = "rgba(143,174,142,0.12)"; e.currentTarget.style.color = "#5a7a50"; }}>View all →</button>
                   </div>
-                  {allUsers.length === 0 ? (
-                    <div style={{ padding: "32px", textAlign: "center", color: "#ccc", fontSize: 13, fontWeight: 600 }}>👥 No users yet</div>
-                  ) : allUsers.slice(0, 5).map(u => (
-                    <div key={u._id} className="row-hover" style={{ padding: "14px 22px", borderBottom: "1px solid rgba(143,174,142,0.08)", display: "flex", alignItems: "center", gap: 14, transition: "background 0.2s" }}>
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: "#fff", flexShrink: 0 }}>
-                        {u.name?.[0]?.toUpperCase() || "?"}
+                  {allUsers.length === 0 ? <div style={{ padding: "32px", textAlign: "center", color: "#ccc", fontSize: 13, fontWeight: 600 }}>👥 No users yet</div>
+                    : allUsers.slice(0, 5).map(u => (
+                      <div key={u._id} className="row-hover" style={{ padding: "14px 22px", borderBottom: "1px solid rgba(143,174,142,0.08)", display: "flex", alignItems: "center", gap: 14, transition: "background 0.2s" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 800, color: "#fff", flexShrink: 0 }}>{u.name?.[0]?.toUpperCase() || "?"}</div>
+                        <div style={{ flex: 1, minWidth: 0 }}><p style={{ fontWeight: 700, fontSize: 13, color: "#2d3b2d", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</p><p style={{ fontSize: 11, color: "#bbb", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</p></div>
+                        <span style={{ background: "rgba(143,174,142,0.12)", color: "#4a7040", border: "1px solid rgba(143,174,142,0.25)", borderRadius: 20, padding: "2px 10px", fontSize: 9, fontWeight: 800, textTransform: "uppercase", flexShrink: 0 }}>{u.role || "customer"}</span>
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontWeight: 700, fontSize: 13, color: "#2d3b2d", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.name}</p>
-                        <p style={{ fontSize: 11, color: "#bbb", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{u.email}</p>
-                      </div>
-                      <span style={{ background: "rgba(143,174,142,0.12)", color: "#4a7040", border: "1px solid rgba(143,174,142,0.25)", borderRadius: 20, padding: "2px 10px", fontSize: 9, fontWeight: 800, textTransform: "uppercase", flexShrink: 0 }}>
-                        {u.role || "customer"}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             </div>
           )}
 
-          {/* ══ USERS ══ */}
-          {activeNav === "users" && (
-            <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-              <AdminUsers users={allUsers} />
-            </div>
-          )}
+          {activeNav === "users" && <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}><AdminUsers users={allUsers} /></div>}
+          {activeNav === "menus" && <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}><AdminMenu /></div>}
+          {activeNav === "feedbacks" && <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}><AdminFeedback feedbacks={allFeedbacks} loading={dataLoading} /></div>}
 
-          {/* ══ MENUS ══ */}
-          {activeNav === "menus" && (
-            <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-              <AdminMenu />
-            </div>
-          )}
-
-          {/* ══ ORDERS ══ */}
+          {/* ORDERS */}
           {activeNav === "orders" && (
             <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
               <div style={{ marginBottom: 28 }}>
@@ -413,56 +537,28 @@ export default function AdminDashboard() {
                 <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Orders</h1>
                 <p style={{ color: "#999", fontSize: 14 }}>{allOrders.length} orders processed on the platform</p>
               </div>
-
               <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                      {["Order ID", "Customer", "Kitchen", "Amount", "Status", "Date"].map(h => (
-                        <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
+                  <thead><tr style={{ background: "rgba(143,174,142,0.07)" }}>{["Order ID", "Customer", "Kitchen", "Amount", "Status", "Date"].map(h => <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>)}</tr></thead>
                   <tbody>
-                    {allOrders.length === 0 ? (
-                      <tr><td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15 }}>No orders found</td></tr>
-                    ) : allOrders.map((o) => (
-                      <tr key={o._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                        <td style={{ padding: "14px 20px", fontSize: 11, color: "#bbb", fontWeight: 700, fontFamily: "monospace" }}>#{o._id?.slice(-8).toUpperCase()}</td>
-                        <td style={{ padding: "14px 20px", fontWeight: 700, fontSize: 14, color: "#444" }}>{o.user?.name || "—"}</td>
-                        <td style={{ padding: "14px 20px", fontSize: 13, color: "#666", fontWeight: 600 }}>{o.provider?.businessName || "—"}</td>
-                        <td style={{ padding: "14px 20px", fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>₹{o.amountPaid?.toLocaleString() || "—"}</td>
-                        <td style={{ padding: "14px 20px" }}>
-                          <span style={{
-                            background: o.status === "delivered" ? "rgba(76,175,80,0.12)" : o.status === "cancelled" ? "rgba(239,83,80,0.1)" : "rgba(255,152,0,0.1)",
-                            color: o.status === "delivered" ? "#388e3c" : o.status === "cancelled" ? "#c62828" : "#e65100",
-                            border: `1.5px solid ${o.status === "delivered" ? "rgba(76,175,80,0.3)" : o.status === "cancelled" ? "rgba(239,83,80,0.25)" : "rgba(255,152,0,0.3)"}`,
-                            borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "capitalize",
-                          }}>
-                            {o.status || "processing"}
-                          </span>
-                        </td>
-                        <td style={{ padding: "14px 20px", fontSize: 12, color: "#bbb", fontWeight: 600 }}>
-                          {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                        </td>
-                      </tr>
-                    ))}
+                    {allOrders.length === 0 ? <tr><td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15 }}>No orders found</td></tr>
+                      : allOrders.map(o => (
+                        <tr key={o._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
+                          <td style={{ padding: "14px 20px", fontSize: 11, color: "#bbb", fontWeight: 700, fontFamily: "monospace" }}>#{o._id?.slice(-8).toUpperCase()}</td>
+                          <td style={{ padding: "14px 20px", fontWeight: 700, fontSize: 14, color: "#444" }}>{o.user?.name || "—"}</td>
+                          <td style={{ padding: "14px 20px", fontSize: 13, color: "#666", fontWeight: 600 }}>{o.provider?.businessName || "—"}</td>
+                          <td style={{ padding: "14px 20px", fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>₹{o.amountPaid?.toLocaleString() || "—"}</td>
+                          <td style={{ padding: "14px 20px" }}><span style={{ background: o.status === "delivered" ? "rgba(76,175,80,0.12)" : o.status === "cancelled" ? "rgba(239,83,80,0.1)" : "rgba(255,152,0,0.1)", color: o.status === "delivered" ? "#388e3c" : o.status === "cancelled" ? "#c62828" : "#e65100", border: `1.5px solid ${o.status === "delivered" ? "rgba(76,175,80,0.3)" : o.status === "cancelled" ? "rgba(239,83,80,0.25)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "capitalize" }}>{o.status || "processing"}</span></td>
+                          <td style={{ padding: "14px 20px", fontSize: 12, color: "#bbb", fontWeight: 600 }}>{o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}</td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
 
-
-
-          {/* ══ FEEDBACKS ══ */}
-          {activeNav === "feedbacks" && (
-            <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-              <AdminFeedback feedbacks={allFeedbacks} loading={dataLoading} />
-            </div>
-          )}
-
-          {/* ══ ALL KITCHENS ══ */}
+          {/* ALL KITCHENS */}
           {activeNav === "providers" && (
             <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
               <div style={{ marginBottom: 28 }}>
@@ -470,13 +566,10 @@ export default function AdminDashboard() {
                 <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Kitchens</h1>
                 <p style={{ color: "#999", fontSize: 14 }}>{allProviders.length} providers registered on the platform</p>
               </div>
-
-              {/* Filters */}
               <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
                 <div className="search-wrap" style={{ flex: 1, minWidth: 220, display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.8)", border: "1.5px solid #e0e0d0", borderRadius: 14, padding: "10px 16px", transition: "all 0.2s" }}>
                   <span style={{ fontSize: 16 }}>🔍</span>
-                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search kitchens, owners..."
-                    style={{ border: "none", background: "none", outline: "none", fontSize: 14, fontFamily: "'Nunito',sans-serif", color: "#2d3b2d", flex: 1 }} />
+                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search kitchens, owners..." style={{ border: "none", background: "none", outline: "none", fontSize: 14, fontFamily: "'Nunito',sans-serif", color: "#2d3b2d", flex: 1 }} />
                 </div>
                 {["all", "active", "pending"].map(f => (
                   <button key={f} className="tab-btn" onClick={() => setFilterStatus(f)}
@@ -485,61 +578,38 @@ export default function AdminDashboard() {
                   </button>
                 ))}
               </div>
-
               <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                      {["Kitchen / Business", "Owner", "Contact", "Status", "Action"].map(h => (
-                        <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
+                  <thead><tr style={{ background: "rgba(143,174,142,0.07)" }}>{["Kitchen / Business", "Owner", "Contact", "Status", "Action"].map(h => <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>)}</tr></thead>
                   <tbody>
-                    {filteredProviders.length === 0 ? (
-                      <tr><td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15, fontWeight: 600 }}>No kitchens found</td></tr>
-                    ) : filteredProviders.map((p) => (
-                      <tr key={p._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                        <td style={{ padding: "16px 20px" }}>
-                          <p style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d", marginBottom: 2 }}>{p.businessName}</p>
-                          <p style={{ fontSize: 11, color: "#ccc", fontWeight: 600 }}>ID: {p._id?.slice(-6)}</p>
-                        </td>
-                        <td style={{ padding: "16px 20px" }}>
-                          <p style={{ fontWeight: 700, fontSize: 14, color: "#444" }}>{p.ownerName}</p>
-                        </td>
-                        <td style={{ padding: "16px 20px" }}>
-                          <p style={{ fontSize: 13, color: "#666", fontWeight: 600 }}>{p.email}</p>
-                          <p style={{ fontSize: 12, color: "#bbb" }}>{p.phone}</p>
-                        </td>
-                        <td style={{ padding: "16px 20px" }}>
-                          <span style={{ background: p.isApproved ? "rgba(76,175,80,0.12)" : "rgba(255,152,0,0.12)", color: p.isApproved ? "#388e3c" : "#e65100", border: `1.5px solid ${p.isApproved ? "rgba(76,175,80,0.3)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                            {p.isApproved ? "✓ Active" : "⏳ Pending"}
-                          </span>
-                        </td>
-                        <td style={{ padding: "16px 20px" }}>
-                          {!p.isApproved && (
-                            <div style={{ display: "flex", gap: 6 }}>
-                              <button className="approve-btn" onClick={() => setApproveTarget(p)}
-                                style={{ background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.35)", borderRadius: 10, padding: "7px 14px", fontSize: 12, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}>
-                                ✓
+                    {filteredProviders.length === 0 ? <tr><td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15, fontWeight: 600 }}>No kitchens found</td></tr>
+                      : filteredProviders.map(p => (
+                        <tr key={p._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
+                          <td style={{ padding: "16px 20px" }}><p style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d", marginBottom: 2 }}>{p.businessName}</p><p style={{ fontSize: 11, color: "#ccc", fontWeight: 600 }}>ID: {p._id?.slice(-6)}</p></td>
+                          <td style={{ padding: "16px 20px" }}><p style={{ fontWeight: 700, fontSize: 14, color: "#444" }}>{p.ownerName}</p></td>
+                          <td style={{ padding: "16px 20px" }}><p style={{ fontSize: 13, color: "#666", fontWeight: 600 }}>{p.email}</p><p style={{ fontSize: 12, color: "#bbb" }}>{p.phone}</p></td>
+                          <td style={{ padding: "16px 20px" }}><span style={{ background: p.isApproved ? "rgba(76,175,80,0.12)" : "rgba(255,152,0,0.12)", color: p.isApproved ? "#388e3c" : "#e65100", border: `1.5px solid ${p.isApproved ? "rgba(76,175,80,0.3)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5 }}>{p.isApproved ? "✓ Active" : "⏳ Pending"}</span></td>
+                          <td style={{ padding: "16px 20px" }}>
+                            {!p.isApproved ? (
+                              <ActionButtons p={p} compact />
+                            ) : (
+                              <button onClick={() => setViewTarget(p)}
+                                style={{ padding: "7px 14px", background: "rgba(143,174,142,0.08)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 10, fontSize: 12, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
+                                onMouseEnter={e => { e.currentTarget.style.background = "rgba(143,174,142,0.18)"; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = "rgba(143,174,142,0.08)"; }}>
+                                👁 View
                               </button>
-                              <button className="reject-btn" onClick={() => setRejectTarget(p)}
-                                style={{ background: "rgba(239,83,80,0.06)", border: "1.5px solid rgba(239,83,80,0.25)", borderRadius: 10, padding: "7px 14px", fontSize: 12, fontWeight: 800, color: "#ef5350", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}>
-                                ✕
-                              </button>
-                            </div>
-                          )}
-                          {p.isApproved && <span style={{ fontSize: 18, color: "#4caf50" }}>✓</span>}
-                        </td>
-                      </tr>
-                    ))}
+                            )}
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
 
-          {/* ══ PENDING APPROVALS ══ */}
+          {/* PENDING APPROVALS */}
           {activeNav === "pending" && (
             <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
               <div style={{ marginBottom: 28 }}>
@@ -547,7 +617,6 @@ export default function AdminDashboard() {
                 <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Pending Approvals</h1>
                 <p style={{ color: "#999", fontSize: 14 }}>{pending.length} application{pending.length !== 1 ? "s" : ""} waiting for your review</p>
               </div>
-
               {pending.length === 0 ? (
                 <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 22, padding: "60px 40px", textAlign: "center", border: "1px solid rgba(143,174,142,0.2)" }}>
                   <div style={{ fontSize: 52, marginBottom: 16 }}>🎉</div>
@@ -567,15 +636,16 @@ export default function AdminDashboard() {
                       <p style={{ fontSize: 13, color: "#aaa", fontWeight: 600, marginBottom: 2 }}>📧 {p.email}</p>
                       <p style={{ fontSize: 13, color: "#aaa", fontWeight: 600, marginBottom: 4 }}>📱 {p.phone}</p>
                       {p.fssaiNumber && <p style={{ fontSize: 12, color: "#bbb", fontWeight: 600, marginBottom: 16 }}>FSSAI: {p.fssaiNumber}</p>}
+                      {/* View Application button prominently */}
+                      <button onClick={() => setViewTarget(p)}
+                        style={{ width: "100%", padding: "11px", marginBottom: 10, background: "rgba(143,174,142,0.08)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 12, fontSize: 13, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
+                        onMouseEnter={e => { e.currentTarget.style.background = "rgba(143,174,142,0.18)"; e.currentTarget.style.borderColor = "#8FA873"; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "rgba(143,174,142,0.08)"; e.currentTarget.style.borderColor = "rgba(143,174,142,0.3)"; }}>
+                        👁 View Full Application
+                      </button>
                       <div style={{ display: "flex", gap: 8 }}>
-                        <button className="approve-btn" onClick={() => setApproveTarget(p)}
-                          style={{ flex: 1, padding: "12px", background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 12, fontSize: 14, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s" }}>
-                          ✓ Approve
-                        </button>
-                        <button className="reject-btn" onClick={() => setRejectTarget(p)}
-                          style={{ flex: 1, padding: "12px", background: "rgba(239,83,80,0.06)", border: "1.5px solid rgba(239,83,80,0.25)", borderRadius: 12, fontSize: 14, fontWeight: 800, color: "#ef5350", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s" }}>
-                          ✕ Reject
-                        </button>
+                        <button className="approve-btn" onClick={() => setApproveTarget(p)} style={{ flex: 1, padding: "11px", background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 12, fontSize: 14, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s" }}>✓ Approve</button>
+                        <button className="reject-btn" onClick={() => setRejectTarget(p)} style={{ flex: 1, padding: "11px", background: "rgba(239,83,80,0.06)", border: "1.5px solid rgba(239,83,80,0.25)", borderRadius: 12, fontSize: 14, fontWeight: 800, color: "#ef5350", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s" }}>✕ Reject</button>
                       </div>
                     </div>
                   ))}
@@ -584,7 +654,7 @@ export default function AdminDashboard() {
             </div>
           )}
         </>)}
-      </div >
-    </div >
+      </div>
+    </div>
   );
 }

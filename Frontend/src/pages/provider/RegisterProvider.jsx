@@ -41,13 +41,15 @@ function Modal({ variant, title, message, onClose }) {
 
 export default function RegisterProvider() {
   const navigate   = useNavigate();
-  const [loaded,   setLoaded]   = useState(false);
-  const [loading,  setLoading]  = useState(false);
-  const [locating, setLocating] = useState(false);
-  const [modal,    setModal]    = useState(null);
-  const [focused,  setFocused]  = useState("");
-  const [form,     setForm]     = useState({ businessName: "", ownerName: "", fssaiNumber: "", address: "" });
-  const [coords,   setCoords]   = useState(null); // [lng, lat] — from GPS only
+  const [loaded,   setLoaded]     = useState(false);
+  const [loading,  setLoading]    = useState(false);
+  const [locating, setLocating]   = useState(false);
+  const [modal,    setModal]      = useState(null);
+  const [focused,  setFocused]    = useState("");
+  const [fssaiFile,    setFssaiFile]    = useState(null);
+  const [fssaiPreview, setFssaiPreview] = useState(null);
+  const [form,     setForm]       = useState({ businessName: "", ownerName: "", fssaiNumber: "", address: "" });
+  const [coords,   setCoords]     = useState(null); // [lng, lat] — GPS only
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -59,8 +61,20 @@ export default function RegisterProvider() {
 
   const anim = (d = 0) => ({ opacity: loaded ? 1 : 0, transform: loaded ? "translateY(0)" : "translateY(20px)", transition: `opacity 0.6s ease ${d}ms, transform 0.6s cubic-bezier(.22,.68,0,1.2) ${d}ms` });
 
-  // ✅ address typing GPS ko affect nahi karta
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setFssaiFile(file);
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (ev) => setFssaiPreview(ev.target.result);
+      reader.readAsDataURL(file);
+    } else {
+      setFssaiPreview("pdf");
+    }
+  };
 
   const iStyle = (name) => ({
     width: "100%", padding: "14px 16px 14px 44px",
@@ -71,7 +85,7 @@ export default function RegisterProvider() {
     boxShadow: focused === name ? "0 0 0 4px rgba(143,174,142,0.12)" : "none",
   });
 
-  // ✅ GPS — sirf coords set karta hai, address field ko touch nahi karta
+  // GPS — sirf coords set karta hai, address field bilkul touch nahi hota
   const handleAutoLocate = () => {
     if (!navigator.geolocation) {
       setModal({ variant: "error", title: "Not Supported", message: "Geolocation is not supported by your browser." });
@@ -82,17 +96,15 @@ export default function RegisterProvider() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         try {
-          const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18`, { headers: { "User-Agent": "TiffinsByNaari/1.0" } });
-          const data = await res.json();
-          // ✅ Sirf coords save karo — address field untouched rehta hai
+          await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18`, { headers: { "User-Agent": "TiffinsByNaari/1.0" } });
           setCoords([longitude, latitude]);
           setModal({
             variant: "location",
             title: "Location Pinned!",
-            message: `GPS coordinates captured successfully.\n\nYour typed address will be saved as-is, and GPS coordinates will be used for delivery matching.`,
+            message: `GPS coordinates captured!\n${latitude.toFixed(5)}° N, ${longitude.toFixed(5)}° E\n\nThese will be used for accurate delivery matching.`,
           });
         } catch {
-          setModal({ variant: "error", title: "Couldn't Capture Location", message: "Something went wrong fetching your location.\nPlease check your connection and try again." });
+          setModal({ variant: "error", title: "Couldn't Capture Location", message: "Something went wrong.\nPlease check your connection and try again." });
         } finally {
           setLocating(false);
         }
@@ -104,7 +116,7 @@ export default function RegisterProvider() {
     );
   };
 
-  // ✅ Submit — GPS coords use karo agar hain, warna address geocode karo
+  // Submit — address compulsory + GPS compulsory + certificate compulsory
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -116,25 +128,25 @@ export default function RegisterProvider() {
         return;
       }
 
-      let finalLocation = null;
-
-      if (coords) {
-        // GPS pin hai — directly use karo
-        finalLocation = { type: "Point", coordinates: coords };
-      } else if (form.address.trim()) {
-        // GPS nahi — address se geocode karo
-        const res  = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(form.address)}&limit=1`, { headers: { "User-Agent": "TiffinsByNaari/1.0" } });
-        const data = await res.json();
-        if (data && data.length > 0) {
-          finalLocation = { type: "Point", coordinates: [parseFloat(data[0].lon), parseFloat(data[0].lat)] };
-        } else {
-          throw new Error("We couldn't locate this address on the map.\nPlease be more specific or use the 📍 GPS button.");
-        }
-      } else {
-        throw new Error("Please enter your kitchen address or use the GPS locator.");
+      // Address compulsory check
+      if (!form.address.trim()) {
+        throw new Error("Please enter your full kitchen address.");
       }
 
-      // ✅ Plain JSON — location as proper nested object
+      // GPS compulsory check
+      if (!coords) {
+        throw new Error("Please pin your exact location using the 📍 GPS button.\nThis is required for delivery matching.");
+      }
+
+      // Certificate compulsory check
+      if (!fssaiFile) {
+        throw new Error("Please upload your FSSAI certificate.\nThis is required for verification.");
+      }
+
+      // Location from GPS (compulsory)
+      const finalLocation = { type: "Point", coordinates: coords };
+
+      // Plain JSON payload — no FormData, backend unchanged
       const payload = { ...form, location: finalLocation };
 
       await axios.post("http://localhost:5000/api/tiffins/register", payload, {
@@ -170,6 +182,7 @@ export default function RegisterProvider() {
         .btn-cancel:hover  { border-color:#ef9a9a !important; color:#ef5350 !important; background:#fff5f5 !important; }
         .btn-locate:hover:not(:disabled) { background:rgba(143,174,142,0.22) !important; border-color:#8FAE8E !important; }
         .link-h:hover { color:#5a7a50 !important; }
+        .upload-zone:hover { border-color:#8FAE8E !important; background:rgba(143,174,142,0.1) !important; }
       `}</style>
 
       {modal && <Modal variant={modal.variant} title={modal.title} message={modal.message} onClose={closeModal} />}
@@ -232,24 +245,58 @@ export default function RegisterProvider() {
               </div>
 
               {/* Owner Name */}
-              <div style={{ position: "relative", ...anim(175) }}>
+              <div style={{ position: "relative", ...anim(165) }}>
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>👤</span>
                 <input name="ownerName" placeholder="Owner Name" value={form.ownerName} onChange={handleChange} required onFocus={() => setFocused("ownerName")} onBlur={() => setFocused("")} style={iStyle("ownerName")} />
               </div>
 
               {/* FSSAI Number */}
-              <div style={{ position: "relative", ...anim(210) }}>
+              <div style={{ position: "relative", ...anim(190) }}>
                 <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>📋</span>
                 <input name="fssaiNumber" placeholder="FSSAI License Number" value={form.fssaiNumber} onChange={handleChange} required onFocus={() => setFocused("fssaiNumber")} onBlur={() => setFocused("")} style={iStyle("fssaiNumber")} />
               </div>
 
               {/* FSSAI hint */}
-              <div style={{ background: "rgba(143,174,142,0.1)", border: "1.5px solid rgba(143,174,142,0.25)", borderRadius: 14, padding: "11px 16px", display: "flex", alignItems: "flex-start", gap: 10, ...anim(225) }}>
+              <div style={{ background: "rgba(143,174,142,0.1)", border: "1.5px solid rgba(143,174,142,0.25)", borderRadius: 14, padding: "11px 16px", display: "flex", alignItems: "flex-start", gap: 10, ...anim(205) }}>
                 <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>ℹ️</span>
                 <p style={{ fontSize: 13, color: "#5a6a50", lineHeight: 1.6, fontWeight: 600 }}>
                   Don't have a FSSAI licence yet?{" "}
                   <a href="https://foscos.fssai.gov.in" target="_blank" rel="noreferrer" style={{ color: "#8FA873", textDecoration: "none", fontWeight: 800 }}>Apply here →</a>
                 </p>
+              </div>
+
+              {/* ── FSSAI Certificate Upload (compulsory) ── */}
+              <div style={{ ...anim(220) }}>
+                <p style={{ fontSize: 13, fontWeight: 800, color: "#5a6a50", marginBottom: 8, letterSpacing: 0.5 }}>
+                  FSSAI Certificate <span style={{ color: "#ef5350", fontSize: 12 }}>*required</span>
+                </p>
+                <label className="upload-zone" style={{
+                  display: "flex", alignItems: "center", gap: 14,
+                  padding: "14px 18px", borderRadius: 14,
+                  border: `2px dashed ${fssaiFile ? "rgba(76,175,80,0.5)" : "rgba(143,174,142,0.4)"}`,
+                  background: fssaiFile ? "rgba(76,175,80,0.06)" : "rgba(255,255,255,0.6)",
+                  cursor: "pointer", transition: "all 0.2s ease",
+                }}>
+                  {fssaiFile ? (
+                    fssaiPreview === "pdf"
+                      ? <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(239,83,80,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>📄</div>
+                      : <img src={fssaiPreview} alt="cert" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0, border: "2px solid rgba(76,175,80,0.3)" }} />
+                  ) : (
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>📎</div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 14, fontWeight: 800, color: fssaiFile ? "#2d6a2d" : "#5a7a50", marginBottom: 2 }}>
+                      {fssaiFile ? fssaiFile.name : "Upload FSSAI Certificate"}
+                    </p>
+                    <p style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>
+                      {fssaiFile ? `${(fssaiFile.size / 1024).toFixed(1)} KB` : "PNG, JPG or PDF · Max 5MB"}
+                    </p>
+                  </div>
+                  {fssaiFile && (
+                    <span onClick={(e) => { e.preventDefault(); setFssaiFile(null); setFssaiPreview(null); }} style={{ fontSize: 18, color: "#ccc", cursor: "pointer", flexShrink: 0, padding: 4 }} title="Remove">✕</span>
+                  )}
+                  <input type="file" accept="image/*,.pdf" onChange={handleFileChange} style={{ display: "none" }} />
+                </label>
               </div>
 
               {/* ── KITCHEN LOCATION SECTION ── */}
@@ -259,12 +306,12 @@ export default function RegisterProvider() {
                 <div style={{ flex: 1, height: 1, background: "#ddddc8" }} />
               </div>
 
-              {/* ✅ Address — fully independent, GPS se koi connection nahi */}
+              {/* Address — compulsory, fully independent from GPS */}
               <div style={{ position: "relative", ...anim(255) }}>
                 <span style={{ position: "absolute", left: 14, top: 15, fontSize: 18, pointerEvents: "none", zIndex: 1 }}>🗺️</span>
                 <textarea
                   name="address"
-                  placeholder="Type your full kitchen address here…"
+                  placeholder="Type your full kitchen address here… (required)"
                   value={form.address}
                   onChange={handleChange}
                   required
@@ -273,25 +320,26 @@ export default function RegisterProvider() {
                 />
               </div>
 
-              {/* OR divider */}
+              {/* AND divider — both are required */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, ...anim(270) }}>
                 <div style={{ flex: 1, height: 1, background: "#ddddc8" }} />
-                <span style={{ fontSize: 12, fontWeight: 800, color: "#bbb", letterSpacing: 2, textTransform: "uppercase" }}>or use GPS</span>
+                <span style={{ fontSize: 12, fontWeight: 800, color: "#bbb", letterSpacing: 2, textTransform: "uppercase" }}>+ pin GPS</span>
                 <div style={{ flex: 1, height: 1, background: "#ddddc8" }} />
               </div>
 
-              {/* ✅ GPS card — sirf coords capture karta hai, address independent rehta hai */}
-              <div style={{ ...anim(285), borderRadius: 14, border: `1.5px solid ${coords ? "rgba(76,175,80,0.4)" : "rgba(143,174,142,0.35)"}`, background: coords ? "rgba(76,175,80,0.06)" : "rgba(143,174,142,0.07)", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, transition: "all 0.3s ease" }}>
+              {/* GPS card — compulsory, independent from address */}
+              <div style={{ ...anim(285), borderRadius: 14, border: `1.5px solid ${coords ? "rgba(76,175,80,0.4)" : "rgba(239,83,80,0.25)"}`, background: coords ? "rgba(76,175,80,0.06)" : "rgba(255,255,255,0.5)", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, transition: "all 0.3s ease" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: coords ? "rgba(76,175,80,0.15)" : "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📍</div>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, flexShrink: 0, background: coords ? "rgba(76,175,80,0.15)" : "rgba(239,83,80,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>📍</div>
                   <div>
                     <p style={{ fontSize: 14, fontWeight: 800, color: coords ? "#2d6a2d" : "#2d3b2d", marginBottom: 2 }}>
-                      {coords ? "GPS Pinned!" : "Pin My Exact Location"}
+                      {coords ? "GPS Pinned ✓" : "Pin Exact Location"}{" "}
+                      {!coords && <span style={{ fontSize: 11, color: "#ef5350", fontWeight: 700 }}>*required</span>}
                     </p>
                     <p style={{ fontSize: 12, color: coords ? "#4caf50" : "#999", fontWeight: 600 }}>
                       {coords
-                        ? `${coords[1].toFixed(5)}° N, ${coords[0].toFixed(5)}° E — used for delivery matching`
-                        : "Accurate GPS coordinates for better delivery matching"}
+                        ? `${coords[1].toFixed(5)}° N, ${coords[0].toFixed(5)}° E`
+                        : "GPS coordinates required for delivery matching"}
                     </p>
                   </div>
                 </div>
@@ -302,29 +350,21 @@ export default function RegisterProvider() {
                 </button>
               </div>
 
-              {/* Info tip */}
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 14px", background: "rgba(255,193,7,0.07)", border: "1.5px solid rgba(255,193,7,0.22)", borderRadius: 12, ...anim(295) }}>
-                <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
-                <p style={{ fontSize: 12, color: "#7a6020", fontWeight: 600, lineHeight: 1.5 }}>
-                  Type your address above <strong>and</strong> optionally pin GPS for the most accurate delivery matching.
-                </p>
-              </div>
-
-              <div style={{ height: 1, background: "#ddddc8", borderRadius: 2, margin: "4px 0", ...anim(305) }} />
+              <div style={{ height: 1, background: "#ddddc8", borderRadius: 2, margin: "4px 0", ...anim(300) }} />
 
               {/* Cancel + Submit */}
-              <div style={{ display: "flex", gap: 12, ...anim(320) }}>
+              <div style={{ display: "flex", gap: 12, ...anim(315) }}>
                 <button type="button" className="btn-cancel" onClick={() => navigate("/CustomerDashboard")} style={{ flex: "0 0 auto", padding: "15px 24px", background: "transparent", border: "2px solid #ddddc8", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", color: "#999", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s ease" }}>Cancel</button>
                 <button type="submit" disabled={loading} className="btn-submit" style={{ flex: 1, padding: "15px", background: loading ? "#d4d4bc" : "linear-gradient(135deg,#8FAE8E,#8FA873)", color: loading ? "#aaa9a0" : "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: loading ? "none" : "0 4px 20px rgba(143,174,142,0.4)", transition: "all 0.35s ease", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
                   {loading ? <><span style={{ width: 17, height: 17, borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} /> Processing...</> : "Submit Application →"}
                 </button>
               </div>
 
-              <p style={{ textAlign: "center", fontSize: 12, color: "#bbb", fontWeight: 600, ...anim(335) }}>Our team reviews applications within 24–48 hours</p>
+              <p style={{ textAlign: "center", fontSize: 12, color: "#bbb", fontWeight: 600, ...anim(330) }}>Our team reviews applications within 24–48 hours</p>
             </div>
           </form>
 
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 24, ...anim(350) }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 24, ...anim(345) }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
             <span style={{ fontSize: 13, color: "#bbb", fontWeight: 600 }}>Free to list · No commission on first month</span>
           </div>

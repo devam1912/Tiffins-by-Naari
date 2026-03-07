@@ -187,6 +187,27 @@ We apologize for the inconvenience.`
   }
 };
 
+const getAllMenus = async (req, res) => {
+  try {
+    const menus = await Menu.find()
+      .populate({
+        path: "provider",
+        populate: {
+          path: "user",
+          select: "name email",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      count: menus.length,
+      menus,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 
-module.exports = { createOrUpdateMenu, submitForApproval, approveMenu, rejectMenu };
+
+module.exports = { createOrUpdateMenu, submitForApproval, approveMenu, rejectMenu, getAllMenus };

@@ -1,6 +1,6 @@
-import { AdminOverview } from "../../components/AdminOverview";
 import { AdminUsers } from "../../components/AdminUsers";
 import { AdminMenu } from "../../components/AdminMenu";
+import { AdminFeedback } from "../../components/AdminFeedback";
 
 function ApproveModal({ provider, onClose, onApprove, loading }) {
   useEffect(() => {
@@ -86,6 +86,7 @@ export default function AdminDashboard() {
   const [pending, setPending] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [allOrders, setAllOrders] = useState([]);
+  const [allFeedbacks, setAllFeedbacks] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [approveTarget, setApproveTarget] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
@@ -108,18 +109,20 @@ export default function AdminDashboard() {
 
   const loadAll = async () => {
     try {
-      const [statsR, provR, pendR, usersR, ordersR] = await Promise.all([
+      const [statsR, provR, pendR, usersR, ordersR, feedbackR] = await Promise.all([
         axios.get("http://localhost:5000/api/admin/stats", { headers }),
         axios.get("http://localhost:5000/api/admin/providers", { headers }),
         axios.get("http://localhost:5000/api/admin/providers/pending", { headers }),
         axios.get("http://localhost:5000/api/admin/users", { headers }),
         axios.get("http://localhost:5000/api/admin/orders", { headers }),
+        axios.get("http://localhost:5000/api/feedback", { headers }),
       ]);
       setStats(statsR.data);
       setAllProviders(provR.data);
       setPending(pendR.data.providers || []);
       setAllUsers(usersR.data);
       setAllOrders(ordersR.data);
+      setAllFeedbacks(feedbackR.data.feedbacks || []);
     } catch (err) {
       console.error("Admin load error:", err);
     } finally {
@@ -173,6 +176,7 @@ export default function AdminDashboard() {
     { id: "menus", icon: "🍱", label: "Menus" },
     { id: "users", icon: "👥", label: "Users" },
     { id: "orders", icon: "📦", label: "Orders" },
+    { id: "feedbacks", icon: "💬", label: "Feedbacks" },
   ];
 
   const filteredProviders = allProviders.filter(p => {
@@ -445,6 +449,15 @@ export default function AdminDashboard() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+
+
+          {/* ══ FEEDBACKS ══ */}
+          {activeNav === "feedbacks" && (
+            <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+              <AdminFeedback feedbacks={allFeedbacks} loading={dataLoading} />
             </div>
           )}
 

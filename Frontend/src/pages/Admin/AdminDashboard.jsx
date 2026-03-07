@@ -90,6 +90,7 @@ export default function AdminDashboard() {
   const [allUsers, setAllUsers] = useState([]);
   const [allOrders, setAllOrders] = useState([]);
   const [allFeedbacks, setAllFeedbacks] = useState([]);
+  const [allMenus, setAllMenus] = useState([]);
   const [dataLoading, setDataLoading] = useState(true);
   const [approveTarget, setApproveTarget] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
@@ -112,13 +113,14 @@ export default function AdminDashboard() {
 
   const loadAll = async () => {
     try {
-      const [statsR, provR, pendR, usersR, ordersR, feedbackR] = await Promise.all([
+      const [statsR, provR, pendR, usersR, ordersR, feedbackR, menusR] = await Promise.all([
         axios.get("http://localhost:5000/api/admin/stats", { headers }),
         axios.get("http://localhost:5000/api/admin/providers", { headers }),
         axios.get("http://localhost:5000/api/admin/providers/pending", { headers }),
         axios.get("http://localhost:5000/api/admin/users", { headers }),
         axios.get("http://localhost:5000/api/admin/orders", { headers }),
         axios.get("http://localhost:5000/api/feedback", { headers }),
+        axios.get("http://localhost:5000/api/tiffins/menu", { headers }),
       ]);
       setStats(statsR.data);
       setAllProviders(provR.data);
@@ -126,6 +128,7 @@ export default function AdminDashboard() {
       setAllUsers(usersR.data);
       setAllOrders(ordersR.data);
       setAllFeedbacks(feedbackR.data.feedbacks || []);
+      setAllMenus(menusR.data.menus || []);
     } catch (err) {
       console.error("Admin load error:", err);
     } finally {
@@ -192,6 +195,7 @@ export default function AdminDashboard() {
   const statCards = stats ? [
     { label: "Total Users", value: (stats.totalUsers || 0) + (stats.totalProviders || 0), sub: `${stats.totalUsers || 0} customers · ${stats.totalProviders || 0} kitchens`, icon: "👥", grad: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.45)", textLight: true },
     { label: "Active Kitchens", value: stats.totalProviders || 0, sub: `${pending.length} pending approval`, icon: "🍳", grad: "linear-gradient(135deg,#a8c5a0,#6b9e5e)", shadow: "rgba(107,158,94,0.38)", textLight: true },
+    { label: "Total Menus", value: allMenus.length || 0, sub: "Live kitchen schedules", icon: "🍱", grad: "rgba(255,255,255,0.85)", shadow: "rgba(143,174,142,0.18)", textLight: false, border: "1.5px solid rgba(143,174,142,0.3)" },
     { label: "Total Orders", value: stats.totalOrders || 0, sub: "All-time platform orders", icon: "📦", grad: "rgba(255,255,255,0.85)", shadow: "rgba(143,174,142,0.18)", textLight: false, border: "1.5px solid rgba(143,174,142,0.3)" },
     { label: "Gross Revenue", value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, sub: "Total amount collected", icon: "💰", grad: "linear-gradient(135deg,#D9D9A8,#c5ce88)", shadow: "rgba(180,190,100,0.32)", textLight: false },
   ] : [];
@@ -403,7 +407,7 @@ export default function AdminDashboard() {
           {/* ══ MENUS ══ */}
           {activeNav === "menus" && (
             <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-              <AdminMenu />
+              <AdminMenu menus={allMenus} loading={dataLoading} />
             </div>
           )}
 

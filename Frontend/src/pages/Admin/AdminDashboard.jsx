@@ -192,12 +192,14 @@ export default function AdminDashboard() {
     return matchQ && matchF;
   });
 
+  const totalRevenueCalculated = allOrders.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
+
   const statCards = stats ? [
     { label: "Total Users", value: (stats.totalUsers || 0) + (stats.totalProviders || 0), sub: `${stats.totalUsers || 0} customers · ${stats.totalProviders || 0} kitchens`, icon: "👥", grad: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.45)", textLight: true },
     { label: "Active Kitchens", value: stats.totalProviders || 0, sub: `${pending.length} pending approval`, icon: "🍳", grad: "linear-gradient(135deg,#a8c5a0,#6b9e5e)", shadow: "rgba(107,158,94,0.38)", textLight: true },
     { label: "Total Menus", value: allMenus.length || 0, sub: "Live kitchen schedules", icon: "🍱", grad: "rgba(255,255,255,0.85)", shadow: "rgba(143,174,142,0.18)", textLight: false, border: "1.5px solid rgba(143,174,142,0.3)" },
     { label: "Total Orders", value: stats.totalOrders || 0, sub: "All-time platform orders", icon: "📦", grad: "rgba(255,255,255,0.85)", shadow: "rgba(143,174,142,0.18)", textLight: false, border: "1.5px solid rgba(143,174,142,0.3)" },
-    { label: "Gross Revenue", value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, sub: "Total amount collected", icon: "💰", grad: "linear-gradient(135deg,#D9D9A8,#c5ce88)", shadow: "rgba(180,190,100,0.32)", textLight: false },
+    { label: "Gross Revenue", value: `₹${(totalRevenueCalculated || 0).toLocaleString()}`, sub: "Total value of all orders", icon: "💰", grad: "linear-gradient(135deg,#D9D9A8,#c5ce88)", shadow: "rgba(180,190,100,0.32)", textLight: false },
   ] : [];
 
   const SIDEBAR_W = collapsed ? 72 : 240;

@@ -25,7 +25,7 @@ function ApproveModal({ provider, onClose, onApprove, loading }) {
       <div style={{ background: "#fff", borderRadius: 32, padding: "52px 44px 44px", maxWidth: 440, width: "100%", textAlign: "center", boxShadow: "0 48px 96px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", animation: "modalIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(90deg,#8FAE8E,#D9D9A8)", borderRadius: "32px 32px 0 0" }} />
         <div style={{ width: 90, height: 90, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", fontSize: 40, boxShadow: "0 20px 40px rgba(143,174,142,0.4)" }}>👩‍🍳</div>
-        <h2 style={{ fontFamily: "'Lora',serif", fontSize: 26, color: "#2d3b2d", marginBottom: 12 }}>Approve Kitchen?</h2>
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 12 }}>Approve Kitchen?</h2>
         <p style={{ color: "#666", fontSize: 15, lineHeight: 1.6, marginBottom: 32 }}>
           You are about to authorize <strong>{provider?.businessName}</strong>. This will enable their menu and notify <strong>{provider?.ownerName}</strong> via email.
         </p>
@@ -59,7 +59,7 @@ function RejectModal({ provider, onClose, onReject, loading }) {
     >
       <div style={{ background: "#fff", borderRadius: 32, padding: "44px 40px", maxWidth: 500, width: "100%", boxShadow: "0 48px 96px rgba(0,0,0,0.4)", position: "relative" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "#ef5350", borderRadius: "32px 32px 0 0" }} />
-        <h2 style={{ fontFamily: "'Lora',serif", fontSize: 24, color: "#2d3b2d", marginBottom: 6 }}>Declining Application</h2>
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Declining Application</h2>
         <p style={{ color: "#888", fontSize: 14, marginBottom: 28 }}>Kitchen: <span style={{ color: "#ef5350", fontWeight: 700 }}>{provider?.businessName}</span></p>
 
         <div style={{ textAlign: "left" }}>
@@ -109,7 +109,7 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
       <div style={{ background: "#fff", borderRadius: 36, width: "100%", maxWidth: 650, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 50px 100px rgba(0,0,0,0.25)", animation: "modalIn 0.5s ease" }}>
         <div style={{ padding: "30px 40px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfdfc" }}>
           <div>
-            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 24, color: "#2d3b2d" }}>Kitchen Dossier</h2>
+            <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>Kitchen Dossier</h2>
             <p style={{ fontSize: 13, color: "#aaa" }}>Application ID: {provider?._id?.slice(-8).toUpperCase()}</p>
           </div>
           <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", fontSize: 18, color: "#aaa" }}>✕</button>
@@ -126,7 +126,7 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
           </div>
 
           <div style={{ marginBottom: 40 }}>
-            <h3 style={{ fontSize: 12, color: "#8FAE8E", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16 }}>Verified Documentation</h3>
+            <h3 style={{ fontSize: 12, color: "#8FAE8E", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, fontFamily: "'Lora', serif" }}>Verified Documentation</h3>
             <div style={{ borderRadius: 24, border: "2px dashed #e0e6e0", overflow: "hidden", background: "#f9faf9", padding: 20, textAlign: "center" }}>
               {provider?.fssaiCertificate ? (
                 isPdf ? (
@@ -257,40 +257,54 @@ export default function AdminDashboard() {
 
   const totalRevenueCalculated = allOrders.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
 
-  if (dataLoading) {
+  const anim = (d = 0) => ({
+    opacity: loaded ? 1 : 0,
+    transform: loaded ? "translateY(0)" : "translateY(18px)",
+    transition: `opacity 0.6s ease ${d}ms, transform 0.6s cubic-bezier(.22,.68,0,1.2) ${d}ms`,
+  });
+
+  const statCards = [
+    { label: "Total Users", val: (stats.totalUsers || 0) + (stats.totalProviders || 0), color: "#2d3b2d", sub: `${stats.totalUsers || 0} customers` },
+    { label: "Active Kitchens", val: stats.totalProviders || 0, color: "#8FAE8E", sub: "Verified Partners" },
+    { label: "Total Menus", val: allMenus.length || 0, color: "#8FA873", sub: "Live kitchen schedules" },
+    { label: "Total Orders", val: stats.totalOrders || 0, color: "#8FA873", sub: "Lifetime Volume" },
+    { label: "Revenue", val: `₹${(totalRevenueCalculated || 0).toLocaleString()}`, color: "#2d3b2d", sub: "Gross Earnings" }
+  ];
+
+  if (dataLoading && !loaded) {
     return (
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#E7E6B6", gap: 20 }}>
         <div style={{ width: 40, height: 40, border: "4px solid #8FAE8E", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
-        <p style={{ fontWeight: 700, color: "#5a7a50", letterSpacing: 1 }}>SECURE ADMIN HANDSHAKE...</p>
+        <p style={{ fontWeight: 700, color: "#5a7a50", letterSpacing: 1 }}>SYNCHRONIZING SECURE DATA...</p>
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "sans-serif" }}>
 
       {/* LAYERED MODAL SYSTEM */}
       {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={approving} />}
       {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={rejecting} />}
       {viewTarget && <ViewApplicationModal provider={viewTarget} onClose={() => setViewTarget(null)} onApprove={setApproveTarget} onReject={setRejectTarget} />}
 
-      {/* DYNAMIC SIDEBAR */}
+      {/* SIMPLE SIDEBAR */}
       <aside style={{ width: 280, background: "linear-gradient(180deg, #8FA873 0%, #6b8254 100%)", color: "#fff", padding: "40px 24px", display: "flex", flexDirection: "column", boxShadow: "10px 0 30px rgba(0,0,0,0.05)", zIndex: 10 }}>
         <div style={{ marginBottom: 50 }}>
-          <h1 style={{ fontFamily: "'Lora',serif", fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Naari Admin</h1>
+          <h1 style={{ fontFamily: "'Lora', serif", fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Naari Admin</h1>
           <div style={{ height: 3, width: 40, background: "#D9D9A8", borderRadius: 2 }} />
         </div>
 
         <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
           {[
-            { id: "dashboard", label: "Overview", icon: "📊" },
-            { id: "pending", label: `Applications (${pending.length})`, icon: "⏳" },
-            { id: "providers", label: "Kitchen Network", icon: "🍳" },
-            { id: "users", label: "Customer Base", icon: "👥" },
-            { id: "menus", label: "Menu Catalog", icon: "🍱" },
-            { id: "orders", label: "Recent Orders", icon: "📦" },
-            { id: "feedbacks", label: "Reviews", icon: "💬" }
+            { id: "dashboard", label: "Dashboard", icon: "📊" },
+            { id: "pending", label: `Pending Requests (${pending.length})`, icon: "⏳" },
+            { id: "providers", label: "Tiffin Providers", icon: "🍳" },
+            { id: "users", label: "Users", icon: "👥" },
+            { id: "menus", label: "Menu", icon: "🍱" },
+            { id: "orders", label: "Orders", icon: "📦" },
+            { id: "feedbacks", label: "Feedback", icon: "💬" }
           ].map(item => (
             <button
               key={item.id}
@@ -310,102 +324,201 @@ export default function AdminDashboard() {
           onClick={() => { localStorage.clear(); navigate("/login"); }}
           style={{ padding: "16px", borderRadius: 16, background: "rgba(0,0,0,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", fontWeight: 700 }}
         >
-          🚪 Terminate Session
+          🚪 Logout
         </button>
       </aside>
 
-      {/* SCROLLABLE VIEWPORT */}
+      {/* MAIN VIEWPORT */}
       <main style={{ flex: 1, padding: "50px 60px", overflowY: "auto", height: "100vh" }}>
 
         {activeNav === "dashboard" && (
           <div style={{ animation: "fadeIn 0.5s ease" }}>
             <header style={{ marginBottom: 40 }}>
-              <h2 style={{ fontSize: 32, color: "#2d3b2d", fontFamily: "'Lora', serif" }}>Platform Health</h2>
-              <p style={{ color: "#7a8a7a" }}>Real-time metrics for TiffinsByNaari</p>
+              <h2 style={{ fontSize: 32, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Admin Dashboard</h2>
+              <p style={{ color: "#7a8a7a" }}>TiffinsByNaari Management Portal</p>
             </header>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 30, marginBottom: 50 }}>
-              {[
-                { label: "Total Users", val: (stats.totalUsers || 0) + (stats.totalProviders || 0), color: "#2d3b2d", sub: `${stats.totalUsers || 0} customers` },
-                { label: "Active Kitchens", val: stats.totalProviders, color: "#8FAE8E", sub: "Verified Partners" },
-                { label: "Total Menus", val: allMenus.length, color: "#8FA873", sub: "Live kitchen schedules" },
-                { label: "Total Orders", val: stats.totalOrders, color: "#8FA873", sub: "Lifetime Volume" },
-                { label: "Revenue", val: `₹${(totalRevenueCalculated || 0).toLocaleString()}`, color: "#2d3b2d", sub: "Gross Earnings" }
-              ].map((card, i) => (
+              {statCards.map((card, i) => (
                 <div key={i} style={{ background: "#fff", padding: 30, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
                   <p style={{ fontSize: 12, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 10 }}>{card.label}</p>
-                  <h3 style={{ fontSize: 36, color: card.color, marginBottom: 5 }}>{card.val}</h3>
+                  <h3 style={{ fontSize: 36, color: card.color, marginBottom: 5, fontWeight: 700 }}>{card.val}</h3>
                   <p style={{ fontSize: 13, color: "#888" }}>{card.sub}</p>
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {activeNav === "pending" && (
-          <div style={{ animation: "fadeIn 0.5s ease" }}>
-            <h3 style={{ fontSize: 24, marginBottom: 30, color: "#2d3b2d" }}>Incoming Applications</h3>
-            {pending.length === 0 ? (
-              <div style={{ padding: 60, textAlign: "center", background: "#fff", borderRadius: 28 }}>
-                <p style={{ fontSize: 18, color: "#aaa" }}>All caught up! No pending reviews.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 30, marginBottom: 50 }}>
+              {/* RECENT TRANSACTIONS */}
+              <div style={{ background: "#fff", padding: 32, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Recent Transactions</h3>
+                  <button onClick={() => setActiveNav("orders")} style={{ background: "none", border: "none", color: "#8fa873", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>See All →</button>
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #eee" }}>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Order ID</th>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Customer</th>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Amount</th>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allOrders.slice(0, 5).map(o => (
+                      <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: "16px 0", fontSize: 13, fontWeight: 700, color: "#333" }}>#{o._id.slice(-6).toUpperCase()}</td>
+                        <td style={{ padding: "16px 0", fontSize: 13, color: "#666" }}>{o.user?.name || "Member"}</td>
+                        <td style={{ padding: "16px 0", fontSize: 13, fontWeight: 800, color: "#2d3b2d" }}>₹{o.totalPrice}</td>
+                        <td style={{ padding: "16px 0" }}>
+                          <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", color: o.status === 'delivered' ? '#43a047' : '#fb8c00' }}>{o.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                    {allOrders.length === 0 && <tr><td colSpan="4" style={{ padding: "20px 0", textAlign: "center", color: "#aaa" }}>No recent records.</td></tr>}
+                  </tbody>
+                </table>
               </div>
-            ) : (
-              <div style={{ display: "grid", gap: 20 }}>
-                {pending.map(p => (
-                  <div key={p._id} style={{ display: "flex", alignItems: "center", padding: "24px 32px", background: "#fff", borderRadius: 24, boxShadow: "0 10px 25px rgba(0,0,0,0.02)" }}>
-                    <div style={{ flex: 1 }}>
-                      <h4 style={{ fontSize: 18, color: "#2d3b2d", marginBottom: 4 }}>{p.businessName}</h4>
-                      <p style={{ fontSize: 14, color: "#888" }}>{p.ownerName} • {p.email}</p>
+
+              {/* RECENT FEEDBACK */}
+              <div style={{ background: "#fff", padding: 32, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Feedback</h3>
+                  <button onClick={() => setActiveNav("feedbacks")} style={{ background: "none", border: "none", color: "#8fa873", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Review →</button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                  {allFeedbacks.slice(0, 3).map(f => (
+                    <div key={f._id} style={{ borderBottom: "1px solid #f9f9f9", paddingBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#333" }}>{f.user?.name}</span>
+                        <span style={{ fontSize: 11, color: "#a5a56d" }}>⭐ {f.rating}</span>
+                      </div>
+                      <p style={{ fontSize: 12, color: "#888", fontStyle: "italic", lineHeight: 1.4, margin: 0 }}>"{f.comment?.length > 60 ? f.comment.slice(0, 60) + "..." : f.comment}"</p>
                     </div>
-                    <div style={{ display: "flex", gap: 12 }}>
-                      <button onClick={() => setViewTarget(p)} style={{ padding: "12px 24px", borderRadius: 14, border: "1px solid #ddd", background: "#fff", cursor: "pointer", fontWeight: 700 }}>Inspect</button>
-                      <button onClick={() => setApproveTarget(p)} style={{ padding: "12px 24px", borderRadius: 14, border: "none", background: "#8FAE8E", color: "#fff", cursor: "pointer", fontWeight: 700 }}>Quick Approve</button>
-                    </div>
+                  ))}
+                  {allFeedbacks.length === 0 && <p style={{ textAlign: "center", color: "#aaa", fontSize: 13 }}>No recent voices.</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* QUICK ACTIONS / ALERTS */}
+            {pending.length > 0 && (
+              <div style={{ ...anim(800), background: "#fff", padding: 40, borderRadius: 40, border: "2px solid #f4f7f4", boxShadow: "0 40px 80px rgba(143,174,142,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                  <div style={{ width: 64, height: 64, borderRadius: 20, background: "#fdf8e6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🔔</div>
+                  <div>
+                    <h4 style={{ fontSize: 20, color: "#2d3b2d", fontWeight: 800, fontFamily: "'Lora', serif" }}>Action Required</h4>
+                    <p style={{ color: "#888" }}>You have <strong>{pending.length}</strong> new kitchen applications awaiting your review.</p>
                   </div>
-                ))}
+                </div>
+                <button onClick={() => setActiveNav("pending")} style={{ padding: "16px 32px", borderRadius: 16, background: "#2d3b2d", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer", transition: "0.3s" }}>View Queue</button>
               </div>
             )}
           </div>
         )}
 
         {/* EXTERNAL MODULES */}
-        {activeNav === "users" && <AdminUsers users={allUsers} />}
-        {activeNav === "feedbacks" && <AdminFeedback feedbacks={allFeedbacks} loading={dataLoading} />}
-        {activeNav === "menus" && <AdminMenu menus={allMenus} loading={dataLoading} />}
-        {activeNav === "orders" && (
-          <div style={{ animation: "fadeIn 0.5s ease" }}>
-            <h3 style={{ fontSize: 24, marginBottom: 30, color: "#2d3b2d" }}>Order Management</h3>
-            <div style={{ background: "#fff", padding: 40, borderRadius: 28 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid #eee" }}>
-                    <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Order ID</th>
-                    <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Customer</th>
-                    <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Amount</th>
-                    <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allOrders.map(o => (
-                    <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
-                      <td style={{ padding: 15, fontSize: 14, fontWeight: 700 }}>#{o._id.slice(-6).toUpperCase()}</td>
-                      <td style={{ padding: 15, fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
-                      <td style={{ padding: 15, fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
-                      <td style={{ padding: 15 }}>
-                        <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>
-                          {o.status}
-                        </span>
-                      </td>
-                    </tr>
+        <div style={{ animation: "fadeIn 0.5s ease" }}>
+          {activeNav === "pending" && (
+            <div>
+              <h3 style={{ fontSize: 32, marginBottom: 30, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Incoming Applications</h3>
+              {pending.length === 0 ? (
+                <div style={{ padding: 60, textAlign: "center", background: "#fff", borderRadius: 28 }}>
+                  <p style={{ fontSize: 18, color: "#aaa" }}>All caught up! No pending reviews.</p>
+                </div>
+              ) : (
+                <div style={{ display: "grid", gap: 20 }}>
+                  {pending.map(p => (
+                    <div key={p._id} style={{ display: "flex", alignItems: "center", padding: "24px 32px", background: "#fff", borderRadius: 24, boxShadow: "0 10px 25px rgba(0,0,0,0.02)" }}>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: 18, color: "#2d3b2d", marginBottom: 4 }}>{p.businessName}</h4>
+                        <p style={{ fontSize: 14, color: "#888" }}>{p.ownerName} • {p.email}</p>
+                      </div>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <button onClick={() => setViewTarget(p)} style={{ padding: "12px 24px", borderRadius: 14, border: "1px solid #ddd", background: "#fff", cursor: "pointer", fontWeight: 700 }}>Inspect</button>
+                        <button onClick={() => setApproveTarget(p)} style={{ padding: "12px 24px", borderRadius: 14, border: "none", background: "#8FAE8E", color: "#fff", cursor: "pointer", fontWeight: 700 }}>Quick Approve</button>
+                      </div>
+                    </div>
                   ))}
-                </tbody>
-              </table>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-        {activeNav === "providers" && <div style={{ background: "#fff", padding: 40, borderRadius: 28 }}><h3>Kitchen Management</h3><p>Listing {allProviders.length} active kitchen partners.</p></div>}
+          )}
 
+          {activeNav === "users" && <AdminUsers users={allUsers} />}
+          {activeNav === "feedbacks" && <AdminFeedback feedbacks={allFeedbacks} loading={dataLoading} />}
+          {activeNav === "menus" && <AdminMenu menus={allMenus} loading={dataLoading} />}
+          {activeNav === "orders" && (
+            <div>
+              <h3 style={{ fontSize: 32, marginBottom: 30, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Order Management</h3>
+              <div style={{ background: "#fff", padding: 40, borderRadius: 28 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #eee" }}>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Order ID</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Customer</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Amount</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allOrders.map(o => (
+                      <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: 15, fontSize: 14, fontWeight: 700 }}>#{o._id.slice(-6).toUpperCase()}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
+                        <td style={{ padding: 15, fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
+                        <td style={{ padding: 15 }}>
+                          <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>
+                            {o.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {activeNav === "providers" && (
+            <div>
+              <h3 style={{ fontSize: 32, marginBottom: 30, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Tiffin Providers</h3>
+              <div style={{ background: "#fff", padding: 40, borderRadius: 28 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #eee" }}>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Business Name</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Owner</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Cuisine</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Phone</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allProviders.map(p => (
+                      <tr key={p._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: 15, fontSize: 14, fontWeight: 700 }}>{p.businessName}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{p.ownerName}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{p.cuisineType || "N/A"}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{p.phone}</td>
+                        <td style={{ padding: 15 }}>
+                          <span style={{
+                            padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 800,
+                            background: p.isActive ? '#e8f5e9' : '#ffebee',
+                            color: p.isActive ? '#2e7d32' : '#c62828'
+                          }}>
+                            {p.isActive ? "ACTIVE" : "INACTIVE"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
       </main>
+
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }

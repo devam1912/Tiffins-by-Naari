@@ -218,6 +218,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
     const [isServiceActive, setIsServiceActive] = useState(true);
     const [isStatusLoading, setIsStatusLoading] = useState(false);
     const [stats, setStats] = useState(null);
+    const [profile, setProfile] = useState(null);
     const [loadingStats, setLoadingStats] = useState(true);
 
     const fetchDashboardStats = async () => {
@@ -229,8 +230,21 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
             });
             if (res.data.success) {
                 setStats(res.data.data);
-                // Also update service status from stats if available (assuming isActive is in data)
-                // if (res.data.data.isActive !== undefined) setIsServiceActive(res.data.data.isActive);
+                if (res.data.data.isActive !== undefined) setIsServiceActive(res.data.data.isActive);
+
+                // --- PROFILE SCRAPER ---
+                // Since there's no direct GET /profile, we scrape it from the nearby list
+                try {
+                    const nearbyRes = await api.get("/api/tiffins/nearby?lat=0&lng=0&distance=100000");
+                    if (Array.isArray(nearbyRes.data)) {
+                        // Find the provider that matches current user ID or business name from stats
+                        // Note: If newly registered and not approved, they won't show here.
+                        const myProfile = nearbyRes.data.find(p => p.businessName === res.data.data.businessName);
+                        if (myProfile) setProfile(myProfile);
+                    }
+                } catch (pErr) {
+                    console.warn("Profile scrape failed:", pErr.message);
+                }
             }
         } catch (error) {
             console.error("Error fetching dashboard stats:", error);
@@ -276,7 +290,9 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                     <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center">
                         <UtensilsCrossed className="text-[var(--primary)] w-6 h-6" />
                     </div>
-                    <Typography variant="h4" className="!text-primary-foreground font-serif tracking-tight">Naari Chef</Typography>
+                    <Typography variant="h4" className="!text-primary-foreground font-serif tracking-tight">
+                        {stats?.businessName || "My Kitchen"}
+                    </Typography>
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-2">
@@ -349,11 +365,15 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                         <div className="h-8 w-px bg-gray-100"></div>
                         <div className="flex items-center gap-3 cursor-pointer group">
                             <div className="text-right">
-                                <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] transition-colors">Naari's Kitchen</p>
-                                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">Premium Provider</p>
+                                <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] transition-colors">
+                                    {stats?.businessName || "My Kitchen"}
+                                </p>
+                                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{stats?.ownerName || "Chef"}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center border-2 border-[var(--primary)]/20 shadow-sm group-hover:scale-105 transition-transform">
-                                <span className="text-[var(--primary)] font-bold">NK</span>
+                                <span className="text-[var(--primary)] font-bold">
+                                    {(stats?.businessName || "K").charAt(0).toUpperCase()}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -389,6 +409,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                                     isServiceActive={isServiceActive}
                                     toggleServiceStatus={toggleServiceStatus}
                                     isStatusLoading={isStatusLoading}
+                                    profileData={profile || stats} // Fallback to stats if scraper fails
                                 />
                             ) : (
                                 <ViewPlaceholder title={activeTab} />

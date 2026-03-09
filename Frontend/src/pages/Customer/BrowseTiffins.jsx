@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useSelector } from "react-redux";
 
 // Cache to avoid re-fetching same coordinates
 const geocodeCache = {};
@@ -14,7 +15,6 @@ async function reverseGeocode(lat, lng) {
       { headers: { "User-Agent": "TiffinsByNaari/1.0" } }
     );
     const data = await res.json();
-    // Build a short readable address: neighbourhood/suburb + city
     const a = data.address || {};
     const parts = [
       a.neighbourhood || a.suburb || a.village || a.town || a.county,
@@ -30,7 +30,9 @@ async function reverseGeocode(lat, lng) {
 
 export default function BrowseTiffins() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
+
+  // ✅ Redux se token
+  const token = useSelector((state) => state.auth.token);
 
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +41,6 @@ export default function BrowseTiffins() {
   const [userLocation, setUserLocation] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [sortBy, setSortBy] = useState("distance");
-  // Map: providerId → geocoded area string
   const [areaMap, setAreaMap] = useState({});
   const geocodingRef = useRef(false);
 
@@ -67,7 +68,6 @@ export default function BrowseTiffins() {
     fetchProviders();
   }, [userLocation, radius]);
 
-  // Whenever providers change, reverse-geocode any that lack an address
   useEffect(() => {
     if (!providers.length) return;
     geocodeProviders(providers);
@@ -89,14 +89,12 @@ export default function BrowseTiffins() {
     }
   };
 
-  // Reverse geocode all providers sequentially (1 req/sec to respect Nominatim ToS)
   const geocodeProviders = async (list) => {
     if (geocodingRef.current) return;
     geocodingRef.current = true;
     for (const p of list) {
       const coords = p.location?.coordinates;
       if (!coords) continue;
-      // Use DB address if present, else geocode
       if (p.address) {
         setAreaMap(prev => ({ ...prev, [p._id]: p.address }));
         continue;
@@ -106,7 +104,7 @@ export default function BrowseTiffins() {
       if (label) {
         setAreaMap(prev => ({ ...prev, [p._id]: label }));
       }
-      await new Promise(r => setTimeout(r, 1100)); // Nominatim rate limit: 1 req/sec
+      await new Promise(r => setTimeout(r, 1100));
     }
     geocodingRef.current = false;
   };
@@ -322,7 +320,7 @@ export default function BrowseTiffins() {
         {!loading && filtered.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 20 }}>
             {filtered.map((p, i) => {
-              const area = areaMap[p._id]; // undefined = still loading, string = ready
+              const area = areaMap[p._id];
               return (
                 <div key={p._id} className="provider-card" style={{ animation: `popIn 0.4s cubic-bezier(.22,.68,0,1.2) ${i * 55}ms both` }}>
 
@@ -354,7 +352,6 @@ export default function BrowseTiffins() {
                       {p.businessName}
                     </h3>
 
-                    {/* Location — geocoded from Nominatim */}
                     <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
                       <span>📍</span>
                       <span
@@ -365,7 +362,6 @@ export default function BrowseTiffins() {
                       </span>
                     </p>
 
-                    {/* Stats */}
                     <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18, flexWrap: "wrap" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                         <StarRating rating={p.rating} />

@@ -2,15 +2,25 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Sidebar from "../../components/Customer/Sidebar";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../../store/authSlice";
+
 export default function CustomerDashboard() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [stats, setStats] = useState({ tiffins: 0, subscriptions: 0, orders: 0 });
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
-  
+
+  // ✅ Redux se user aur token
+  const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
+  const dispatch = useDispatch();
+
+  // ✅ Login nahi hai toh redirect
+  if (!token) { navigate("/login"); return; }
+
   useEffect(() => {
     // 1. Get Coordinates from Browser
     if ("geolocation" in navigator) {
@@ -49,18 +59,14 @@ export default function CustomerDashboard() {
     } else {
       setLocation({ address: "Geolocation not supported", loading: false });
     }
+
     // Fonts
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
 
-    const token = localStorage.getItem("token");
-    if (!token) { navigate("/login"); return; }
-
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) setUser(JSON.parse(storedUser));
-
+    // ✅ Token ab Redux se aa raha hai, localStorage se nahi
     const headers = { Authorization: `Bearer ${token}` };
 
     Promise.all([
@@ -78,11 +84,11 @@ export default function CustomerDashboard() {
       .catch(err => console.error("Dashboard fetch error:", err));
 
     setTimeout(() => setLoaded(true), 80);
-  }, [navigate]);
+  }, [navigate, token]);
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+  // ✅ Naya logout — Redux dispatch karta hai
+  const handleLogout = () => {
+    dispatch(logout());
     navigate("/login");
   };
 
@@ -170,14 +176,15 @@ export default function CustomerDashboard() {
 
       {/* ══════════════ SIDEBAR ══════════════ */}
       <Sidebar 
-  collapsed={collapsed} 
-  setCollapsed={setCollapsed} 
-  activeNav={activeNav} 
-  setActiveNav={setActiveNav} 
-  user={user} 
-  location={location} 
-  logout={logout} 
-/>
+        collapsed={collapsed} 
+        setCollapsed={setCollapsed} 
+        activeNav={activeNav} 
+        setActiveNav={setActiveNav} 
+        user={user} 
+        location={location} 
+        logout={handleLogout}
+      />
+
       {/* ══════════════ MAIN CONTENT ══════════════ */}
       <main style={{
         marginLeft: collapsed ? 72 : 260,
@@ -230,7 +237,6 @@ export default function CustomerDashboard() {
               Discover Fresh Home-Cooked<br /><em>Meals Near You</em>
             </h2>
             <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-              {/* UPDATED LOCATION TEXT */}
               Browse from <strong style={{ color: "#fff" }}>{stats.tiffins}</strong> home kitchens in <strong>{location.address.split(',')[0]}</strong> — wholesome, authentic and delivered fresh.
             </p>
             <button
@@ -320,7 +326,6 @@ export default function CustomerDashboard() {
                 </div>
               </div>
             </div>
-
           </div>
         </div>
 

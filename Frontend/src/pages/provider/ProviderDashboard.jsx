@@ -22,7 +22,7 @@ import { cn } from "../../lib/utils";
 
 // --- Placeholder Sub-components ---
 
-const DashboardOverview = ({ stats, loading }) => {
+const DashboardOverview = ({ stats, loading, isServiceActive }) => {
     const statsConfig = [
         {
             label: "Monthly Revenue",
@@ -50,11 +50,11 @@ const DashboardOverview = ({ stats, loading }) => {
         },
         {
             label: "Service Status",
-            value: stats?.isActive ? "Active" : "Paused",
+            value: isServiceActive ? "Active" : "Paused",
             icon: UtensilsCrossed,
             trend: "Current",
-            color: stats?.isActive ? "text-amber-600" : "text-red-600",
-            bg: stats?.isActive ? "bg-amber-50" : "bg-red-50"
+            color: isServiceActive ? "text-amber-600" : "text-red-600",
+            bg: isServiceActive ? "bg-amber-50" : "bg-red-50"
         },
     ];
 
@@ -225,25 +225,36 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
         setLoadingStats(true);
         try {
             const token = localStorage.getItem("token");
+            const userData = JSON.parse(localStorage.getItem("user") || "{}");
+
             const res = await api.get("/api/subscriptions/provider/dashboard", {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
             if (res.data.success) {
                 setStats(res.data.data);
-                if (res.data.data.isActive !== undefined) setIsServiceActive(res.data.data.isActive);
 
-                // --- PROFILE SCRAPER ---
-                // Since there's no direct GET /profile, we scrape it from the nearby list
+                // --- PROFILE & STATUS SYNC ---
+                // We fetch the public 'nearby' list to find our own provider record
+                // This gives us the accurate 'isActive' status and 'businessName'
                 try {
                     const nearbyRes = await api.get("/api/tiffins/nearby?lat=0&lng=0&distance=100000");
                     if (Array.isArray(nearbyRes.data)) {
-                        // Find the provider that matches current user ID or business name from stats
-                        // Note: If newly registered and not approved, they won't show here.
-                        const myProfile = nearbyRes.data.find(p => p.businessName === res.data.data.businessName);
-                        if (myProfile) setProfile(myProfile);
+                        // Match by user ID from localStorage
+                        const myProfile = nearbyRes.data.find(p => p.user === userData.id);
+
+                        if (myProfile) {
+                            setProfile(myProfile);
+                            setIsServiceActive(true); // Found in public 'active' list
+                        } else {
+                            // If not found in the 'active/approved' list, we are inactive
+                            setIsServiceActive(false);
+                            // Still try to get profile data from stats if the scraper misses it
+                            // (e.g., if newly registered but not approved yet)
+                        }
                     }
                 } catch (pErr) {
-                    console.warn("Profile scrape failed:", pErr.message);
+                    console.warn("Status sync via nearby failed:", pErr.message);
                 }
             }
         } catch (error) {
@@ -266,6 +277,8 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                 headers: { Authorization: `Bearer ${token}` }
             });
             setIsServiceActive(!isServiceActive);
+            // Refresh counts (meals, subscribers) which might change after pausing/resuming
+            await fetchDashboardStats();
         } catch (error) {
             console.error("Failed to toggle service status:", error);
             alert("Failed to update service status. Please try again.");
@@ -291,7 +304,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                         <UtensilsCrossed className="text-[var(--primary)] w-6 h-6" />
                     </div>
                     <Typography variant="h4" className="!text-primary-foreground font-serif tracking-tight">
-                        {stats?.businessName || "My Kitchen"}
+                        {profile?.businessName || stats?.businessName || "My Kitchen"}
                     </Typography>
                 </div>
 
@@ -366,13 +379,13 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                         <div className="flex items-center gap-3 cursor-pointer group">
                             <div className="text-right">
                                 <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] transition-colors">
-                                    {stats?.businessName || "My Kitchen"}
+                                    {profile?.businessName || stats?.businessName || "My Kitchen"}
                                 </p>
-                                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{stats?.ownerName || "Chef"}</p>
+                                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{profile?.ownerName || stats?.ownerName || "Chef"}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center border-2 border-[var(--primary)]/20 shadow-sm group-hover:scale-105 transition-transform">
                                 <span className="text-[var(--primary)] font-bold">
-                                    {(stats?.businessName || "K").charAt(0).toUpperCase()}
+                                    {(profile?.businessName || stats?.businessName || "K").charAt(0).toUpperCase()}
                                 </span>
                             </div>
                         </div>
@@ -397,7 +410,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                             transition={{ duration: 0.3 }}
                         >
                             {activeTab === "Dashboard" ? (
-                                <DashboardOverview stats={stats} loading={loadingStats} />
+                                <DashboardOverview stats={stats} loading={loadingStats} isServiceActive={isServiceActive} />
                             ) : activeTab === "Menu Management" ? (
                                 <ProviderMenu />
                             ) : activeTab === "Active Subscriptions" ? (

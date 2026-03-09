@@ -18,45 +18,8 @@ import { Button } from "./ui/Button";
 import { cn } from "../lib/utils";
 import api from "../services/api";
 
-// Demo fallback data (used when backend is unavailable)
-const DEMO_ORDERS = [
-    {
-        _id: "demo-ord-001",
-        user: { name: "Aditi Sharma", phone: "+91 98765 43210" },
-        timeSlot: "lunch",
-        items: [{ name: "Dal Tadka", itemType: "Dal", price: 0 }, { name: "Jeera Rice", itemType: "Rice", price: 0 }],
-        totalPrice: 150,
-        status: "completed",
-        date: new Date().toISOString(),
-    },
-    {
-        _id: "demo-ord-002",
-        user: { name: "Rahul V.", phone: "+91 87654 32109" },
-        timeSlot: "lunch",
-        items: [{ name: "Paneer Butter Masala", itemType: "Sabzi", price: 0 }],
-        totalPrice: 150,
-        status: "ready",
-        date: new Date().toISOString(),
-    },
-    {
-        _id: "demo-ord-003",
-        user: { name: "Sneha Kapur", phone: "+91 76543 21098" },
-        timeSlot: "dinner",
-        items: [{ name: "Palak Paneer", itemType: "Sabzi", price: 0 }, { name: "Tandoori Roti", itemType: "Bread", price: 0 }],
-        totalPrice: 150,
-        status: "preparing",
-        date: new Date().toISOString(),
-    },
-    {
-        _id: "demo-ord-004",
-        user: { name: "Amit G.", phone: "+91 65432 10987" },
-        timeSlot: "dinner",
-        items: [{ name: "Dal Fry", itemType: "Dal", price: 0 }],
-        totalPrice: 150,
-        status: "confirmed",
-        date: new Date().toISOString(),
-    }
-];
+// Demo data removed - syncing purely with backend
+const DEMO_ORDERS = [];
 
 export const OrdersToday = () => {
     const [orders, setOrders] = useState([]);
@@ -87,9 +50,9 @@ export const OrdersToday = () => {
 
             setOrders(todayOrders);
         } catch (err) {
-            console.warn("Backend unavailable, using demo data:", err.message);
-            setError("Using demo data — backend is offline.");
-            setOrders(DEMO_ORDERS);
+            console.error("Orders sync failed:", err.message);
+            setError("Unable to sync live orders. Please check your connection.");
+            setOrders([]);
         } finally {
             setLoading(false);
         }
@@ -176,7 +139,12 @@ export const OrdersToday = () => {
             {/* Header + Stats */}
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div>
-                    <Typography variant="h2" className="font-serif">Orders Today</Typography>
+                    <Typography
+                        variant="h2"
+                        className="font-serif !text-[32px] !font-bold"
+                    >
+                        Orders Today
+                    </Typography>
                     <Typography variant="small" className="text-gray-500">
                         Managing {orders.length} deliveries for {formatDate()}
                     </Typography>

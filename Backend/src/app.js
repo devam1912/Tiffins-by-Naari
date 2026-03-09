@@ -20,6 +20,7 @@ const mealSelectionRoutes = require("./modules/subscription/mealSelection.routes
 const orderRoutes = require("./modules/order/order.routes");
 const feedbackRoutes = require("./modules/feedback/feedback.routes");
 const recommendationRoutes = require("./modules/recommendation/recommendation.routes");
+const cartRoutes = require("./modules/cart/cart.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/feedback", feedbackRoutes);
@@ -29,4 +30,5 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/meal-selection", mealSelectionRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/cart", cartRoutes);
 module.exports = app;

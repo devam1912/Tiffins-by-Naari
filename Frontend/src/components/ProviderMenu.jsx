@@ -33,19 +33,12 @@ export const ProviderMenu = () => {
         DAYS.map(day => ({
             day,
             lunch: {
-                items: day === "Monday" ? [
-                    { id: "1", name: "Dal Tadka", type: "Dal", isVeg: true, status: "approved" },
-                    { id: "2", name: "Jeera Rice", type: "Rice", isVeg: true, status: "approved" },
-                    { id: "3", name: "Palak Paneer", type: "Sabzi", isVeg: true, status: "pending" },
-                ] : [],
-                price: 150
+                items: [], // NO STATIC MOCK DATA
+                price: 0
             },
             dinner: {
-                items: day === "Monday" ? [
-                    { id: "4", name: "Paneer Butter Masala", type: "Sabzi", isVeg: true, status: "approved" },
-                    { id: "5", name: "Tandoori Roti", type: "Bread", isVeg: true, status: "pending" },
-                ] : [],
-                price: 150
+                items: [], // NO STATIC MOCK DATA
+                price: 0
             }
         }))
     );

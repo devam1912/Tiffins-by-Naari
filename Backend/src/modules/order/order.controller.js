@@ -2,6 +2,7 @@ const Order = require("./order.model");
 const User = require("../user/user.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
+const Cart = require("../cart/cart.model");
 const { deductCredit } = require("../user/wallet.service");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
@@ -144,6 +145,23 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Invalid time slot" });
     }
 
+    // ===== TIME VALIDATION FOR ORDERING =====
+    const now = new Date();
+    const currentHours = now.getHours() + now.getMinutes() / 60;
+
+    // Convert orderDate into today check
+    const isToday = new Date().toDateString() === new Date(date).toDateString();
+
+    if (isToday) {
+      if (timeSlot === "lunch" && currentHours >= 15) {
+        return res.status(400).json({ message: "Lunch orders can only be placed before 3:00 PM today." });
+      }
+
+      if (timeSlot === "dinner" && (currentHours < 19 || currentHours >= 22.5)) {
+        return res.status(400).json({ message: "Dinner orders can only be placed between 7:00 PM and 10:30 PM today." });
+      }
+    }
+
     const orderDate = new Date(date);
     if (isNaN(orderDate)) {
       return res.status(400).json({ message: "Invalid date" });
@@ -183,6 +201,7 @@ const createOrder = async (req, res) => {
 
     const validatedItems = [];
 
+    // Map item quantities and structure them correctly for the Order schema
     for (const item of selectedItems) {
       if (!availableItems.includes(item.name)) {
         return res.status(400).json({
@@ -192,16 +211,34 @@ const createOrder = async (req, res) => {
 
       validatedItems.push({
         name: item.name,
-        type: item.type || "",
-        price: 0, // pricing controlled by slot
+        itemType: item.type || "",
+        price: 0,
+        quantity: item.quantity || 1, // Store quantity if needed later
       });
     }
 
-    const totalPrice = baseMealPrice;
+    let totalPrice = baseMealPrice;
+
+    // ===== INTEGRATE CART IF EXISTS =====
+    const cart = await Cart.findOne({ user: req.user._id, provider: providerId, timeSlot: timeSlot });
+
+    if (cart && cart.items.length > 0) {
+      // If standard items are passed but cart has them, use Cart's state
+      validatedItems.length = 0; // reset
+      for (const cartItem of cart.items) {
+        validatedItems.push({
+          name: cartItem.name,
+          itemType: cartItem.type || "",
+          price: cartItem.price || 0,
+          quantity: cartItem.quantity || 1
+        });
+      }
+      totalPrice = cart.totalPrice > 0 ? cart.totalPrice : baseMealPrice;
+    }
 
     // ===== WALLET =====
     const walletResult = await deductCredit(req.user._id, totalPrice);
-     const walletUsed = walletResult.deducted;
+    const walletUsed = walletResult.deducted;
     const remainingToPay = walletResult.remainingToPay;
 
     // 🟢 CASE 1 — FULL WALLET PAYMENT
@@ -217,6 +254,13 @@ const createOrder = async (req, res) => {
         paymentStatus: "paid",
         status: "confirmed",
       });
+
+      // Clear cart
+      if (cart) {
+        cart.items = [];
+        cart.totalPrice = 0;
+        await cart.save();
+      }
 
       return res.status(201).json({
         message: "Order placed using wallet",
@@ -245,6 +289,13 @@ const createOrder = async (req, res) => {
       status: "pending",
     });
 
+    // Clear cart (Order is pending but items are moved to checkout flow)
+    if (cart) {
+      cart.items = [];
+      cart.totalPrice = 0;
+      await cart.save();
+    }
+
     return res.status(201).json({
       message: "Razorpay payment required",
       order,
@@ -265,8 +316,8 @@ const verifyOrderPayment = async (req, res) => {
     const { razorpay_payment_id, razorpay_signature } = req.body;
 
     const order = await Order.findById(orderId)
-    .populate("user", "name email")
-    .populate("provider", "businessName");
+      .populate("user", "name email")
+      .populate("provider", "businessName");
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -341,7 +392,7 @@ const getOrderReceipt = async (req, res) => {
       status: order.status,
     };
 
-      res.json(receipt);
+    res.json(receipt);
   } catch (error) {
     console.error("Receipt Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -379,7 +430,7 @@ Thank you for choosing us ❤️
   );
 };
 
-module.exports = { 
+module.exports = {
   createOrder,
   getMyOrders,
   getOrderById,

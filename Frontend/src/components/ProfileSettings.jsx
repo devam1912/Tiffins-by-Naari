@@ -18,18 +18,36 @@ import { Input } from "./ui/Input";
 import { toast } from "sonner";
 import { cn } from "../lib/utils";
 
-export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatusLoading }) => {
+export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatusLoading, profileData }) => {
     const [isSaved, setIsSaved] = useState(false);
+
+    // Use dynamic data from backend with fallback to empty strings (NO MOCK DATA)
     const [formData, setFormData] = useState({
-        kitchenName: "Naari's Kitchen",
-        chefName: "Bhavika Sharma",
-        email: "bhavika.chef@naari.com",
-        phone: "+91 98765 43210",
-        location: "Indiranagar, Bangalore",
-        specialty: "North Indian Thalis & Fusion Bowls",
-        fssai: "22223056000123",
-        description: "Authentic North Indian homemade meals with less oil and spices. My kitchen uses heirloom recipes passed down through generations. We source our spices directly from local farmers and use cold-pressed oils."
+        kitchenName: profileData?.businessName || profileData?.name || "",
+        chefName: profileData?.ownerName || "",
+        email: profileData?.email || "",
+        phone: profileData?.phone || "",
+        location: profileData?.address || "",
+        specialty: profileData?.cuisineType || "",
+        fssai: profileData?.fssaiNumber || "",
+        description: profileData?.description || ""
     });
+
+    // Update form if props change
+    React.useEffect(() => {
+        if (profileData) {
+            setFormData({
+                kitchenName: profileData.businessName || profileData.name || "",
+                chefName: profileData.ownerName || "",
+                email: profileData.email || "",
+                phone: profileData.phone || "",
+                location: profileData.address || "",
+                specialty: profileData.cuisineType || "",
+                fssai: profileData.fssaiNumber || "",
+                description: profileData.description || ""
+            });
+        }
+    }, [profileData]);
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -98,11 +116,11 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
 
                             <div className="space-y-2">
                                 <label className="text-sm font-bold text-gray-700">Kitchen Bio / Philosophy</label>
-                                <Textarea
+                                <textarea
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     placeholder="Tell your customers about your cooking style and ingredients..."
-                                    className="resize-none h-32"
+                                    className="w-full p-4 bg-gray-50 border-none rounded-xl text-sm focus:ring-4 focus:ring-[var(--primary)]/10 outline-none transition-all resize-none h-32"
                                 />
                             </div>
                         </CardContent>

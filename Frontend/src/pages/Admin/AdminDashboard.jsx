@@ -1,58 +1,38 @@
-import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
-/* ══════════════════════════════════════════
-   MINI SPARKLINE — pure SVG
-══════════════════════════════════════════ */
-function Sparkline({ values = [], color = "#8FA873" }) {
-  if (!values.length) return null;
-  const max = Math.max(...values, 1);
-  const w = 80, h = 32;
-  const pts = values.map((v, i) => `${(i / (values.length - 1)) * w},${h - (v / max) * h}`).join(" ");
-  return (
-    <svg width={w} height={h} style={{ overflow: "visible" }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
-      <circle cx={(values.length - 1) / (values.length - 1) * w} cy={h - (values[values.length - 1] / max) * h} r="3.5" fill={color} />
-    </svg>
-  );
-}
+// Internal Components for Modular Organization
+import { AdminUsers } from "../../components/AdminUsers";
+import { AdminMenu } from "../../components/AdminMenu";
+import { AdminFeedback } from "../../components/AdminFeedback";
 
-/* ══════════════════════════════════════════
-   APPROVAL MODAL
-══════════════════════════════════════════ */
+// ══════════════════════════════════════════
+// 1. APPROVE MODAL COMPONENT
+// ══════════════════════════════════════════
 function ApproveModal({ provider, onClose, onApprove, loading }) {
   useEffect(() => {
-    const fn = (e) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", fn);
-    return () => document.removeEventListener("keydown", fn);
-  }, []);
+    const handleEsc = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
   return (
-    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.6)", backdropFilter: "blur(14px)", padding: 20, animation: "overlayIn 0.25s ease" }}>
-      <div style={{ background: "#fff", borderRadius: 28, padding: "52px 44px 44px", maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 48px 96px rgba(20,35,20,0.28)", animation: "modalIn 0.45s cubic-bezier(.22,.68,0,1.2)", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 5, background: "linear-gradient(90deg,#8FAE8E,#8FA873,#D9D9A8)", borderRadius: "28px 28px 0 0" }} />
-        <div style={{ width: 88, height: 88, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 38, boxShadow: "0 16px 48px rgba(143,174,142,0.45)", animation: "iconPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.15s both" }}>
-          👩‍🍳
-        </div>
-        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 10 }}>Provider Approval</p>
-        <h2 style={{ fontFamily: "'Lora',serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.25, marginBottom: 10 }}>Approve this kitchen?</h2>
-        <p style={{ color: "#777", fontSize: 14, lineHeight: 1.7, marginBottom: 6 }}>
-          <strong style={{ color: "#2d3b2d" }}>{provider?.businessName}</strong>
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.7)", backdropFilter: "blur(14px)", padding: 20, animation: "overlayIn 0.3s ease" }}
+    >
+      <div style={{ background: "#fff", borderRadius: 32, padding: "52px 44px 44px", maxWidth: 440, width: "100%", textAlign: "center", boxShadow: "0 48px 96px rgba(0,0,0,0.3)", position: "relative", overflow: "hidden", animation: "modalIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(90deg,#8FAE8E,#D9D9A8)", borderRadius: "32px 32px 0 0" }} />
+        <div style={{ width: 90, height: 90, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", fontSize: 40, boxShadow: "0 20px 40px rgba(143,174,142,0.4)" }}>👩‍🍳</div>
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 12 }}>Approve Kitchen?</h2>
+        <p style={{ color: "#666", fontSize: 15, lineHeight: 1.6, marginBottom: 32 }}>
+          You are about to authorize <strong>{provider?.businessName}</strong>. This will enable their menu and notify <strong>{provider?.ownerName}</strong> via email.
         </p>
-        <p style={{ color: "#aaa", fontSize: 13, marginBottom: 28 }}>by {provider?.ownerName} · {provider?.email}</p>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button onClick={onClose}
-            style={{ flex: 1, padding: "13px", background: "transparent", border: "2px solid #e0e0d0", borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#999", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef9a9a"; e.currentTarget.style.color = "#ef5350"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0e0d0"; e.currentTarget.style.color = "#999"; }}
-          >Cancel</button>
-          <button onClick={onApprove} disabled={loading}
-            style={{ flex: 1, padding: "13px", background: loading ? "#d4d4bc" : "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 4px 16px rgba(143,174,142,0.4)", transition: "all 0.25s", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-            onMouseEnter={e => { if (!loading) { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-1px)"; }}}
-            onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "none"; }}
-          >
-            {loading ? <><span style={{ width: 14, height: 14, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} /> Approving...</> : "✓ Approve Kitchen"}
+        <div style={{ display: "flex", gap: 14 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "16px", background: "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 700, cursor: "pointer", color: "#888", transition: "0.2s" }}>Cancel</button>
+          <button onClick={onApprove} disabled={loading} style={{ flex: 2, padding: "16px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer", boxShadow: "0 8px 20px rgba(143,174,142,0.3)" }}>
+            {loading ? "Processing..." : "Confirm Approval"}
           </button>
         </div>
       </div>
@@ -60,134 +40,222 @@ function ApproveModal({ provider, onClose, onApprove, loading }) {
   );
 }
 
-/* ══════════════════════════════════════════
-   REJECT MODAL
-══════════════════════════════════════════ */
-function RejectModal({ provider, onClose, onReject }) {
+// ══════════════════════════════════════════
+// 2. REJECT MODAL COMPONENT
+// ══════════════════════════════════════════
+function RejectModal({ provider, onClose, onReject, loading }) {
+  const [reason, setReason] = useState("");
+
   useEffect(() => {
-    const fn = (e) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", fn);
-    return () => document.removeEventListener("keydown", fn);
-  }, []);
+    const handleEsc = (e) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handleEsc);
+    return () => document.removeEventListener("keydown", handleEsc);
+  }, [onClose]);
+
   return (
-    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.6)", backdropFilter: "blur(14px)", padding: 20, animation: "overlayIn 0.25s ease" }}>
-      <div style={{ background: "#fff", borderRadius: 28, padding: "52px 44px 44px", maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 48px 96px rgba(20,35,20,0.28)", animation: "modalIn 0.45s cubic-bezier(.22,.68,0,1.2)", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 5, background: "linear-gradient(90deg,#ef5350,#e57373,#ffcdd2)", borderRadius: "28px 28px 0 0" }} />
-        <div style={{ width: 88, height: 88, borderRadius: "50%", background: "linear-gradient(135deg,#ef5350,#e57373)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: "0 16px 48px rgba(239,83,80,0.35)", animation: "iconPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.15s both" }}>
-          <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M12 12l14 14M26 12L12 26" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"/></svg>
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(30,10,10,0.7)", backdropFilter: "blur(14px)", padding: 20 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 32, padding: "44px 40px", maxWidth: 500, width: "100%", boxShadow: "0 48px 96px rgba(0,0,0,0.4)", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "#ef5350", borderRadius: "32px 32px 0 0" }} />
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Declining Application</h2>
+        <p style={{ color: "#888", fontSize: 14, marginBottom: 28 }}>Kitchen: <span style={{ color: "#ef5350", fontWeight: 700 }}>{provider?.businessName}</span></p>
+
+        <div style={{ textAlign: "left" }}>
+          <label style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", color: "#aaa", display: "block", marginBottom: 10, letterSpacing: 1 }}>Reason for Rejection (Sent to Provider)</label>
+          <textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            placeholder="Please provide specific feedback (e.g., 'FSSAI document is blurry' or 'Address mismatch')..."
+            style={{ width: "100%", padding: 20, borderRadius: 16, border: "2px solid #f0f0f0", fontSize: 15, minHeight: 140, marginBottom: 24, resize: "none", outline: "none", fontFamily: "inherit", transition: "border-color 0.3s" }}
+            onFocus={(e) => e.target.style.borderColor = "#ef5350"}
+          />
         </div>
-        <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#ef5350", marginBottom: 10 }}>Reject Application</p>
-        <h2 style={{ fontFamily: "'Lora',serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.25, marginBottom: 10 }}>Reject this kitchen?</h2>
-        <p style={{ color: "#777", fontSize: 14, marginBottom: 6 }}><strong style={{ color: "#2d3b2d" }}>{provider?.businessName}</strong></p>
-        <p style={{ color: "#aaa", fontSize: 13, marginBottom: 6 }}>by {provider?.ownerName}</p>
-        <p style={{ color: "#ffb74d", fontSize: 13, fontWeight: 600, marginBottom: 28 }}>⚠ Application will be removed from pending list.</p>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button onClick={onClose}
-            style={{ flex: 1, padding: "13px", background: "transparent", border: "2px solid #e0e0d0", borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: "pointer", color: "#999", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = "#8FAE8E"; e.currentTarget.style.color = "#5a7a50"; }}
-            onMouseLeave={e => { e.currentTarget.style.borderColor = "#e0e0d0"; e.currentTarget.style.color = "#999"; }}
-          >Cancel</button>
-          <button onClick={onReject}
-            style={{ flex: 1, padding: "13px", background: "linear-gradient(135deg,#ef5350,#e57373)", color: "#fff", border: "none", borderRadius: 14, fontSize: 14, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 4px 16px rgba(239,83,80,0.3)", transition: "all 0.25s" }}
-            onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
-            onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-          >✕ Yes, Reject</button>
+
+        <div style={{ display: "flex", gap: 14 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "16px", background: "transparent", border: "2px solid #eee", borderRadius: 16, fontWeight: 700, color: "#999", cursor: "pointer" }}>Go Back</button>
+          <button
+            onClick={() => onReject(reason)}
+            disabled={!reason.trim() || loading}
+            style={{ flex: 2, padding: "16px", background: "#ef5350", color: "#fff", border: "none", borderRadius: 16, fontWeight: 700, cursor: (!reason.trim() || loading) ? "not-allowed" : "pointer", opacity: !reason.trim() ? 0.6 : 1 }}
+          >
+            {loading ? "Sending Notification..." : "Confirm Rejection"}
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ══════════════════════════════════════════
-   MAIN — ADMIN DASHBOARD
-══════════════════════════════════════════ */
+// ══════════════════════════════════════════
+// 3. VIEW APPLICATION MODAL
+// ══════════════════════════════════════════
+function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
+  const isPdf = provider?.fssaiCertificate?.toLowerCase().includes(".pdf");
+
+  const DataField = ({ label, value, fullWidth = false }) => (
+    <div style={{ padding: "16px 0", borderBottom: "1px solid #f4f7f4", width: fullWidth ? "100%" : "50%" }}>
+      <p style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 15, color: "#2d3b2d", fontWeight: 600 }}>{value || "Not Provided"}</p>
+    </div>
+  );
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.65)", backdropFilter: "blur(18px)", padding: 20 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 36, width: "100%", maxWidth: 650, maxHeight: "90vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 50px 100px rgba(0,0,0,0.25)", animation: "modalIn 0.5s ease" }}>
+        <div style={{ padding: "30px 40px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfdfc" }}>
+          <div>
+            <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>Kitchen Dossier</h2>
+            <p style={{ fontSize: 13, color: "#aaa" }}>Application ID: {provider?._id?.slice(-8).toUpperCase()}</p>
+          </div>
+          <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 40, height: 40, borderRadius: "50%", cursor: "pointer", fontSize: 18, color: "#aaa" }}>✕</button>
+        </div>
+
+        <div style={{ padding: "40px", overflowY: "auto", flex: 1 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 40 }}>
+            <DataField label="Business Entity" value={provider?.businessName} />
+            <DataField label="Lead Chef / Owner" value={provider?.ownerName} />
+            <DataField label="Registration (FSSAI)" value={provider?.fssaiNumber} />
+            <DataField label="Contact Channel" value={provider?.email} />
+            <DataField label="Mobile Number" value={provider?.phone} />
+            <DataField label="Operational Address" value={provider?.address} fullWidth />
+          </div>
+
+          <div style={{ marginBottom: 40 }}>
+            <h3 style={{ fontSize: 12, color: "#8FAE8E", letterSpacing: 2, textTransform: "uppercase", marginBottom: 16, fontFamily: "'Lora', serif" }}>Verified Documentation</h3>
+            <div style={{ borderRadius: 24, border: "2px dashed #e0e6e0", overflow: "hidden", background: "#f9faf9", padding: 20, textAlign: "center" }}>
+              {provider?.fssaiCertificate ? (
+                isPdf ? (
+                  <div style={{ padding: 20 }}>
+                    <span style={{ fontSize: 50 }}>📜</span>
+                    <p style={{ margin: "15px 0", fontWeight: 700, color: "#444" }}>FSSAI_Certificate.pdf</p>
+                    <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "10px 24px", background: "#8FAE8E", color: "#fff", textDecoration: "none", borderRadius: 12, fontWeight: 700 }}>View Document</a>
+                  </div>
+                ) : (
+                  <img src={provider.fssaiCertificate} alt="Certificate" style={{ width: "100%", borderRadius: 12, boxShadow: "0 10px 30px rgba(0,0,0,0.1)" }} />
+                )
+              ) : <p style={{ color: "#ef5350", padding: 40 }}>Notice: Certificate image missing from application.</p>}
+            </div>
+          </div>
+
+          {!provider?.isApproved && (
+            <div style={{ display: "flex", gap: 20 }}>
+              <button
+                onClick={() => { onClose(); onReject(provider); }}
+                style={{ flex: 1, padding: 18, borderRadius: 18, border: "2px solid #ef5350", color: "#ef5350", fontWeight: 800, background: "none", cursor: "pointer", transition: "0.3s" }}
+              >Decline Kitchen</button>
+              <button
+                onClick={() => { onClose(); onApprove(provider); }}
+                style={{ flex: 1, padding: 18, borderRadius: 18, background: "#8FAE8E", border: "none", color: "#fff", fontWeight: 800, cursor: "pointer", boxShadow: "0 10px 20px rgba(143,174,142,0.3)" }}
+              >Approve Credentials</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// 4. MAIN DASHBOARD CONTROLLER
+// ══════════════════════════════════════════
 export default function AdminDashboard() {
-  const navigate  = useNavigate();
-  const token     = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
 
-  const [loaded,    setLoaded]    = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  // UI & Data State
+  const [loaded, setLoaded] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
-
-  const [stats,        setStats]        = useState(null);
+  const [stats, setStats] = useState({ totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 });
   const [allProviders, setAllProviders] = useState([]);
-  const [pending,      setPending]      = useState([]);
-  const [allUsers,     setAllUsers]     = useState([]);
-  const [allOrders,    setAllOrders]    = useState([]);
-  const [dataLoading,  setDataLoading]  = useState(true);
+  const [pending, setPending] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
+  const [allFeedbacks, setAllFeedbacks] = useState([]);
+  const [allMenus, setAllMenus] = useState([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
+  // Selection Targets
   const [approveTarget, setApproveTarget] = useState(null);
-  const [rejectTarget,  setRejectTarget]  = useState(null);
-  const [approving,     setApproving]     = useState(false);
-  const [search,        setSearch]        = useState("");
-  const [filterStatus,  setFilterStatus]  = useState("all");
+  const [rejectTarget, setRejectTarget] = useState(null);
+  const [viewTarget, setViewTarget] = useState(null);
 
-  const headers = { Authorization: `Bearer ${token}` };
+  // Action Loading States
+  const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
 
-  useEffect(() => {
-    const link = document.createElement("link");
-    link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
+  // Data Fetching Logic
+  const fetchAllData = useCallback(async () => {
     if (!token) { navigate("/login"); return; }
-    loadAll();
-    setTimeout(() => setLoaded(true), 100);
-  }, []);
-
-  const loadAll = async () => {
+    setDataLoading(true);
     try {
-      const [statsR, provR, pendR, usersR, ordersR] = await Promise.all([
-        axios.get("http://localhost:5000/api/admin/stats",              { headers }),
-        axios.get("http://localhost:5000/api/admin/providers",          { headers }),
-        axios.get("http://localhost:5000/api/admin/providers/pending",  { headers }),
-        axios.get("http://localhost:5000/api/admin/users",              { headers }),
-        axios.get("http://localhost:5000/api/admin/orders",             { headers }),
+      const [sRes, pRes, penRes, uRes, oRes, fRes, mRes] = await Promise.all([
+        axios.get("http://localhost:5000/api/admin/stats", { headers }),
+        axios.get("http://localhost:5000/api/admin/providers", { headers }),
+        axios.get("http://localhost:5000/api/admin/providers/pending", { headers }),
+        axios.get("http://localhost:5000/api/admin/users", { headers }),
+        axios.get("http://localhost:5000/api/admin/orders", { headers }),
+        axios.get("http://localhost:5000/api/feedback", { headers }),
+        axios.get("http://localhost:5000/api/tiffins/menu", { headers })
       ]);
-      setStats(statsR.data);
-      setAllProviders(provR.data);
-      setPending(pendR.data.providers || []);
-      setAllUsers(usersR.data);
-      setAllOrders(ordersR.data);
+
+      setStats(sRes.data);
+      setAllProviders(pRes.data || []);
+      setPending(penRes.data.providers || penRes.data || []);
+      setAllUsers(uRes.data || []);
+      setAllOrders(oRes.data || []);
+      setAllFeedbacks(fRes.data.feedbacks || []);
+      setAllMenus(mRes.data.menus || []);
     } catch (err) {
-      console.error("Admin load error:", err);
+      console.error("Dashboard Load Error:", err);
     } finally {
       setDataLoading(false);
+      setLoaded(true);
     }
-  };
+  }, [token, navigate, headers]);
 
-  const handleApprove = async () => {
+  useEffect(() => {
+    fetchAllData();
+  }, [fetchAllData]);
+
+  // Business Logic Handlers
+  const confirmApprove = async () => {
     if (!approveTarget) return;
     setApproving(true);
     try {
-      await axios.patch(
-        `http://localhost:5000/api/tiffins/approve/${approveTarget._id}`,
-        {},
-        { headers }
-      );
-      setAllProviders(prev => prev.map(p => p._id === approveTarget._id ? { ...p, isApproved: true } : p));
-      setPending(prev => prev.filter(p => p._id !== approveTarget._id));
-      if (stats) setStats(s => ({ ...s, totalProviders: s.totalProviders + 1 }));
+      await axios.patch(`http://localhost:5000/api/tiffins/approve/${approveTarget._id}`, {}, { headers });
+      setAllProviders(current => current.map(p => p._id === approveTarget._id ? { ...p, isApproved: true } : p));
+      setPending(current => current.filter(p => p._id !== approveTarget._id));
+      setStats(s => ({ ...s, totalProviders: (s.totalProviders || 0) + 1 }));
       setApproveTarget(null);
     } catch (err) {
-      console.error("Approve error:", err);
+      alert("System Error: Failed to approve provider.");
     } finally {
       setApproving(false);
     }
   };
 
-  // Reject = UI only, isApproved stays false in DB, just hide from pending list
-  const handleReject = () => {
+  const confirmReject = async (reason) => {
     if (!rejectTarget) return;
-    setPending(prev => prev.filter(p => p._id !== rejectTarget._id));
-    setRejectTarget(null);
+    setRejecting(true);
+    try {
+      await axios.patch(`http://localhost:5000/api/tiffins/reject/${rejectTarget._id}`, { reason }, { headers });
+      setPending(current => current.filter(p => p._id !== rejectTarget._id));
+      setAllProviders(current => current.filter(p => p._id !== rejectTarget._id));
+      setRejectTarget(null);
+    } catch (err) {
+      alert("System Error: Failed to process rejection.");
+    } finally {
+      setRejecting(false);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    navigate("/login");
-  };
+  const totalRevenueCalculated = allOrders.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
 
   const anim = (d = 0) => ({
     opacity: loaded ? 1 : 0,
@@ -195,465 +263,267 @@ export default function AdminDashboard() {
     transition: `opacity 0.6s ease ${d}ms, transform 0.6s cubic-bezier(.22,.68,0,1.2) ${d}ms`,
   });
 
-  /* ── Nav items ── */
-  const navItems = [
-    { id: "dashboard",  icon: "⊞",  label: "Dashboard"        },
-    { id: "providers",  icon: "🍳",  label: "All Kitchens"     },
-    { id: "pending",    icon: "⏳",  label: "Pending",   badge: pending.length },
-    { id: "users",      icon: "👥",  label: "Users"            },
-    { id: "orders",     icon: "📦",  label: "Orders"           },
+  const statCards = [
+    { label: "Total Users", val: (stats.totalUsers || 0) + (stats.totalProviders || 0), color: "#2d3b2d", sub: `${stats.totalUsers || 0} customers` },
+    { label: "Active Kitchens", val: stats.totalProviders || 0, color: "#8FAE8E", sub: "Verified Partners" },
+    { label: "Total Menus", val: allMenus.length || 0, color: "#8FA873", sub: "Live kitchen schedules" },
+    { label: "Total Orders", val: stats.totalOrders || 0, color: "#8FA873", sub: "Lifetime Volume" },
+    { label: "Revenue", val: `₹${(totalRevenueCalculated || 0).toLocaleString()}`, color: "#2d3b2d", sub: "Gross Earnings" }
   ];
 
-  /* ── Filter providers ── */
-  const filteredProviders = allProviders.filter(p => {
-    const q = search.toLowerCase();
-    const matchQ = !q || p.businessName?.toLowerCase().includes(q) || p.ownerName?.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q);
-    const matchF = filterStatus === "all" || (filterStatus === "active" && p.isApproved) || (filterStatus === "pending" && !p.isApproved);
-    return matchQ && matchF;
-  });
+  if (dataLoading && !loaded) {
+    return (
+      <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "#E7E6B6", gap: 20 }}>
+        <div style={{ width: 40, height: 40, border: "4px solid #8FAE8E", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 1s linear infinite" }} />
+        <p style={{ fontWeight: 700, color: "#5a7a50", letterSpacing: 1 }}>SYNCHRONIZING SECURE DATA...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
-  /* ── Stat cards ── */
-  const statCards = stats ? [
-    { label: "Total Users",    value: (stats.totalUsers || 0) + (stats.totalProviders || 0), sub: `${stats.totalUsers || 0} customers · ${stats.totalProviders || 0} kitchens`, icon: "👥", grad: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.45)", textLight: true },
-    { label: "Active Kitchens", value: stats.totalProviders || 0,  sub: `${pending.length} pending approval`,          icon: "🍳", grad: "linear-gradient(135deg,#a8c5a0,#6b9e5e)", shadow: "rgba(107,158,94,0.38)",  textLight: true },
-    { label: "Total Orders",   value: stats.totalOrders || 0,    sub: "All-time platform orders",                   icon: "📦", grad: "rgba(255,255,255,0.85)",  shadow: "rgba(143,174,142,0.18)", textLight: false, border: "1.5px solid rgba(143,174,142,0.3)" },
-    { label: "Gross Revenue",  value: `₹${(stats.totalRevenue || 0).toLocaleString()}`, sub: "Total amount collected", icon: "💰", grad: "linear-gradient(135deg,#D9D9A8,#c5ce88)", shadow: "rgba(180,190,100,0.32)", textLight: false },
-  ] : [];
-
-  const SIDEBAR_W = collapsed ? 72 : 240;
-
-  /* ─────────────────────────────────────────────────────
-     RENDER
-  ───────────────────────────────────────────────────── */
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #E7E6B6; }
-        ::-webkit-scrollbar-thumb { background: #8FAE8E; border-radius: 10px; }
+    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "sans-serif" }}>
 
-        @keyframes floatY    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes spinSlow  { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-        @keyframes pulseDot  { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.55);opacity:0.35} }
-        @keyframes overlayIn { from{opacity:0} to{opacity:1} }
-        @keyframes modalIn   { from{opacity:0;transform:scale(0.88) translateY(30px)} to{opacity:1;transform:scale(1) translateY(0)} }
-        @keyframes iconPop   { 0%{transform:scale(0) rotate(-15deg);opacity:0} 65%{transform:scale(1.2) rotate(4deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
-        @keyframes slideIn   { from{opacity:0;transform:translateX(-14px)} to{opacity:1;transform:translateX(0)} }
-        @keyframes popIn     { from{opacity:0;transform:scale(0.92) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
-        @keyframes badgePop  { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+      {/* LAYERED MODAL SYSTEM */}
+      {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={approving} />}
+      {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={rejecting} />}
+      {viewTarget && <ViewApplicationModal provider={viewTarget} onClose={() => setViewTarget(null)} onApprove={setApproveTarget} onReject={setRejectTarget} />}
 
-        .nav-btn {
-          display:flex; align-items:center; gap:12px;
-          width:100%; padding:12px 16px; border-radius:14px;
-          border:none; background:none; cursor:pointer;
-          font-family:'Nunito',sans-serif; font-size:14px; font-weight:600;
-          color:rgba(255,255,255,0.72); transition:all 0.22s ease;
-          text-align:left; position:relative; overflow:hidden; white-space:nowrap;
-        }
-        .nav-btn:hover  { background:rgba(255,255,255,0.14) !important; color:#fff !important; transform:translateX(3px); }
-        .nav-btn.active { background:rgba(255,255,255,0.22) !important; color:#fff !important; box-shadow:0 4px 16px rgba(0,0,0,0.08); }
-        .nav-btn.active::before { content:''; position:absolute; left:0; top:22%; bottom:22%; width:3px; background:#fff; border-radius:2px; }
-
-        .stat-card:hover { transform:translateY(-4px) !important; box-shadow:0 20px 48px rgba(90,120,70,0.22) !important; }
-        .row-hover:hover { background:rgba(143,174,142,0.06) !important; }
-        .approve-btn:hover { background:linear-gradient(135deg,#8FAE8E,#8FA873) !important; color:#fff !important; box-shadow:0 4px 14px rgba(143,174,142,0.4) !important; }
-        .tab-btn:hover { background:rgba(143,174,142,0.12) !important; color:#4a7040 !important; }
-        .search-wrap:focus-within { box-shadow:0 0 0 3px rgba(143,174,142,0.18) !important; border-color:#8FAE8E !important; }
-      `}</style>
-
-      {/* ═══════════════════════════
-          SIDEBAR
-      ═══════════════════════════ */}
-      <div style={{
-        width: SIDEBAR_W, minHeight: "100vh", flexShrink: 0,
-        background: "linear-gradient(170deg,#8FA873,#6b8a5e)",
-        display: "flex", flexDirection: "column",
-        transition: "width 0.32s cubic-bezier(.22,.68,0,1.2)",
-        position: "sticky", top: 0, overflow: "hidden",
-        boxShadow: "4px 0 32px rgba(90,120,70,0.18)",
-        zIndex: 100,
-      }}>
-        {/* Decorative rings */}
-        <div style={{ position: "absolute", width: 240, height: 240, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.07)", top: "-80px", left: "-80px", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.1)", bottom: "18%", right: "-50px", pointerEvents: "none", animation: "spinSlow 30s linear infinite" }} />
-
-        {/* Brand + collapse toggle */}
-        <div style={{ padding: collapsed ? "22px 0" : "22px 20px", display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", borderBottom: "1px solid rgba(255,255,255,0.1)", marginBottom: 8, position: "relative", zIndex: 1 }}>
-          {!collapsed && (
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,0.55)", marginBottom: 2 }}>Admin Panel</div>
-              <div style={{ fontFamily: "'Lora',serif", fontSize: 18, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>Tiffins<em>ByNaari</em></div>
-            </div>
-          )}
-          <button onClick={() => setCollapsed(c => !c)}
-            style={{ width: 34, height: 34, borderRadius: 10, border: "1.5px solid rgba(255,255,255,0.25)", background: "rgba(255,255,255,0.12)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 15, transition: "all 0.2s", flexShrink: 0 }}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.22)"}
-            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
-          >
-            {collapsed ? "›" : "‹"}
-          </button>
+      {/* SIMPLE SIDEBAR */}
+      <aside style={{ width: 280, background: "linear-gradient(180deg, #8FA873 0%, #6b8254 100%)", color: "#fff", padding: "40px 24px", display: "flex", flexDirection: "column", boxShadow: "10px 0 30px rgba(0,0,0,0.05)", zIndex: 10 }}>
+        <div style={{ marginBottom: 50 }}>
+          <h1 style={{ fontFamily: "'Lora', serif", fontSize: 26, fontWeight: 700, marginBottom: 8 }}>Naari Admin</h1>
+          <div style={{ height: 3, width: 40, background: "#D9D9A8", borderRadius: 2 }} />
         </div>
 
-        {/* Nav items */}
-        <nav style={{ flex: 1, padding: collapsed ? "8px 8px" : "8px 12px", display: "flex", flexDirection: "column", gap: 4, position: "relative", zIndex: 1 }}>
-          {navItems.map(({ id, icon, label, badge }) => (
-            <button key={id} className={`nav-btn ${activeNav === id ? "active" : ""}`}
-              onClick={() => setActiveNav(id)}
-              style={{ justifyContent: collapsed ? "center" : "flex-start", padding: collapsed ? "12px" : "12px 16px" }}
-              title={collapsed ? label : undefined}
+        <nav style={{ flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+          {[
+            { id: "dashboard", label: "Dashboard", icon: "📊" },
+            { id: "pending", label: `Pending Requests (${pending.length})`, icon: "⏳" },
+            { id: "providers", label: "Tiffin Providers", icon: "🍳" },
+            { id: "users", label: "Users", icon: "👥" },
+            { id: "menus", label: "Menu", icon: "🍱" },
+            { id: "orders", label: "Orders", icon: "📦" },
+            { id: "feedbacks", label: "Feedback", icon: "💬" }
+          ].map(item => (
+            <button
+              key={item.id}
+              onClick={() => setActiveNav(item.id)}
+              style={{
+                padding: "16px 20px", borderRadius: 16, border: "none", textAlign: "left", cursor: "pointer",
+                background: activeNav === item.id ? "rgba(255,255,255,0.2)" : "transparent",
+                color: "#fff", fontWeight: activeNav === item.id ? 800 : 500, transition: "0.3s", fontSize: 15
+              }}
             >
-              <span style={{ fontSize: 18, flexShrink: 0 }}>{icon}</span>
-              {!collapsed && <span style={{ flex: 1 }}>{label}</span>}
-              {!collapsed && badge > 0 && (
-                <span style={{ background: "#ef5350", color: "#fff", fontSize: 10, fontWeight: 800, borderRadius: 20, padding: "2px 7px", animation: "badgePop 0.4s cubic-bezier(.34,1.56,.64,1)" }}>
-                  {badge}
-                </span>
-              )}
-              {collapsed && badge > 0 && (
-                <span style={{ position: "absolute", top: 6, right: 6, width: 8, height: 8, borderRadius: "50%", background: "#ef5350", animation: "pulseDot 1.8s ease-in-out infinite" }} />
-              )}
+              <span style={{ marginRight: 12 }}>{item.icon}</span> {item.label}
             </button>
           ))}
         </nav>
 
-        {/* Logout */}
-        <div style={{ padding: collapsed ? "12px 8px" : "12px 12px", borderTop: "1px solid rgba(255,255,255,0.1)", position: "relative", zIndex: 1 }}>
-          <button onClick={logout} className="nav-btn"
-            style={{ justifyContent: collapsed ? "center" : "flex-start", padding: collapsed ? "12px" : "12px 16px", color: "rgba(255,150,150,0.8)" }}
-            title={collapsed ? "Logout" : undefined}
-          >
-            <span style={{ fontSize: 18 }}>⏻</span>
-            {!collapsed && <span>Logout</span>}
-          </button>
-        </div>
-      </div>
+        <button
+          onClick={() => { localStorage.clear(); navigate("/login"); }}
+          style={{ padding: "16px", borderRadius: 16, background: "rgba(0,0,0,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", cursor: "pointer", fontWeight: 700 }}
+        >
+          🚪 Logout
+        </button>
+      </aside>
 
-      {/* ═══════════════════════════
-          MAIN CONTENT
-      ═══════════════════════════ */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "36px 40px", minWidth: 0 }}>
+      {/* MAIN VIEWPORT */}
+      <main style={{ flex: 1, padding: "50px 60px", overflowY: "auto", height: "100vh" }}>
 
-        {/* Approve modal */}
-        {approveTarget && (
-          <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={handleApprove} loading={approving} />
-        )}
+        {activeNav === "dashboard" && (
+          <div style={{ animation: "fadeIn 0.5s ease" }}>
+            <header style={{ marginBottom: 40 }}>
+              <h2 style={{ fontSize: 32, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Admin Dashboard</h2>
+              <p style={{ color: "#7a8a7a" }}>TiffinsByNaari Management Portal</p>
+            </header>
 
-        {/* Reject modal */}
-        {rejectTarget && (
-          <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={handleReject} />
-        )}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 30, marginBottom: 50 }}>
+              {statCards.map((card, i) => (
+                <div key={i} style={{ background: "#fff", padding: 30, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
+                  <p style={{ fontSize: 12, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 10 }}>{card.label}</p>
+                  <h3 style={{ fontSize: 36, color: card.color, marginBottom: 5, fontWeight: 700 }}>{card.val}</h3>
+                  <p style={{ fontSize: 13, color: "#888" }}>{card.sub}</p>
+                </div>
+              ))}
+            </div>
 
-        {/* Loading state */}
-        {dataLoading && (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "60vh", gap: 16 }}>
-            <div style={{ width: 52, height: 52, borderRadius: "50%", border: "4px solid rgba(143,174,142,0.2)", borderTopColor: "#8FA873", animation: "spinSlow 0.8s linear infinite" }} />
-            <p style={{ fontFamily: "'Lora',serif", fontSize: 18, color: "#5a7a50", fontWeight: 600 }}>Loading admin data...</p>
+            <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 30, marginBottom: 50 }}>
+              {/* RECENT TRANSACTIONS */}
+              <div style={{ background: "#fff", padding: 32, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Recent Transactions</h3>
+                  <button onClick={() => setActiveNav("orders")} style={{ background: "none", border: "none", color: "#8fa873", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>See All →</button>
+                </div>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #eee" }}>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Order ID</th>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Customer</th>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Amount</th>
+                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allOrders.slice(0, 5).map(o => (
+                      <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: "16px 0", fontSize: 13, fontWeight: 700, color: "#333" }}>#{o._id.slice(-6).toUpperCase()}</td>
+                        <td style={{ padding: "16px 0", fontSize: 13, color: "#666" }}>{o.user?.name || "Member"}</td>
+                        <td style={{ padding: "16px 0", fontSize: 13, fontWeight: 800, color: "#2d3b2d" }}>₹{o.totalPrice}</td>
+                        <td style={{ padding: "16px 0" }}>
+                          <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", color: o.status === 'delivered' ? '#43a047' : '#fb8c00' }}>{o.status}</span>
+                        </td>
+                      </tr>
+                    ))}
+                    {allOrders.length === 0 && <tr><td colSpan="4" style={{ padding: "20px 0", textAlign: "center", color: "#aaa" }}>No recent records.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* RECENT FEEDBACK */}
+              <div style={{ background: "#fff", padding: 32, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+                  <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Feedback</h3>
+                  <button onClick={() => setActiveNav("feedbacks")} style={{ background: "none", border: "none", color: "#8fa873", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Review →</button>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                  {allFeedbacks.slice(0, 3).map(f => (
+                    <div key={f._id} style={{ borderBottom: "1px solid #f9f9f9", paddingBottom: 12 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: "#333" }}>{f.user?.name}</span>
+                        <span style={{ fontSize: 11, color: "#a5a56d" }}>⭐ {f.rating}</span>
+                      </div>
+                      <p style={{ fontSize: 12, color: "#888", fontStyle: "italic", lineHeight: 1.4, margin: 0 }}>"{f.comment?.length > 60 ? f.comment.slice(0, 60) + "..." : f.comment}"</p>
+                    </div>
+                  ))}
+                  {allFeedbacks.length === 0 && <p style={{ textAlign: "center", color: "#aaa", fontSize: 13 }}>No recent voices.</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* QUICK ACTIONS / ALERTS */}
+            {pending.length > 0 && (
+              <div style={{ ...anim(800), background: "#fff", padding: 40, borderRadius: 40, border: "2px solid #f4f7f4", boxShadow: "0 40px 80px rgba(143,174,142,0.05)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+                  <div style={{ width: 64, height: 64, borderRadius: 20, background: "#fdf8e6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🔔</div>
+                  <div>
+                    <h4 style={{ fontSize: 20, color: "#2d3b2d", fontWeight: 800, fontFamily: "'Lora', serif" }}>Action Required</h4>
+                    <p style={{ color: "#888" }}>You have <strong>{pending.length}</strong> new kitchen applications awaiting your review.</p>
+                  </div>
+                </div>
+                <button onClick={() => setActiveNav("pending")} style={{ padding: "16px 32px", borderRadius: 16, background: "#2d3b2d", color: "#fff", border: "none", fontWeight: 700, cursor: "pointer", transition: "0.3s" }}>View Queue</button>
+              </div>
+            )}
           </div>
         )}
 
-        {!dataLoading && (
-          <>
-            {/* ══ DASHBOARD HOME ══ */}
-            {activeNav === "dashboard" && (
-              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-
-                {/* Header */}
-                <div style={{ marginBottom: 32, ...anim(0) }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Admin Command Centre</p>
-                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.1, marginBottom: 6 }}>
-                    System <em>Insights</em>
-                  </h1>
-                  <p style={{ color: "#999", fontSize: 15 }}>Welcome back, Admin. Here's what's happening on the platform.</p>
+        {/* EXTERNAL MODULES */}
+        <div style={{ animation: "fadeIn 0.5s ease" }}>
+          {activeNav === "pending" && (
+            <div>
+              <h3 style={{ fontSize: 32, marginBottom: 30, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Incoming Applications</h3>
+              {pending.length === 0 ? (
+                <div style={{ padding: 60, textAlign: "center", background: "#fff", borderRadius: 28 }}>
+                  <p style={{ fontSize: 18, color: "#aaa" }}>All caught up! No pending reviews.</p>
                 </div>
-
-                {/* Stat cards */}
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 18, marginBottom: 36 }}>
-                  {statCards.map(({ label, value, sub, icon, grad, shadow, textLight, border }, i) => (
-                    <div key={i} className="stat-card"
-                      style={{ background: grad, borderRadius: 22, padding: "24px 22px", boxShadow: `0 8px 28px ${shadow}`, border: border || "none", transition: "all 0.3s cubic-bezier(.22,.68,0,1.2)", cursor: "default", ...anim(80 + i * 70) }}>
-                      <div style={{ fontSize: 28, marginBottom: 10 }}>{icon}</div>
-                      <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase", color: textLight ? "rgba(255,255,255,0.7)" : "#8FA873", marginBottom: 6 }}>{label}</p>
-                      <h2 style={{ fontFamily: "'Lora',serif", fontSize: 34, fontWeight: 700, color: textLight ? "#fff" : "#2d3b2d", lineHeight: 1, marginBottom: 8 }}>{value}</h2>
-                      <p style={{ fontSize: 12, color: textLight ? "rgba(255,255,255,0.65)" : "#aaa", fontWeight: 600 }}>{sub}</p>
+              ) : (
+                <div style={{ display: "grid", gap: 20 }}>
+                  {pending.map(p => (
+                    <div key={p._id} style={{ display: "flex", alignItems: "center", padding: "24px 32px", background: "#fff", borderRadius: 24, boxShadow: "0 10px 25px rgba(0,0,0,0.02)" }}>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: 18, color: "#2d3b2d", marginBottom: 4 }}>{p.businessName}</h4>
+                        <p style={{ fontSize: 14, color: "#888" }}>{p.ownerName} • {p.email}</p>
+                      </div>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <button onClick={() => setViewTarget(p)} style={{ padding: "12px 24px", borderRadius: 14, border: "1px solid #ddd", background: "#fff", cursor: "pointer", fontWeight: 700 }}>Inspect</button>
+                        <button onClick={() => setApproveTarget(p)} style={{ padding: "12px 24px", borderRadius: 14, border: "none", background: "#8FAE8E", color: "#fff", cursor: "pointer", fontWeight: 700 }}>Quick Approve</button>
+                      </div>
                     </div>
                   ))}
                 </div>
+              )}
+            </div>
+          )}
 
-                {/* Pending alert banner */}
-                {pending.length > 0 && (
-                  <div style={{ background: "linear-gradient(135deg,rgba(255,152,0,0.12),rgba(255,193,7,0.08))", border: "1.5px solid rgba(255,152,0,0.3)", borderRadius: 18, padding: "18px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, marginBottom: 32, ...anim(320) }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                      <div style={{ width: 42, height: 42, borderRadius: 14, background: "rgba(255,152,0,0.18)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>⏳</div>
-                      <div>
-                        <p style={{ fontWeight: 800, fontSize: 14, color: "#7a4f00", marginBottom: 2 }}>{pending.length} kitchen{pending.length > 1 ? "s" : ""} awaiting approval</p>
-                        <p style={{ fontSize: 13, color: "#a06020", fontWeight: 600 }}>Review and approve pending provider applications</p>
-                      </div>
-                    </div>
-                    <button onClick={() => setActiveNav("pending")}
-                      style={{ background: "linear-gradient(135deg,#ff9800,#ffa726)", color: "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontSize: 13, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 4px 14px rgba(255,152,0,0.35)", whiteSpace: "nowrap", transition: "all 0.2s" }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = "0.9"}
-                      onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-                    >
-                      Review Now →
-                    </button>
-                  </div>
-                )}
-
-                {/* Recent providers mini table */}
-                <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)", ...anim(360) }}>
-                  <div style={{ padding: "20px 24px", borderBottom: "1px solid rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <div>
-                      <h3 style={{ fontFamily: "'Lora',serif", fontSize: 18, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>Recent Kitchens</h3>
-                      <p style={{ fontSize: 13, color: "#aaa", fontWeight: 600 }}>{allProviders.length} total registered</p>
-                    </div>
-                    <button onClick={() => setActiveNav("providers")}
-                      style={{ background: "rgba(143,174,142,0.15)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 12, padding: "8px 18px", fontSize: 13, fontWeight: 700, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}
-                      onMouseEnter={e => { e.currentTarget.style.background = "linear-gradient(135deg,#8FAE8E,#8FA873)"; e.currentTarget.style.color = "#fff"; }}
-                      onMouseLeave={e => { e.currentTarget.style.background = "rgba(143,174,142,0.15)"; e.currentTarget.style.color = "#5a7a50"; }}
-                    >View all →</button>
-                  </div>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Kitchen", "Owner", "Status"].map(h => (
-                          <th key={h} style={{ padding: "12px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                        ))}
+          {activeNav === "users" && <AdminUsers users={allUsers} />}
+          {activeNav === "feedbacks" && <AdminFeedback feedbacks={allFeedbacks} loading={dataLoading} />}
+          {activeNav === "menus" && <AdminMenu menus={allMenus} loading={dataLoading} />}
+          {activeNav === "orders" && (
+            <div>
+              <h3 style={{ fontSize: 32, marginBottom: 30, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Order Management</h3>
+              <div style={{ background: "#fff", padding: 40, borderRadius: 28 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #eee" }}>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Order ID</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Customer</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Amount</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allOrders.map(o => (
+                      <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: 15, fontSize: 14, fontWeight: 700 }}>#{o._id.slice(-6).toUpperCase()}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
+                        <td style={{ padding: 15, fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
+                        <td style={{ padding: 15 }}>
+                          <span style={{ padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>
+                            {o.status}
+                          </span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {allProviders.slice(0, 5).map((p) => (
-                        <tr key={p._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                          <td style={{ padding: "14px 20px", fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{p.businessName}</td>
-                          <td style={{ padding: "14px 20px" }}>
-                            <p style={{ fontWeight: 700, fontSize: 13, color: "#555" }}>{p.ownerName}</p>
-                            <p style={{ fontSize: 12, color: "#bbb" }}>{p.phone}</p>
-                          </td>
-                          <td style={{ padding: "14px 20px" }}>
-                            <span style={{ background: p.isApproved ? "rgba(76,175,80,0.12)" : "rgba(255,152,0,0.12)", color: p.isApproved ? "#388e3c" : "#e65100", border: `1.5px solid ${p.isApproved ? "rgba(76,175,80,0.3)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                              {p.isApproved ? "✓ Active" : "⏳ Pending"}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* ══ ALL KITCHENS ══ */}
-            {activeNav === "providers" && (
-              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-                <div style={{ marginBottom: 28 }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Kitchen Directory</p>
-                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Kitchens</h1>
-                  <p style={{ color: "#999", fontSize: 14 }}>{allProviders.length} providers registered on the platform</p>
-                </div>
-
-                {/* Filters */}
-                <div style={{ display: "flex", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
-                  <div className="search-wrap" style={{ flex: 1, minWidth: 220, display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.8)", border: "1.5px solid #e0e0d0", borderRadius: 14, padding: "10px 16px", transition: "all 0.2s" }}>
-                    <span style={{ fontSize: 16 }}>🔍</span>
-                    <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search kitchens, owners..."
-                      style={{ border: "none", background: "none", outline: "none", fontSize: 14, fontFamily: "'Nunito',sans-serif", color: "#2d3b2d", flex: 1 }} />
-                  </div>
-                  {["all","active","pending"].map(f => (
-                    <button key={f} className="tab-btn" onClick={() => setFilterStatus(f)}
-                      style={{ padding: "10px 20px", borderRadius: 14, border: `1.5px solid ${filterStatus === f ? "#8FAE8E" : "#e0e0d0"}`, background: filterStatus === f ? "linear-gradient(135deg,#8FAE8E,#8FA873)" : "rgba(255,255,255,0.7)", color: filterStatus === f ? "#fff" : "#888", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s", textTransform: "capitalize" }}>
-                      {f === "all" ? "All" : f === "active" ? "✓ Active" : "⏳ Pending"}
-                    </button>
-                  ))}
-                </div>
-
-                <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Kitchen / Business","Owner","Contact","Status","Action"].map(h => (
-                          <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredProviders.length === 0 ? (
-                        <tr><td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15, fontWeight: 600 }}>No kitchens found</td></tr>
-                      ) : filteredProviders.map((p) => (
-                        <tr key={p._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                          <td style={{ padding: "16px 20px" }}>
-                            <p style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d", marginBottom: 2 }}>{p.businessName}</p>
-                            <p style={{ fontSize: 11, color: "#ccc", fontWeight: 600 }}>ID: {p._id?.slice(-6)}</p>
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <p style={{ fontWeight: 700, fontSize: 14, color: "#444" }}>{p.ownerName}</p>
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <p style={{ fontSize: 13, color: "#666", fontWeight: 600 }}>{p.email}</p>
-                            <p style={{ fontSize: 12, color: "#bbb" }}>{p.phone}</p>
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            <span style={{ background: p.isApproved ? "rgba(76,175,80,0.12)" : "rgba(255,152,0,0.12)", color: p.isApproved ? "#388e3c" : "#e65100", border: `1.5px solid ${p.isApproved ? "rgba(76,175,80,0.3)" : "rgba(255,152,0,0.3)"}`, borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                              {p.isApproved ? "✓ Active" : "⏳ Pending"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "16px 20px" }}>
-                            {!p.isApproved && (
-                              <div style={{ display: "flex", gap: 6 }}>
-                                <button className="approve-btn" onClick={() => setApproveTarget(p)}
-                                  style={{ background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.35)", borderRadius: 10, padding: "7px 14px", fontSize: 12, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}>
-                                  ✓
-                                </button>
-                                <button className="reject-btn" onClick={() => setRejectTarget(p)}
-                                  style={{ background: "rgba(239,83,80,0.06)", border: "1.5px solid rgba(239,83,80,0.25)", borderRadius: 10, padding: "7px 14px", fontSize: 12, fontWeight: 800, color: "#ef5350", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }}>
-                                  ✕
-                                </button>
-                              </div>
-                            )}
-                            {p.isApproved && <span style={{ fontSize: 18, color: "#4caf50" }}>✓</span>}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* ══ PENDING APPROVALS ══ */}
-            {activeNav === "pending" && (
-              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-                <div style={{ marginBottom: 28 }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Action Required</p>
-                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Pending Approvals</h1>
-                  <p style={{ color: "#999", fontSize: 14 }}>{pending.length} application{pending.length !== 1 ? "s" : ""} waiting for your review</p>
-                </div>
-
-                {pending.length === 0 ? (
-                  <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 22, padding: "60px 40px", textAlign: "center", border: "1px solid rgba(143,174,142,0.2)" }}>
-                    <div style={{ fontSize: 52, marginBottom: 16 }}>🎉</div>
-                    <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>All caught up!</h3>
-                    <p style={{ color: "#aaa", fontSize: 15, fontWeight: 600 }}>No pending provider applications right now.</p>
-                  </div>
-                ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(300px,1fr))", gap: 18 }}>
-                    {pending.map((p, i) => (
-                      <div key={p._id} style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(12px)", borderRadius: 22, padding: "26px", border: "1.5px solid rgba(255,152,0,0.2)", boxShadow: "0 6px 24px rgba(90,120,70,0.08)", animation: `popIn 0.4s cubic-bezier(.22,.68,0,1.2) ${i * 60}ms both` }}>
-                        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 16 }}>
-                          <div style={{ width: 48, height: 48, borderRadius: 16, background: "rgba(255,152,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👩‍🍳</div>
-                          <span style={{ background: "rgba(255,152,0,0.12)", color: "#e65100", border: "1.5px solid rgba(255,152,0,0.3)", borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>⏳ Pending</span>
-                        </div>
-                        <h3 style={{ fontWeight: 800, fontSize: 16, color: "#2d3b2d", marginBottom: 4 }}>{p.businessName}</h3>
-                        <p style={{ fontSize: 13, color: "#777", fontWeight: 600, marginBottom: 2 }}>👤 {p.ownerName}</p>
-                        <p style={{ fontSize: 13, color: "#aaa", fontWeight: 600, marginBottom: 2 }}>📧 {p.email}</p>
-                        <p style={{ fontSize: 13, color: "#aaa", fontWeight: 600, marginBottom: 4 }}>📱 {p.phone}</p>
-                        {p.fssaiNumber && <p style={{ fontSize: 12, color: "#bbb", fontWeight: 600, marginBottom: 16 }}>FSSAI: {p.fssaiNumber}</p>}
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button className="approve-btn" onClick={() => setApproveTarget(p)}
-                            style={{ flex: 1, padding: "12px", background: "rgba(143,174,142,0.12)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 12, fontSize: 14, fontWeight: 800, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s" }}>
-                            ✓ Approve
-                          </button>
-                          <button className="reject-btn" onClick={() => setRejectTarget(p)}
-                            style={{ flex: 1, padding: "12px", background: "rgba(239,83,80,0.06)", border: "1.5px solid rgba(239,83,80,0.25)", borderRadius: 12, fontSize: 14, fontWeight: 800, color: "#ef5350", cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s" }}>
-                            ✕ Reject
-                          </button>
-                        </div>
-                      </div>
                     ))}
-                  </div>
-                )}
+                  </tbody>
+                </table>
               </div>
-            )}
-
-            {/* ══ USERS ══ */}
-            {activeNav === "users" && (
-              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-                <div style={{ marginBottom: 28 }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>User Management</p>
-                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Users</h1>
-                  <p style={{ color: "#999", fontSize: 14 }}>{allUsers.length} registered customers</p>
-                </div>
-                <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Name","Email","Phone","Role","Joined"].map(h => (
-                          <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                        ))}
+            </div>
+          )}
+          {activeNav === "providers" && (
+            <div>
+              <h3 style={{ fontSize: 32, marginBottom: 30, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Tiffin Providers</h3>
+              <div style={{ background: "#fff", padding: 40, borderRadius: 28 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #eee" }}>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Business Name</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Owner</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Cuisine</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Phone</th>
+                      <th style={{ textAlign: "left", padding: 15, fontSize: 12, color: "#aaa", textTransform: "uppercase" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allProviders.map(p => (
+                      <tr key={p._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: 15, fontSize: 14, fontWeight: 700 }}>{p.businessName}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{p.ownerName}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{p.cuisineType || "N/A"}</td>
+                        <td style={{ padding: 15, fontSize: 14 }}>{p.phone}</td>
+                        <td style={{ padding: 15 }}>
+                          <span style={{
+                            padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 800,
+                            background: p.isActive ? '#e8f5e9' : '#ffebee',
+                            color: p.isActive ? '#2e7d32' : '#c62828'
+                          }}>
+                            {p.isActive ? "ACTIVE" : "INACTIVE"}
+                          </span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {allUsers.length === 0 ? (
-                        <tr><td colSpan={5} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15 }}>No users found</td></tr>
-                      ) : allUsers.map((u) => (
-                        <tr key={u._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                          <td style={{ padding: "14px 20px", fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{u.name}</td>
-                          <td style={{ padding: "14px 20px", fontSize: 13, color: "#666", fontWeight: 600 }}>{u.email}</td>
-                          <td style={{ padding: "14px 20px", fontSize: 13, color: "#888" }}>{u.phone || "—"}</td>
-                          <td style={{ padding: "14px 20px" }}>
-                            <span style={{ background: "rgba(143,174,142,0.12)", color: "#4a7040", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 20, padding: "3px 12px", fontSize: 10, fontWeight: 800, textTransform: "uppercase" }}>
-                              {u.role || "customer"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "14px 20px", fontSize: 12, color: "#bbb", fontWeight: 600 }}>
-                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+            </div>
+          )}
+        </div>
+      </main>
 
-            {/* ══ ORDERS ══ */}
-            {activeNav === "orders" && (
-              <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
-                <div style={{ marginBottom: 28 }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Order Management</p>
-                  <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Orders</h1>
-                  <p style={{ color: "#999", fontSize: 14 }}>{allOrders.length} orders processed on the platform</p>
-                </div>
-                <div style={{ background: "rgba(255,255,255,0.75)", backdropFilter: "blur(16px)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 8px 32px rgba(90,120,70,0.1)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr style={{ background: "rgba(143,174,142,0.07)" }}>
-                        {["Order ID","Customer","Kitchen","Amount","Status","Date"].map(h => (
-                          <th key={h} style={{ padding: "14px 20px", textAlign: "left", fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "#aaa" }}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allOrders.length === 0 ? (
-                        <tr><td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "#bbb", fontSize: 15 }}>No orders found</td></tr>
-                      ) : allOrders.map((o) => (
-                        <tr key={o._id} className="row-hover" style={{ borderTop: "1px solid rgba(143,174,142,0.1)", transition: "background 0.2s" }}>
-                          <td style={{ padding: "14px 20px", fontSize: 11, color: "#bbb", fontWeight: 700, fontFamily: "monospace" }}>#{o._id?.slice(-8).toUpperCase()}</td>
-                          <td style={{ padding: "14px 20px", fontWeight: 700, fontSize: 14, color: "#444" }}>{o.user?.name || "—"}</td>
-                          <td style={{ padding: "14px 20px", fontSize: 13, color: "#666", fontWeight: 600 }}>{o.provider?.businessName || "—"}</td>
-                          <td style={{ padding: "14px 20px", fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>₹{o.amountPaid?.toLocaleString() || "—"}</td>
-                          <td style={{ padding: "14px 20px" }}>
-                            <span style={{
-                              background: o.status === "delivered" ? "rgba(76,175,80,0.12)" : o.status === "cancelled" ? "rgba(239,83,80,0.1)" : "rgba(255,152,0,0.1)",
-                              color:      o.status === "delivered" ? "#388e3c"              : o.status === "cancelled" ? "#c62828"               : "#e65100",
-                              border: `1.5px solid ${o.status === "delivered" ? "rgba(76,175,80,0.3)" : o.status === "cancelled" ? "rgba(239,83,80,0.25)" : "rgba(255,152,0,0.3)"}`,
-                              borderRadius: 20, padding: "4px 12px", fontSize: 10, fontWeight: 800, textTransform: "capitalize",
-                            }}>
-                              {o.status || "processing"}
-                            </span>
-                          </td>
-                          <td style={{ padding: "14px 20px", fontSize: 12, color: "#bbb", fontWeight: 600 }}>
-                            {o.createdAt ? new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
     </div>
   );
 }

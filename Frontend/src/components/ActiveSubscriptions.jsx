@@ -24,48 +24,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import api from "../services/api";
 
-// Demo fallback data (used when backend is unavailable)
-const DEMO_SUBSCRIPTIONS = [
-    {
-        _id: "demo-sub-101",
-        user: { name: "Aditi Sharma", email: "aditi@example.com" },
-        planType: "monthly",
-        timeSlot: "lunch",
-        startDate: "2026-02-01T00:00:00Z",
-        endDate: "2026-03-01T00:00:00Z",
-        status: "active",
-        remainingMeals: 42,
-        totalPrice: 4500,
-        amountPaid: 4500,
-        paymentStatus: "paid",
-    },
-    {
-        _id: "demo-sub-102",
-        user: { name: "Rahul Verma", email: "rahul@example.com" },
-        planType: "weekly",
-        timeSlot: "dinner",
-        startDate: "2026-02-12T00:00:00Z",
-        endDate: "2026-02-19T00:00:00Z",
-        status: "paused",
-        remainingMeals: 4,
-        totalPrice: 1050,
-        amountPaid: 1050,
-        paymentStatus: "paid",
-    },
-    {
-        _id: "demo-sub-103",
-        user: { name: "Priya Das", email: "priya@example.com" },
-        planType: "monthly",
-        timeSlot: "lunch",
-        startDate: "2026-01-15T00:00:00Z",
-        endDate: "2026-02-15T00:00:00Z",
-        status: "active",
-        remainingMeals: 2,
-        totalPrice: 4500,
-        amountPaid: 4500,
-        paymentStatus: "paid",
-    }
-];
+// Demo data removed - syncing purely with backend
+const DEMO_SUBSCRIPTIONS = [];
 
 export const ActiveSubscriptions = () => {
     const [selectedSub, setSelectedSub] = useState(null);
@@ -98,15 +58,15 @@ export const ActiveSubscriptions = () => {
                 setSubscriptions(data.recentActivity || []);
             }
         } catch (err) {
-            console.warn("Backend unavailable, using demo data:", err.message);
-            setError("Using demo data — backend is offline.");
-            setSubscriptions(DEMO_SUBSCRIPTIONS);
+            console.error("Subscriptions sync failed:", err.message);
+            setError("Unable to sync active subscriptions. Please check your connection.");
+            setSubscriptions([]);
             setDashboardStats({
-                todaysMeals: 42,
-                lunchCount: 28,
-                dinnerCount: 14,
-                activeSubscribers: 3,
-                monthlyRevenue: 10050,
+                todaysMeals: 0,
+                lunchCount: 0,
+                dinnerCount: 0,
+                activeSubscribers: 0,
+                monthlyRevenue: 0,
             });
         } finally {
             setLoading(false);

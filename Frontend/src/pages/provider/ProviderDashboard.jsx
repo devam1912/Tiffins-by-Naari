@@ -22,66 +22,175 @@ import { cn } from "../../lib/utils";
 
 // --- Placeholder Sub-components ---
 
-const DashboardOverview = () => (
-    <div className="space-y-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-                { label: "Total Revenue", value: "₹45,280", icon: DollarSign, trend: "+12%", color: "text-green-600", bg: "bg-green-50" },
-                { label: "Active Subscriptions", value: "128", icon: Users, trend: "+5%", color: "text-blue-600", bg: "bg-blue-50" },
-                { label: "Orders Today", value: "42", icon: ShoppingBag, trend: "+18%", color: "text-purple-600", bg: "bg-purple-50" },
-                { label: "Avg. Rating", value: "4.9", icon: UtensilsCrossed, trend: "Stable", color: "text-amber-600", bg: "bg-amber-50" },
-            ].map((stat, i) => (
-                <Card key={i} className="border-none shadow-sm">
-                    <CardContent className="p-6">
-                        <div className="flex justify-between items-start">
-                            <div className={cn("p-3 rounded-2xl", stat.bg)}>
-                                <stat.icon className={stat.color} size={24} />
+const DashboardOverview = ({ stats, loading }) => {
+    const statsConfig = [
+        {
+            label: "Monthly Revenue",
+            value: loading ? "..." : `₹${stats?.monthlyRevenue?.toLocaleString() || 0}`,
+            icon: DollarSign,
+            trend: "This Month",
+            color: "text-green-600",
+            bg: "bg-green-50"
+        },
+        {
+            label: "Active Subscribers",
+            value: loading ? "..." : (stats?.activeSubscribers || 0),
+            icon: Users,
+            trend: "Active Now",
+            color: "text-blue-600",
+            bg: "bg-blue-50"
+        },
+        {
+            label: "Meals Today",
+            value: loading ? "..." : (stats?.todaysMeals || 0),
+            icon: ShoppingBag,
+            trend: loading ? "" : `${stats?.lunchCount || 0}L / ${stats?.dinnerCount || 0}D`,
+            color: "text-purple-600",
+            bg: "bg-purple-50"
+        },
+        {
+            label: "Service Status",
+            value: stats?.isActive ? "Active" : "Paused",
+            icon: UtensilsCrossed,
+            trend: "Current",
+            color: stats?.isActive ? "text-amber-600" : "text-red-600",
+            bg: stats?.isActive ? "bg-amber-50" : "bg-red-50"
+        },
+    ];
+
+    return (
+        <div className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {statsConfig.map((stat, i) => (
+                    <Card key={i} className="border-none shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+                        <CardContent className="p-6">
+                            <div className="flex justify-between items-start">
+                                <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110", stat.bg)}>
+                                    <stat.icon className={stat.color} size={24} />
+                                </div>
+                                <span className={cn("text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider", stat.bg, stat.color)}>
+                                    {stat.trend}
+                                </span>
                             </div>
-                            <span className={cn("text-xs font-bold px-2 py-1 rounded-full", stat.bg, stat.color)}>
-                                {stat.trend}
-                            </span>
+                            <div className="mt-4">
+                                <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                                <h3 className="text-2xl font-bold mt-1 text-gray-900">{stat.value}</h3>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <Card className="lg:col-span-2 border-none shadow-sm flex flex-col">
+                    <CardHeader className="border-b border-gray-50 pb-5">
+                        <CardTitle className="text-xl font-serif">Recent Subscriptions</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0 flex-1">
+                        {loading ? (
+                            <div className="h-64 flex items-center justify-center">
+                                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                            </div>
+                        ) : !stats?.recentActivity || stats.recentActivity.length === 0 ? (
+                            <div className="h-64 flex flex-col items-center justify-center text-gray-400 italic">
+                                <Users size={40} className="mb-4 opacity-20" />
+                                <p>No recent subscription activity</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left">
+                                    <thead>
+                                        <tr className="bg-gray-50/50">
+                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Customer</th>
+                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Plan</th>
+                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Amount</th>
+                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {stats.recentActivity.map((activity, idx) => (
+                                            <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
+                                                <td className="px-6 py-4">
+                                                    <p className="font-bold text-gray-800">{activity.user?.name || "Customer"}</p>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-600 rounded-md capitalize">
+                                                        {activity.planType}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 font-bold text-gray-700">₹{activity.amountPaid}</td>
+                                                <td className="px-6 py-4 text-sm text-gray-500">
+                                                    {new Date(activity.createdAt).toLocaleDateString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card className="border-none shadow-sm">
+                    <CardHeader className="border-b border-gray-50 pb-5">
+                        <CardTitle className="text-xl font-serif">Quick Stats</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
+                                        <Clock size={18} />
+                                    </div>
+                                    <span className="text-sm font-medium">Lunch Deliveries</span>
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">{stats?.lunchCount || 0}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-orange-400 h-full transition-all duration-1000"
+                                    style={{ width: `${(stats?.todaysMeals > 0 ? (stats.lunchCount / stats.todaysMeals) * 100 : 0) || 0}%` }}
+                                />
+                            </div>
                         </div>
-                        <div className="mt-4">
-                            <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                            <h3 className="text-2xl font-bold mt-1 text-gray-900">{stat.value}</h3>
+
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
+                                        <Clock size={18} />
+                                    </div>
+                                    <span className="text-sm font-medium">Dinner Deliveries</span>
+                                </div>
+                                <span className="text-sm font-bold text-gray-900">{stats?.dinnerCount || 0}</span>
+                            </div>
+                            <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="bg-blue-400 h-full transition-all duration-1000"
+                                    style={{ width: `${(stats?.todaysMeals > 0 ? (stats.dinnerCount / stats.todaysMeals) * 100 : 0) || 0}%` }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-gray-50">
+                            <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                                <div className="flex items-center gap-2 text-primary mb-1">
+                                    <TrendingUp size={16} />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Efficiency Tip</span>
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                                    {stats?.lunchCount > stats?.dinnerCount
+                                        ? "Lunch hours are your peak. Consider prepping side dishes earlier."
+                                        : "Dinner demand is rising. Ensure your evening staff is ready."}
+                                </p>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
-            ))}
+            </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <Card className="lg:col-span-2 border-none shadow-sm">
-                <CardHeader>
-                    <CardTitle>Recent Sales Overview</CardTitle>
-                </CardHeader>
-                <CardContent className="h-64 flex items-center justify-center bg-gray-50 rounded-xl m-6">
-                    <Typography className="text-muted-foreground italic">Sales Chart Placeholder</Typography>
-                </CardContent>
-            </Card>
-            <Card className="border-none shadow-sm">
-                <CardHeader>
-                    <CardTitle>Peak Hours</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 m-6">
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">12:00 PM - 1:00 PM</span>
-                        <span className="text-sm font-bold text-primary">High</span>
-                    </div>
-                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                        <div className="bg-primary h-full w-[80%]"></div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">7:30 PM - 8:30 PM</span>
-                        <span className="text-sm font-bold text-accent">Medium</span>
-                    </div>
-                    <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                        <div className="bg-accent h-full w-[60%]"></div>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-    </div>
-);
+    );
+};
 
 const ViewPlaceholder = ({ title }) => (
     <div className="bg-white p-20 rounded-3xl border-2 border-dashed border-gray-100 flex flex-col items-center justify-center text-center">
@@ -108,6 +217,45 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
     const [activeTab, setActiveTab] = useState("Dashboard");
     const [isServiceActive, setIsServiceActive] = useState(true);
     const [isStatusLoading, setIsStatusLoading] = useState(false);
+    const [stats, setStats] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [loadingStats, setLoadingStats] = useState(true);
+
+    const fetchDashboardStats = async () => {
+        setLoadingStats(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await api.get("/api/subscriptions/provider/dashboard", {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                setStats(res.data.data);
+                if (res.data.data.isActive !== undefined) setIsServiceActive(res.data.data.isActive);
+
+                // --- PROFILE SCRAPER ---
+                // Since there's no direct GET /profile, we scrape it from the nearby list
+                try {
+                    const nearbyRes = await api.get("/api/tiffins/nearby?lat=0&lng=0&distance=100000");
+                    if (Array.isArray(nearbyRes.data)) {
+                        // Find the provider that matches current user ID or business name from stats
+                        // Note: If newly registered and not approved, they won't show here.
+                        const myProfile = nearbyRes.data.find(p => p.businessName === res.data.data.businessName);
+                        if (myProfile) setProfile(myProfile);
+                    }
+                } catch (pErr) {
+                    console.warn("Profile scrape failed:", pErr.message);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching dashboard stats:", error);
+        } finally {
+            setLoadingStats(false);
+        }
+    };
+
+    React.useEffect(() => {
+        fetchDashboardStats();
+    }, []);
 
     const toggleServiceStatus = async () => {
         setIsStatusLoading(true);
@@ -142,7 +290,9 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                     <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center">
                         <UtensilsCrossed className="text-[var(--primary)] w-6 h-6" />
                     </div>
-                    <Typography variant="h4" className="!text-primary-foreground font-serif tracking-tight">Naari Chef</Typography>
+                    <Typography variant="h4" className="!text-primary-foreground font-serif tracking-tight">
+                        {stats?.businessName || "My Kitchen"}
+                    </Typography>
                 </div>
 
                 <nav className="flex-1 px-4 py-4 space-y-2">
@@ -215,11 +365,15 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                         <div className="h-8 w-px bg-gray-100"></div>
                         <div className="flex items-center gap-3 cursor-pointer group">
                             <div className="text-right">
-                                <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] transition-colors">Naari's Kitchen</p>
-                                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">Premium Provider</p>
+                                <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] transition-colors">
+                                    {stats?.businessName || "My Kitchen"}
+                                </p>
+                                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{stats?.ownerName || "Chef"}</p>
                             </div>
                             <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center border-2 border-[var(--primary)]/20 shadow-sm group-hover:scale-105 transition-transform">
-                                <span className="text-[var(--primary)] font-bold">NK</span>
+                                <span className="text-[var(--primary)] font-bold">
+                                    {(stats?.businessName || "K").charAt(0).toUpperCase()}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -227,7 +381,12 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
 
                 {/* View Render */}
                 <div className="p-10 max-w-7xl mx-auto text-left">
-                    <Typography variant="h2" className="mb-8 font-serif">{activeTab}</Typography>
+                    <Typography
+                        variant="h2"
+                        className="mb-8 font-serif !text-[32px] !font-bold"
+                    >
+                        {activeTab === "Dashboard" ? "TSP Dashboard Overview" : activeTab}
+                    </Typography>
 
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -238,7 +397,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                             transition={{ duration: 0.3 }}
                         >
                             {activeTab === "Dashboard" ? (
-                                <DashboardOverview />
+                                <DashboardOverview stats={stats} loading={loadingStats} />
                             ) : activeTab === "Menu Management" ? (
                                 <ProviderMenu />
                             ) : activeTab === "Active Subscriptions" ? (
@@ -250,6 +409,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                                     isServiceActive={isServiceActive}
                                     toggleServiceStatus={toggleServiceStatus}
                                     isStatusLoading={isStatusLoading}
+                                    profileData={profile || stats} // Fallback to stats if scraper fails
                                 />
                             ) : (
                                 <ViewPlaceholder title={activeTab} />

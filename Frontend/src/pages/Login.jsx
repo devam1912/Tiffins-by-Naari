@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/auth";
-
+import { useDispatch } from "react-redux";
+import { loginSuccess } from "../store/authSlice";
 export default function Login() {
     const [loaded, setLoaded] = useState(false);
     const [form, setForm] = useState({ email: "", password: "" });
@@ -10,6 +11,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const navigate = useNavigate();
+    const dispatch = useDispatch();
 
     const isFormReady = form.email.trim() !== "" && form.password !== "";
 
@@ -29,10 +31,8 @@ export default function Login() {
         const token = res.data.token;
         const user = res.data.user;
 
-        // store auth data
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-
+        dispatch(loginSuccess({ user, token }));
+        
         // role based navigation
         if (user.role === "admin") {
             navigate("/admin");

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateProfile } from "../../api/auth";
+import { useSelector, useDispatch } from "react-redux";
+import { loginSuccess } from "../../store/authSlice";
 
 export default function EditProfile() {
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
@@ -11,23 +13,28 @@ export default function EditProfile() {
   const [showSuccess, setShowSuccess] = useState(false);
   const navigate = useNavigate();
 
+  // ✅ Redux se user aur token
+  const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
 
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    if (storedUser) {
+    // ✅ localStorage ki jagah Redux store se user data
+    if (user) {
       setForm({
-        name: storedUser.name || "",
-        email: storedUser.email || "",
-        phone: storedUser.phone || "",
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
       });
     }
 
     setTimeout(() => setLoaded(true), 80);
-  }, []);
+  }, [user]);
 
   const anim = (delay = 0) => ({
     opacity: loaded ? 1 : 0,
@@ -46,7 +53,8 @@ export default function EditProfile() {
     setLoading(true);
     try {
       const res = await updateProfile(form);
-      localStorage.setItem("user", JSON.stringify(res.data.user));
+      // ✅ localStorage ki jagah Redux store update karo
+      dispatch(loginSuccess({ user: res.data.user, token }));
       setShowSuccess(true);
     } catch (err) {
       setError(err.response?.data?.message || "Update failed. Please try again.");

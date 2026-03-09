@@ -25,15 +25,16 @@ const orderSchema = new mongoose.Schema(
     },
 
     items: [
-  {
-    type: {
-      name: { type: String, required: true },
-      itemType: { type: String, default: "" },  // Renamed!
-      price: { type: Number, default: 0 },
-    },
-    _id: false,
-  },
-],
+      {
+        type: {
+          name: { type: String, required: true },
+          itemType: { type: String, default: "" },
+          price: { type: Number, default: 0 },
+          quantity: { type: Number, default: 1 },
+        },
+        _id: false,
+      },
+    ],
 
     totalPrice: {
       type: Number,
@@ -47,17 +48,17 @@ const orderSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [ "pending","confirmed", "preparing", "ready", "completed", "cancelled"],
+      enum: ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"],
       default: "pending",
     },
 
     paymentStatus: {
-    type: String,
-    enum: ["pending", "partial", "paid"],
-    default: "pending",
-  },
-  razorpayOrderId: String,
-  razorpayPaymentId: String,
+      type: String,
+      enum: ["pending", "partial", "paid"],
+      default: "pending",
+    },
+    razorpayOrderId: String,
+    razorpayPaymentId: String,
   },
   { timestamps: true }
 );

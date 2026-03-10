@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchNearbyTiffins } from "../../store/tiffinSlice";
 
 // Cache to avoid re-fetching same coordinates
 const geocodeCache = {};
@@ -34,8 +34,9 @@ export default function BrowseTiffins() {
   // ✅ Redux se token
   const token = useSelector((state) => state.auth.token);
 
-  const [providers, setProviders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+  const { providers, loading } = useSelector((state) => state.tiffins);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [radius, setRadius] = useState(10);
   const [userLocation, setUserLocation] = useState(null);
@@ -59,35 +60,20 @@ export default function BrowseTiffins() {
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      ()    => setUserLocation({ lat: 23.0225, lng: 72.5714 })
+      () => setUserLocation({ lat: 23.0225, lng: 72.5714 })
     );
   }, []);
 
   useEffect(() => {
     if (!userLocation) return;
-    fetchProviders();
-  }, [userLocation, radius]);
+    dispatch(fetchNearbyTiffins({ lat: userLocation.lat, lng: userLocation.lng, radius, token }));
+  }, [userLocation, radius, dispatch, token]);
 
   useEffect(() => {
     if (!providers.length) return;
     geocodeProviders(providers);
   }, [providers]);
 
-  const fetchProviders = async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get("http://localhost:5000/api/tiffins/nearby", {
-        params: { lat: userLocation.lat, lng: userLocation.lng, distance: radius },
-        headers,
-      });
-      setProviders(res.data || []);
-    } catch (err) {
-      console.error("Fetch providers error:", err);
-      setProviders([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const geocodeProviders = async (list) => {
     if (geocodingRef.current) return;
@@ -116,9 +102,9 @@ export default function BrowseTiffins() {
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos((lat1 * Math.PI) / 180) *
-        Math.cos((lat2 * Math.PI) / 180) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
     return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
   };
 
@@ -139,15 +125,15 @@ export default function BrowseTiffins() {
       distanceKm:
         userLocation && p.location?.coordinates
           ? calcDistance(
-              userLocation.lat, userLocation.lng,
-              p.location.coordinates[1], p.location.coordinates[0]
-            )
+            userLocation.lat, userLocation.lng,
+            p.location.coordinates[1], p.location.coordinates[0]
+          )
           : null,
     }))
     .sort((a, b) => {
       if (sortBy === "distance") return (a.distanceKm || 99) - (b.distanceKm || 99);
-      if (sortBy === "price")    return (a.pricePerMeal || 0) - (b.pricePerMeal || 0);
-      if (sortBy === "rating")   return (b.rating || 0) - (a.rating || 0);
+      if (sortBy === "price") return (a.pricePerMeal || 0) - (b.pricePerMeal || 0);
+      if (sortBy === "rating") return (b.rating || 0) - (a.rating || 0);
       return 0;
     });
 
@@ -265,8 +251,8 @@ export default function BrowseTiffins() {
               <span style={{ fontSize: 12, fontWeight: 700, color: "#aaa", marginRight: 4 }}>Sort:</span>
               {[
                 { key: "distance", label: "📏 Nearest" },
-                { key: "price",    label: "💰 Price"   },
-                { key: "rating",   label: "⭐ Rating"  },
+                { key: "price", label: "💰 Price" },
+                { key: "rating", label: "⭐ Rating" },
               ].map(s => (
                 <button key={s.key} className={`sort-btn ${sortBy === s.key ? "active" : ""}`} onClick={() => setSortBy(s.key)}>
                   {s.label}

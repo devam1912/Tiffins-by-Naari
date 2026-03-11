@@ -15,6 +15,13 @@ import {
     Clock
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useSelector, useDispatch } from "react-redux";
+import {
+    fetchProviderDashboard,
+    toggleProviderService,
+    setProviderProfile,
+    setServiceActive
+} from "../../store/providerSlice";
 import { Typography } from "../../components/ui/Typography";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
@@ -214,77 +221,44 @@ import api from "../../services/api";
 // --- Main Dashboard Component ---
 
 export const ProviderDashboard = ({ onLogout = () => console.log("Logout triggered") }) => {
+    const dispatch = useDispatch();
     const [activeTab, setActiveTab] = useState("Dashboard");
-    const [isServiceActive, setIsServiceActive] = useState(true);
-    const [isStatusLoading, setIsStatusLoading] = useState(false);
-    const [stats, setStats] = useState(null);
-    const [profile, setProfile] = useState(null);
-    const [loadingStats, setLoadingStats] = useState(true);
 
-    const fetchDashboardStats = async () => {
-        setLoadingStats(true);
+    const {
+        stats,
+        profile,
+        isServiceActive,
+        loading: loadingStats,
+        statusLoading: isStatusLoading
+    } = useSelector((state) => state.provider);
+
+    const user = useSelector((state) => state.auth.user);
+
+    const syncProfileStatus = async () => {
         try {
-            const token = localStorage.getItem("token");
             const userData = JSON.parse(localStorage.getItem("user") || "{}");
-
-            const res = await api.get("/api/subscriptions/provider/dashboard", {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            if (res.data.success) {
-                setStats(res.data.data);
-
-                // --- PROFILE & STATUS SYNC ---
-                // We fetch the public 'nearby' list to find our own provider record
-                // This gives us the accurate 'isActive' status and 'businessName'
-                try {
-                    const nearbyRes = await api.get("/api/tiffins/nearby?lat=0&lng=0&distance=100000");
-                    if (Array.isArray(nearbyRes.data)) {
-                        // Match by user ID from localStorage
-                        const myProfile = nearbyRes.data.find(p => p.user === userData.id);
-
-                        if (myProfile) {
-                            setProfile(myProfile);
-                            setIsServiceActive(true); // Found in public 'active' list
-                        } else {
-                            // If not found in the 'active/approved' list, we are inactive
-                            setIsServiceActive(false);
-                            // Still try to get profile data from stats if the scraper misses it
-                            // (e.g., if newly registered but not approved yet)
-                        }
-                    }
-                } catch (pErr) {
-                    console.warn("Status sync via nearby failed:", pErr.message);
+            const nearbyRes = await api.get("/api/tiffins/nearby?lat=0&lng=0&distance=100000");
+            if (Array.isArray(nearbyRes.data)) {
+                const myProfile = nearbyRes.data.find(p => p.user === userData.id);
+                if (myProfile) {
+                    dispatch(setProviderProfile(myProfile));
+                    dispatch(setServiceActive(true));
+                } else {
+                    dispatch(setServiceActive(false));
                 }
             }
-        } catch (error) {
-            console.error("Error fetching dashboard stats:", error);
-        } finally {
-            setLoadingStats(false);
+        } catch (pErr) {
+            console.warn("Status sync via nearby failed:", pErr.message);
         }
     };
 
     React.useEffect(() => {
-        fetchDashboardStats();
-    }, []);
+        dispatch(fetchProviderDashboard());
+        syncProfileStatus();
+    }, [dispatch]);
 
-    const toggleServiceStatus = async () => {
-        setIsStatusLoading(true);
-        try {
-            const token = localStorage.getItem("token");
-            const endpoint = isServiceActive ? "/api/tiffin/deactivate" : "/api/tiffin/reactivate";
-            await api.patch(endpoint, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setIsServiceActive(!isServiceActive);
-            // Refresh counts (meals, subscribers) which might change after pausing/resuming
-            await fetchDashboardStats();
-        } catch (error) {
-            console.error("Failed to toggle service status:", error);
-            alert("Failed to update service status. Please try again.");
-        } finally {
-            setIsStatusLoading(false);
-        }
+    const handleToggleService = () => {
+        dispatch(toggleProviderService(isServiceActive));
     };
 
     const menuItems = [
@@ -333,7 +307,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                             <span className="text-sm font-semibold">{isServiceActive ? "Active" : "Paused"}</span>
                         </div>
                         <button
-                            onClick={toggleServiceStatus}
+                            onClick={handleToggleService}
                             disabled={isStatusLoading}
                             className={cn(
                                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50",
@@ -420,7 +394,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                             ) : activeTab === "Profile Settings" ? (
                                 <ProfileSettings
                                     isServiceActive={isServiceActive}
-                                    toggleServiceStatus={toggleServiceStatus}
+                                    toggleServiceStatus={handleToggleService}
                                     isStatusLoading={isStatusLoading}
                                     profileData={profile || stats} // Fallback to stats if scraper fails
                                 />

@@ -22,7 +22,23 @@ export default function CustomerDashboard() {
   if (!token) { navigate("/login"); return; }
 
   useEffect(() => {
-    // 1. Get Coordinates from Browser
+    const fetchStats = (lat = 23.0225, lng = 72.5714) => {
+      const headers = { Authorization: `Bearer ${token}` };
+      Promise.all([
+        axios.get(`http://localhost:5000/api/tiffins/nearby?lat=${lat}&lng=${lng}&distance=15`),
+        axios.get("http://localhost:5000/api/subscriptions/my", { headers }),
+        axios.get("http://localhost:5000/api/orders/my", { headers }),
+      ])
+        .then(([tiffinsRes, subsRes, ordersRes]) => {
+          setStats({
+            tiffins: tiffinsRes.data.length || 0,
+            subscriptions: subsRes.data.length || 0,
+            orders: ordersRes.data.length || 0,
+          });
+        })
+        .catch(err => console.error("Dashboard fetch error:", err));
+    };
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -46,18 +62,22 @@ export default function CustomerDashboard() {
               lng: longitude,
               loading: false
             });
+            fetchStats(latitude, longitude);
           } catch (error) {
             console.error("Geocoding error:", error);
             setLocation({ address: "Location unavailable", loading: false });
+            fetchStats();
           }
         },
         (error) => {
           console.error("Geolocation error:", error);
           setLocation({ address: "Location access denied", loading: false });
+          fetchStats();
         }
       );
     } else {
       setLocation({ address: "Geolocation not supported", loading: false });
+      fetchStats();
     }
 
     // Fonts
@@ -66,22 +86,7 @@ export default function CustomerDashboard() {
     link.rel = "stylesheet";
     document.head.appendChild(link);
 
-    // ✅ Token ab Redux se aa raha hai, localStorage se nahi
-    const headers = { Authorization: `Bearer ${token}` };
-
-    Promise.all([
-      axios.get("http://localhost:5000/api/tiffins"),
-      axios.get("http://localhost:5000/api/subscriptions", { headers }),
-      axios.get("http://localhost:5000/api/orders", { headers }),
-    ])
-      .then(([tiffinsRes, subsRes, ordersRes]) => {
-        setStats({
-          tiffins: tiffinsRes.data.length || 0,
-          subscriptions: subsRes.data.length || 0,
-          orders: ordersRes.data.length || 0,
-        });
-      })
-      .catch(err => console.error("Dashboard fetch error:", err));
+    // fetchStats is called inside geolocation block
 
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);

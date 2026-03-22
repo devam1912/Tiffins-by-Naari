@@ -2,22 +2,24 @@ import React, { useState } from "react";
 import { cn } from "../lib/utils";
 import {
     Eye,
-    Trash2,
-    Ban,
     Search,
-    MoreHorizontal,
     User as UserIcon,
     Filter,
-    CheckCircle2,
-    XCircle,
-    Clock
+    Clock,
+    X,
+    Mail,
+    Phone,
+    ShieldCheck
 } from "lucide-react";
 import { Typography } from "./ui/Typography";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
+import { Card } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Input } from "./ui/Input";
+import { motion, AnimatePresence } from "motion/react";
+
 export const AdminUsers = ({ users = [] }) => {
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedUser, setSelectedUser] = useState(null);
 
     const filteredUsers = users.filter(
         (user) =>
@@ -26,7 +28,7 @@ export const AdminUsers = ({ users = [] }) => {
     );
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 pb-10">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>User Management</h2>
@@ -78,7 +80,9 @@ export const AdminUsers = ({ users = [] }) => {
                                     <td className="px-6 py-5">
                                         <span className={cn(
                                             "text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border",
-                                            user.role === 'provider' ? "bg-purple-50 text-purple-600 border-purple-100" : "bg-blue-50 text-blue-600 border-blue-100"
+                                            user.role === 'provider' ? "bg-purple-50 text-purple-600 border-purple-100" :
+                                                user.role === 'admin' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                                    "bg-blue-50 text-blue-600 border-blue-100"
                                         )}>
                                             {user.role}
                                         </span>
@@ -87,13 +91,13 @@ export const AdminUsers = ({ users = [] }) => {
                                         <div className="flex items-center gap-2">
                                             <span className={cn(
                                                 "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                "bg-green-50 text-green-600 border border-green-100"
+                                                user.isVerified ? "bg-green-50 text-green-600 border border-green-100" : "bg-gray-50 text-gray-600 border border-gray-100"
                                             )}>
                                                 <div className={cn(
                                                     "w-1.5 h-1.5 rounded-full",
-                                                    "bg-green-500"
+                                                    user.isVerified ? "bg-green-500" : "bg-gray-400"
                                                 )} />
-                                                Active
+                                                {user.isVerified ? "Verified" : "Unverified"}
                                             </span>
                                         </div>
                                     </td>
@@ -111,7 +115,11 @@ export const AdminUsers = ({ users = [] }) => {
                                     </td>
                                     <td className="px-8 py-5 text-right">
                                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button className="p-2 text-gray-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-xl transition-all">
+                                            <button
+                                                onClick={() => setSelectedUser(user)}
+                                                className="p-2 text-gray-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-xl transition-all"
+                                                title="View User Details"
+                                            >
                                                 <Eye size={18} />
                                             </button>
                                         </div>
@@ -130,6 +138,107 @@ export const AdminUsers = ({ users = [] }) => {
                     )}
                 </div>
             </Card>
+
+            {/* User Details Modal */}
+            <AnimatePresence>
+                {selectedUser && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setSelectedUser(null)}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+                            className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl p-8"
+                        >
+                            <div className="flex justify-between items-start mb-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center text-gray-400 border-4 border-white shadow-md">
+                                        <UserIcon size={32} />
+                                    </div>
+                                    <div>
+                                        <Typography variant="h3" className="font-serif leading-none mb-1 text-gray-800">{selectedUser.name}</Typography>
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <span className={cn(
+                                                "text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border",
+                                                selectedUser.role === 'provider' ? "bg-purple-50 text-purple-600 border-purple-100" :
+                                                    selectedUser.role === 'admin' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                                        "bg-blue-50 text-blue-600 border-blue-100"
+                                            )}>
+                                                {selectedUser.role}
+                                            </span>
+                                            {selectedUser.isVerified && (
+                                                <span className="text-[10px] bg-green-50 text-green-600 border border-green-100 font-extrabold px-2 py-1 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                                    <ShieldCheck size={12} />
+                                                    Verified
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onClick={() => setSelectedUser(null)} className="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-400">
+                                    <X size={20} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-6 mt-8">
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4">
+                                    <div className="p-3 bg-white rounded-xl shadow-sm text-[var(--primary)] text-[#8FAE8E]">
+                                        <Mail size={18} />
+                                    </div>
+                                    <div className="overflow-hidden">
+                                        <Typography className="text-xs font-bold text-gray-400 uppercase tracking-widest">Email Address</Typography>
+                                        <Typography className="font-medium text-gray-800 truncate" title={selectedUser.email}>{selectedUser.email}</Typography>
+                                    </div>
+                                </div>
+
+                                {selectedUser.phone ? (
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4">
+                                        <div className="p-3 bg-white rounded-xl shadow-sm text-blue-500">
+                                            <Phone size={18} />
+                                        </div>
+                                        <div>
+                                            <Typography className="text-xs font-bold text-gray-400 uppercase tracking-widest">Phone Number</Typography>
+                                            <Typography className="font-medium text-gray-800">{selectedUser.phone}</Typography>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-dashed border-gray-200 flex items-center justify-center text-center">
+                                        <Typography className="text-sm font-medium text-gray-400 italic">No phone number provided</Typography>
+                                    </div>
+                                )}
+
+                                <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4">
+                                    <div className="p-3 bg-white rounded-xl shadow-sm text-gray-500">
+                                        <Clock size={18} />
+                                    </div>
+                                    <div>
+                                        <Typography className="text-xs font-bold text-gray-400 uppercase tracking-widest">Member Since</Typography>
+                                        <Typography className="font-medium text-gray-800">
+                                            {selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString('en-IN', {
+                                                year: 'numeric',
+                                                month: 'long',
+                                                day: 'numeric',
+                                            }) : "—"}
+                                        </Typography>
+                                    </div>
+                                </div>
+                                {selectedUser.walletBalance !== undefined && (
+                                    <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 flex items-center gap-4 text-center justify-center mt-2">
+                                        <Typography className="text-sm font-bold text-gray-800">Wallet Balance: </Typography>
+                                        <Typography className="text-sm font-bold text-[var(--primary)]">₹{selectedUser.walletBalance}</Typography>
+                                    </div>
+                                )}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

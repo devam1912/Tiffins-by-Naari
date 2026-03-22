@@ -3,7 +3,7 @@ import {
     Users,
     Store,
     Calendar,
-    UtensilsCrossed,
+    IndianRupee,
     TrendingUp,
     ArrowUpRight,
     ArrowDownRight,
@@ -11,29 +11,30 @@ import {
 } from "lucide-react";
 import { Typography } from "./ui/Typography";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
-import { dashboardStats, mockActivities } from "../data/adminMockData";
 import { cn } from "../lib/utils";
 
 const StatsCard = ({ title, value, icon: Icon, description, color, bgColor, trend }) => {
     return (
-        <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-[32px] overflow-hidden group">
-            <CardContent className="p-8">
+        <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-[32px] overflow-hidden group h-full">
+            <CardContent className="p-8 flex flex-col justify-between h-full">
                 <div className="flex justify-between items-start mb-6">
-                    <div className={cn("p-4 rounded-2xl shadow-sm border border-white/50", bgColor, color)}>
+                    <div className={cn("p-4 rounded-2xl shadow-sm border border-white/50 shrink-0", bgColor, color)}>
                         <Icon size={24} />
                     </div>
                     <div className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border",
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border ml-2 text-right",
                         trend === 'up' ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100"
                     )}>
-                        {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                        {description.split(' ')[0]}
+                        {trend === 'up' ? <ArrowUpRight size={14} className="shrink-0" /> : <ArrowDownRight size={14} className="shrink-0" />}
+                        <span className="truncate">{description}</span>
                     </div>
                 </div>
                 <div>
                     <Typography variant="small" className="text-gray-400 font-bold uppercase tracking-widest mb-1.5">{title}</Typography>
                     <div className="flex items-end gap-3">
-                        <Typography variant="h2" className="font-serif leading-none">{value.toLocaleString()}</Typography>
+                        <Typography variant="h2" className="font-serif leading-none truncate overflow-hidden">
+                            {typeof value === 'number' ? value.toLocaleString() : value}
+                        </Typography>
                         <Typography variant="small" className="text-gray-400 font-medium mb-1.5">Total</Typography>
                     </div>
                 </div>
@@ -42,40 +43,40 @@ const StatsCard = ({ title, value, icon: Icon, description, color, bgColor, tren
     );
 };
 
-export const AdminOverview = () => {
-    const stats = [
+export const AdminOverview = ({ stats, activities = [] }) => {
+    const statCards = [
         {
             title: 'Total Users',
-            value: dashboardStats.totalUsers,
+            value: stats?.totalUsers || 0,
             icon: Users,
-            description: '+12% from last month',
+            description: 'Platform Members',
             color: 'text-blue-600',
             bgColor: 'bg-blue-50',
             trend: 'up'
         },
         {
-            title: 'Total Providers',
-            value: dashboardStats.totalProviders,
+            title: 'Active Kitchens',
+            value: stats?.totalProviders || 0,
             icon: Store,
-            description: '+3 new this month',
+            description: 'Live Providers',
             color: 'text-[var(--primary)]',
             bgColor: 'bg-[var(--primary)]/10',
             trend: 'up'
         },
         {
-            title: 'Active Subs',
-            value: dashboardStats.activeSubscriptions,
+            title: 'Total Orders',
+            value: stats?.totalOrders || 0,
             icon: Calendar,
-            description: '+8% from last month',
+            description: 'Processed',
             color: 'text-[var(--accent)]',
             bgColor: 'bg-[var(--accent)]/10',
             trend: 'up'
         },
         {
-            title: 'Menu Items',
-            value: dashboardStats.totalMenuItems,
-            icon: UtensilsCrossed,
-            description: '+15 items added',
+            title: 'Revenue',
+            value: `₹${(stats?.totalRevenue || 0).toLocaleString()}`,
+            icon: IndianRupee,
+            description: 'Gross Sales',
             color: 'text-orange-600',
             bgColor: 'bg-orange-50',
             trend: 'up'
@@ -87,13 +88,13 @@ export const AdminOverview = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
                     <Typography variant="h2" className="font-serif text-3xl">Dashboard Overview</Typography>
-                    <Typography className="text-gray-500 mt-1">Platform performance and recent registrations at a glance.</Typography>
+                    <Typography className="text-gray-500 mt-1">Platform performance and recent activity at a glance.</Typography>
                 </div>
                 <div className="flex gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
                     {['24h', '7d', '30d', 'All'].map((range) => (
                         <button key={range} className={cn(
                             "px-5 py-2 rounded-xl text-xs font-bold transition-all",
-                            range === '30d' ? "bg-white text-[var(--primary)] shadow-sm border border-gray-100" : "text-gray-400 hover:text-gray-600"
+                            range === 'All' ? "bg-white text-[var(--primary)] shadow-sm border border-gray-100" : "text-gray-400 hover:text-gray-600"
                         )}>
                             {range}
                         </button>
@@ -102,7 +103,7 @@ export const AdminOverview = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                {stats.map((stat) => (
+                {statCards.map((stat) => (
                     <StatsCard key={stat.title} {...stat} />
                 ))}
             </div>
@@ -113,35 +114,35 @@ export const AdminOverview = () => {
                         <div className="flex justify-between items-center">
                             <CardTitle className="font-serif text-xl flex items-center gap-3">
                                 <Clock className="text-[var(--primary)]" size={24} />
-                                Recent Activity
+                                Recent Activity Feed
                             </CardTitle>
-                            <button className="text-xs font-bold text-[var(--primary)] hover:underline">View All</button>
                         </div>
                     </CardHeader>
                     <CardContent className="p-4">
                         <div className="space-y-2">
-                            {mockActivities.map((activity) => (
+                            {activities.length > 0 ? activities.map((activity) => (
                                 <div
                                     key={activity.id}
                                     className="flex items-center gap-6 p-6 rounded-[24px] hover:bg-gray-50/50 transition-all group"
                                 >
                                     <div className={cn(
                                         "p-3 rounded-2xl shadow-sm border border-white shrink-0 group-hover:scale-110 transition-transform",
-                                        activity.type === 'user_joined' ? "bg-blue-50 text-blue-600" :
-                                            activity.type === 'provider_registered' ? "bg-[var(--primary)]/10 text-[var(--primary)]" :
+                                        activity.type === 'user' ? "bg-blue-50 text-blue-600" :
+                                            activity.type === 'provider' ? "bg-[var(--primary)]/10 text-[var(--primary)]" :
                                                 "bg-[var(--accent)]/10 text-[var(--accent)]"
                                     )}>
-                                        {activity.type === 'user_joined' && <Users size={18} />}
-                                        {activity.type === 'provider_registered' && <Store size={18} />}
-                                        {activity.type === 'subscription_created' && <Calendar size={18} />}
+                                        {activity.type === 'user' && <Users size={18} />}
+                                        {activity.type === 'provider' && <Store size={18} />}
+                                        {activity.type === 'order' && <Calendar size={18} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <Typography className="text-sm font-bold text-gray-800">{activity.message}</Typography>
                                         <Typography variant="small" className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-1">{activity.timestamp}</Typography>
                                     </div>
-                                    <ArrowUpRight className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" size={18} />
                                 </div>
-                            ))}
+                            )) : (
+                                <div className="p-8 text-center text-gray-400 font-medium">No recent activity found.</div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -152,7 +153,7 @@ export const AdminOverview = () => {
                             <TrendingUp size={24} className="text-green-400" />
                         </div>
                         <Typography variant="h3" className="!text-white font-serif mb-4 leading-tight">System Status & Statistics</Typography>
-                        <Typography className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">All platform services are currently operational. Traffic has increased by 22% in the last hour.</Typography>
+                        <Typography className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">All platform services are currently operational. Traffic has remained stable in the last 24 hours.</Typography>
 
                         <div className="mt-auto space-y-6">
                             <div className="space-y-3">
@@ -180,3 +181,4 @@ export const AdminOverview = () => {
         </div>
     );
 };
+

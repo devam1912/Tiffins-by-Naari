@@ -6,6 +6,7 @@ import axios from "axios";
 import { AdminUsers } from "../../components/AdminUsers";
 import { AdminMenu } from "../../components/AdminMenu";
 import { AdminFeedback } from "../../components/AdminFeedback";
+import { AdminOverview } from "../../components/AdminOverview";
 
 // ══════════════════════════════════════════
 // 1. APPROVE MODAL COMPONENT
@@ -257,6 +258,20 @@ export default function AdminDashboard() {
 
   const totalRevenueCalculated = allOrders.reduce((acc, o) => acc + (o.totalPrice || 0), 0);
 
+  const derivedActivities = useMemo(() => {
+    const activities = [];
+    allUsers.forEach(u => u.createdAt && activities.push({
+      id: `u_${u._id}`, type: 'user', message: `New user ${u.name || 'Anonymous'} joined`, timestamp: new Date(u.createdAt).toLocaleDateString(), dateObj: new Date(u.createdAt)
+    }));
+    allProviders.forEach(p => p.createdAt && activities.push({
+      id: `p_${p._id}`, type: 'provider', message: `Kitchen ${p.businessName} applied`, timestamp: new Date(p.createdAt).toLocaleDateString(), dateObj: new Date(p.createdAt)
+    }));
+    allOrders.forEach(o => o.createdAt && activities.push({
+      id: `o_${o._id}`, type: 'order', message: `Order #${o._id.slice(-6).toUpperCase()} placed`, timestamp: new Date(o.createdAt).toLocaleDateString(), dateObj: new Date(o.createdAt)
+    }));
+    return activities.sort((a, b) => b.dateObj - a.dateObj).slice(0, 8);
+  }, [allUsers, allProviders, allOrders]);
+
   const anim = (d = 0) => ({
     opacity: loaded ? 1 : 0,
     transform: loaded ? "translateY(0)" : "translateY(18px)",
@@ -333,73 +348,7 @@ export default function AdminDashboard() {
 
         {activeNav === "dashboard" && (
           <div style={{ animation: "fadeIn 0.5s ease" }}>
-            <header style={{ marginBottom: 40 }}>
-              <h2 style={{ fontSize: 32, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Admin Dashboard</h2>
-              <p style={{ color: "#7a8a7a" }}>TiffinsByNaari Management Portal</p>
-            </header>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 30, marginBottom: 50 }}>
-              {statCards.map((card, i) => (
-                <div key={i} style={{ background: "#fff", padding: 30, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
-                  <p style={{ fontSize: 12, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 10 }}>{card.label}</p>
-                  <h3 style={{ fontSize: 36, color: card.color, marginBottom: 5, fontWeight: 700 }}>{card.val}</h3>
-                  <p style={{ fontSize: 13, color: "#888" }}>{card.sub}</p>
-                </div>
-              ))}
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 30, marginBottom: 50 }}>
-              {/* RECENT TRANSACTIONS */}
-              <div style={{ background: "#fff", padding: 32, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Recent Transactions</h3>
-                  <button onClick={() => setActiveNav("orders")} style={{ background: "none", border: "none", color: "#8fa873", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>See All →</button>
-                </div>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr style={{ borderBottom: "1px solid #eee" }}>
-                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Order ID</th>
-                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Customer</th>
-                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Amount</th>
-                      <th style={{ textAlign: "left", padding: "0 0 12px 0", fontSize: 10, color: "#aaa", textTransform: "uppercase", letterSpacing: 1 }}>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {allOrders.slice(0, 5).map(o => (
-                      <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
-                        <td style={{ padding: "16px 0", fontSize: 13, fontWeight: 700, color: "#333" }}>#{o._id.slice(-6).toUpperCase()}</td>
-                        <td style={{ padding: "16px 0", fontSize: 13, color: "#666" }}>{o.user?.name || "Member"}</td>
-                        <td style={{ padding: "16px 0", fontSize: 13, fontWeight: 800, color: "#2d3b2d" }}>₹{o.totalPrice}</td>
-                        <td style={{ padding: "16px 0" }}>
-                          <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", color: o.status === 'delivered' ? '#43a047' : '#fb8c00' }}>{o.status}</span>
-                        </td>
-                      </tr>
-                    ))}
-                    {allOrders.length === 0 && <tr><td colSpan="4" style={{ padding: "20px 0", textAlign: "center", color: "#aaa" }}>No recent records.</td></tr>}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* RECENT FEEDBACK */}
-              <div style={{ background: "#fff", padding: 32, borderRadius: 28, boxShadow: "0 15px 35px rgba(0,0,0,0.03)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Feedback</h3>
-                  <button onClick={() => setActiveNav("feedbacks")} style={{ background: "none", border: "none", color: "#8fa873", fontWeight: 700, cursor: "pointer", fontSize: 13 }}>Review →</button>
-                </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                  {allFeedbacks.slice(0, 3).map(f => (
-                    <div key={f._id} style={{ borderBottom: "1px solid #f9f9f9", paddingBottom: 12 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: "#333" }}>{f.user?.name}</span>
-                        <span style={{ fontSize: 11, color: "#a5a56d" }}>⭐ {f.rating}</span>
-                      </div>
-                      <p style={{ fontSize: 12, color: "#888", fontStyle: "italic", lineHeight: 1.4, margin: 0 }}>"{f.comment?.length > 60 ? f.comment.slice(0, 60) + "..." : f.comment}"</p>
-                    </div>
-                  ))}
-                  {allFeedbacks.length === 0 && <p style={{ textAlign: "center", color: "#aaa", fontSize: 13 }}>No recent voices.</p>}
-                </div>
-              </div>
-            </div>
+            <AdminOverview stats={{ ...stats, totalRevenue: totalRevenueCalculated }} activities={derivedActivities} />
 
             {/* QUICK ACTIONS / ALERTS */}
             {pending.length > 0 && (

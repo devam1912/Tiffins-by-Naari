@@ -174,17 +174,18 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                         <div className="px-6 pb-8 -mt-14 text-center">
                             <div className="relative inline-block">
                                 <div className="w-28 h-28 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden mx-auto flex items-center justify-center font-bold text-4xl text-[var(--primary)]">
-                                    {formData.kitchenName.charAt(0)}
+                                    {formData.kitchenName?.charAt(0) || '👩‍🍳'}
                                 </div>
                                 <button className="absolute bottom-1 right-1 p-2 bg-white rounded-full shadow-md text-gray-600 hover:text-[var(--primary)] border border-gray-100 transition-colors">
                                     <Upload size={16} />
                                 </button>
                             </div>
-                            <Typography variant="h3" className="mt-4 font-serif">{formData.kitchenName}</Typography>
-                            <Typography className="text-gray-500 font-medium">{formData.chefName}</Typography>
+                            <Typography variant="h3" className="mt-4 font-serif">{formData.kitchenName || 'Kitchen Profile'}</Typography>
+                            <Typography className="text-gray-500 font-medium">{formData.chefName || 'Chef'}</Typography>
                             <div className="mt-6 flex flex-wrap justify-center gap-2">
-                                <span className="text-[10px] font-bold px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 uppercase tracking-widest">Verified</span>
-                                <span className="text-[10px] font-bold px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 uppercase tracking-widest">Top Rated</span>
+                                {profileData?.isApproved && (
+                                    <span className="text-[10px] font-bold px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 uppercase tracking-widest">Verified Partner</span>
+                                )}
                             </div>
                         </div>
                     </Card>
@@ -207,9 +208,9 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                             <div className="mt-6 p-4 bg-white rounded-xl border border-amber-100 shadow-sm">
                                 <div className="flex items-center gap-2 text-sm font-bold text-green-700">
                                     <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                                    Currently Active & Valid
+                                    {profileData?.fssaiCertificate ? 'Certificate Uploaded & Valid' : 'Certificate Pending Verification'}
                                 </div>
-                                <p className="text-xs text-amber-600 mt-1 font-medium ml-4.5">Expiry: Jan 15, 2027</p>
+                                <p className="text-xs text-amber-600 mt-1 font-medium ml-4.5">Last updated: {profileData?.updatedAt ? new Date(profileData.updatedAt).toLocaleDateString() : '—'}</p>
                             </div>
                         </CardContent>
                     </Card>

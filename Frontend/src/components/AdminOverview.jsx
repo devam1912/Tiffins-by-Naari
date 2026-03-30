@@ -131,7 +131,7 @@ export const AdminOverview = ({ stats, activities = [] }) => {
                     </CardHeader>
                     <CardContent className="p-4">
                         <div className="space-y-2">
-                            {activities.length > 0 ? activities.map((activity, i) => (
+                            {activities.length > 0 ? activities.map((activity) => (
                                 <div
                                     key={activity.id}
                                     className="flex items-center gap-6 p-6 rounded-[28px] hover:bg-muted/30 transition-all duration-300 group/item border border-transparent hover:border-muted-foreground/5"
@@ -203,3 +203,4 @@ export const AdminOverview = ({ stats, activities = [] }) => {
         </div>
     );
 };
+

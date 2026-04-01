@@ -9,7 +9,8 @@ import {
     ArrowDownRight,
     Clock,
     Activity,
-    Package
+    Package,
+    Sparkles
 } from "lucide-react";
 import { Typography } from "./ui/Typography";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
@@ -165,39 +166,37 @@ export const AdminOverview = ({ stats, activities = [] }) => {
                     </CardContent>
                 </Card>
 
-                {/* System Pulsar (Status) */}
-                <Card className="border-none shadow-xl rounded-[40px] bg-foreground text-background overflow-hidden relative group">
+                {/* AI Recommendations Card */}
+                <Card className="border-none shadow-xl rounded-[40px] bg-[#1a1c1e] text-background overflow-hidden relative group">
                     <CardContent className="p-10 flex flex-col h-full relative z-10">
-                        <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl w-fit mb-8 border border-white/20 group-hover:animate-pulse">
-                            <TrendingUp size={24} className="text-primary" />
+                        <div className="flex items-center justify-between mb-8">
+                            <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 group-hover:animate-pulse">
+                                <Sparkles size={24} className="text-[#a5b4fc]" />
+                            </div>
+                            <span className="px-3 py-1 bg-[#a5b4fc]/20 text-[#a5b4fc] text-[10px] font-black uppercase tracking-widest rounded-full border border-[#a5b4fc]/30">Auto-Generated</span>
                         </div>
-                        <Typography variant="h3" className="!text-white font-serif mb-4 leading-tight">System Status</Typography>
-                        <Typography className="text-white/50 text-sm mb-12 leading-relaxed font-medium">All platform systems are running smoothly.</Typography>
+                        <Typography variant="h3" className="!text-white font-serif mb-3 leading-tight">AI Insights</Typography>
+                        <Typography className="text-white/60 text-sm mb-8 leading-relaxed font-medium">Smart recommendations based on platform activity.</Typography>
 
-                        <div className="mt-auto space-y-8">
+                        <div className="mt-auto space-y-6">
                             {[
-                                { label: 'Server Load', value: 88, color: 'bg-primary' },
-                                { label: 'Database Speed', value: 34, color: 'bg-accent' },
-                                { label: 'System Uptime', value: 99, color: 'bg-blue-400' }
-                            ].map((service) => (
-                                <div key={service.label} className="space-y-3">
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
-                                        <span>{service.label}</span>
-                                        <span className="text-white/80">{service.value}%</span>
+                                { title: 'High Demand Detected', desc: 'Surge in orders in North Sector. Notify nearby providers.', color: 'text-green-400', bg: 'bg-green-400' },
+                                { title: 'Provider Engagement', desc: '3 kitchens missed menu updates today. Send reminders.', color: 'text-amber-400', bg: 'bg-amber-400' },
+                                { title: 'Revenue Optimization', desc: 'Conversion rate up 12%. Optimal time for premium push.', color: 'text-blue-400', bg: 'bg-blue-400' }
+                            ].map((insight, idx) => (
+                                <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors cursor-default">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <div className={cn("w-1.5 h-1.5 rounded-full", insight.bg)} />
+                                        <Typography variant="small" className={cn("font-bold text-[10px] uppercase tracking-[0.15em]", insight.color)}>{insight.title}</Typography>
                                     </div>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                        <div 
-                                            className={cn("h-full rounded-full transition-all duration-1000 ease-out", service.color)} 
-                                            style={{ width: `${service.value}%` }} 
-                                        />
-                                    </div>
+                                    <Typography className="text-white/70 text-sm leading-relaxed pl-3.5 border-l border-white/10 ml-[3px]">{insight.desc}</Typography>
                                 </div>
                             ))}
                         </div>
                     </CardContent>
                     {/* Abstract Decorative Graphics */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl -ml-24 -mb-24" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl -ml-24 -mb-24 pointer-events-none" />
                 </Card>
             </div>
         </div>

@@ -1,0 +1,91 @@
+2026-03-23 | Bhavika Mulani | Profile settings managed
+2026-03-22 | Bhavika Mulani | Admin Dashboard updated
+2026-03-22 | Bhavika Mulani | Admin Users updated as per backend
+2026-03-13 | Bhavika Mulani | Design documents added
+2026-03-11 | Bhavika Mulani | Tsp state managed
+2026-03-11 | charmi | Merge branch 'backend-by-charmee' of https://github.com/devam1912/Tiffins-by-Naari : the commit.
+2026-03-11 | charmi | Pushing gitignore file
+2026-03-10 | Bhavika Mulani | managed state for tiffins
+2026-03-09 | kajalVarlani | Merge pull request #13 from devam1912/frontend-kajal
+2026-03-09 | kajalVarlani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari into frontend-kajal
+2026-03-09 | kajalVarlani | integrate Redux Toolkit for global auth state management
+2026-03-09 | kajalVarlani | Fixed location not specified error
+2026-03-09 | Devam | feat: Synchronize Order checkout to consume active cart items and times
+2026-03-09 | Devam | feat: Mount cart routes into core application
+2026-03-09 | Devam | feat: Implement Cart controller logic with time limits and auto-clear cron
+2026-03-09 | Devam | feat: Add Cart schema and API routes
+2026-03-09 | Bhavika Mulani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari
+2026-03-09 | Bhavika Mulani | TSP TOGGLE STATUS CHANGES
+2026-03-09 | Charmi Bhayani | Merge pull request #12 from devam1912/backend-by-charmee
+2026-03-09 | charmi | Resolve conflict by removing node_modules
+2026-03-09 | charmi | remove node_modules
+2026-03-08 | Bhavika Mulani | TSP static data removed and linked to backend
+2026-03-08 | Bhavika Mulani | TSP Dashboard stats card updated
+2026-03-08 | Bhavika Mulani | Admin dashboard styling changed
+2026-03-08 | Bhavika Mulani | Admin dashboard conflicts resolved
+2026-03-08 | Bhavika Mulani | Admin dashboard fixes made
+2026-03-07 | kajalVarlani | Fixed mail issues after rejection
+2026-03-07 | Bhavika Mulani | Admin menu management
+2026-03-07 | kajalVarlani | Admin can view full application
+2026-03-07 | kajalVarlani | Only image upload for FSSAI certificate
+2026-03-07 | Bhavika Mulani | Admin Dashboard components working
+2026-03-07 | kajalVarlani | Added FSSAI certificate upload and gps locator
+2026-03-07 | kajalVarlani | Added necessary imports
+2026-03-07 | Charmi Bhayani | Add getAllMenus route to tiffin.routes.js
+2026-03-07 | Charmi Bhayani | Add getAllMenus function to menu controller
+2026-03-07 | Bhavika Mulani | ADMIN DASHBOARD FEEDBACK ADDED
+2026-03-07 | Bhavika Mulani | ADMIN DASHBOARD DUPLICATE ROUTES DELETED
+2026-03-07 | Bhavika Mulani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari
+2026-03-07 | Bhavika Mulani | ADMIN MENU ADDED MOCK DATA TO TEST APPROVE/REJECT
+2026-03-07 | kajalVarlani | Updated Provider registration page
+2026-03-06 | Bhavika Mulani | ADMIN MENU MANAGEMENT
+2026-03-06 | kajalVarlani | erge remote-tracking branch 'origin/main' into frontend-kajal
+2026-03-06 | kajalVarlani | Browse Providers Page functional
+2026-03-06 | Charmi Bhayani | Merge pull request #11 from devam1912/backend-by-charmee
+2026-03-06 | charmi | Use authenticated user's email and phone for provider request instead or req.body & address field added to provider schema
+2026-03-06 | kajalVarlani | Recent activity on admin dashboard
+2026-03-06 | kajalVarlani | Fixed errors
+2026-03-06 | Bhavika Mulani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari
+2026-03-06 | Bhavika Mulani | ADMIN USER MANAGEMENT INTEGRATED WITH BACKEND
+2026-03-06 | Charmi Bhayani | Merge pull request #10 from devam1912/backend-by-charmee
+2026-03-06 | charmi | bug fix
+2026-03-05 | Bhavika Mulani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari
+2026-03-05 | Bhavika Mulani | ADMIN DASHBOARD-USER MANAGEMENT
+2026-03-05 | Charmi Bhayani | Merge pull request #9 from devam1912/backend-by-charmee
+2026-03-05 | Charmi Bhayani | Merge branch 'main' into backend-by-charmee
+2026-03-05 | charmi | (admin right): can reject TSP application
+2026-03-05 | charmi | (notification): on application approval, TSP reactivation & deactivation
+2026-03-05 | Bhavika Mulani | TSP PROFILE SETTINGS AND STATUS INTEGRATED
+2026-03-05 | devam1912 | Update tiffin.routes.js
+2026-03-05 | devam1912 | Added FSSAI certificate uploading via Cloudinary during provider registration
+2026-03-05 | kajalVarlani | Admin Dashboard Layout
+2026-03-05 | kajalVarlani | List your kitchen functionality implemented
+2026-03-05 | kajalVarlani | Edit profile page for customer
+2026-03-05 | Bhavika Mulani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari merged the files
+2026-03-05 | Bhavika Mulani | TSP ORDERS TODAY PAGE ADDED
+2026-03-04 | kajalVarlani | Updated necessary files
+2026-03-04 | kajalVarlani | Complete Login Page
+2026-03-04 | kajalVarlani | Customer Dashboard with location feature
+2026-03-04 | kajalVarlani | Resolved merge conflicts
+2026-03-04 | Charmi Bhayani | Merge pull request #8 from devam1912/backend-by-charmee
+2026-03-04 | charmi | (Bug Fix): as per the registration flow by default provider's profile would be completed
+2026-03-04 | charmi | role change on the admin approval to tsp
+2026-03-04 | charmi | authorization wall removed to create provider request
+2026-03-04 | kajalVarlani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari into frontend-kajal
+2026-03-04 | Bhavika Mulani | TSP SUBSCRIPTION INTEGRATED WITH BACKEND
+2026-03-04 | kajalVarlani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari into frontend-kajal
+2026-03-04 | kajalVarlani | OTP verification after signup
+2026-03-03 | kajalVarlani | Sidebar component for customer
+2026-03-03 | kajalVarlani | Updated Signup Logic
+2026-03-03 | kajalVarlani | Enhanced UI for signup page
+2026-03-03 | kajalVarlani | Customer SignupPage with OTP redirection and validation
+2026-03-03 | Bhavika Mulani | Merge branch 'main' of https://github.com/devam1912/Tiffins-by-Naari
+2026-03-03 | Bhavika Mulani | TSP ACTIVE SUBSCRIPTION PAGE ADDED
+2026-03-03 | Charmi Bhayani | Merge pull request #7 from devam1912/backend-by-charmee
+2026-03-03 | charmi | (provider dashboard):todaysmeal, lunchcount, dinnercount, activesubscribers, monthlyrevenue and recentactivity.
+2026-03-03 | Bhavika Mulani | TSP MENU MANAGEMENT ADDED
+2026-03-03 | Bhavika Mulani | TSP DASHBOARD COMPONENTS ADDED
+2026-03-02 | Bhavika Mulani | Service provider dashboard created
+2026-03-02 | kajalVarlani | Merge branch 'main' into frontend-kajal
+2026-03-02 | kajalVarlani | Add initial frontend setup and homepage UI
+2026-03-02 | Bhavika Mulani | frontend updated

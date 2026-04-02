@@ -1,7 +1,7 @@
 import React from "react";
-import { 
-  Utensils, 
-  Trash2, 
+import {
+  Utensils,
+  Trash2,
   ExternalLink,
   ChevronRight,
   Info
@@ -21,84 +21,82 @@ export const AdminMenu = ({ menus = [], loading }) => {
 
   return (
     <div className="space-y-10 animate-in fade-in duration-700">
-      <header className="space-y-1">
-        <Typography variant="h2" className="font-serif tracking-tight">Menus</Typography>
-        <Typography className="text-muted-foreground">View all kitchen menus.</Typography>
+      <header className="mb-8">
+        <h2 className="admin-title">Menus</h2>
+        <p className="admin-subtitle m-0">View all kitchen menus.</p>
       </header>
 
-      <Card className="rounded-[40px] border-none shadow-xl overflow-hidden bg-white">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-muted/30 border-b border-muted">
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">Kitchen</th>
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">Cuisine Type</th>
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">Menu Items</th>
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
+      <div className="table-container">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="table-header">
+              <tr>
+                <th style={{ padding: "20px 24px" }} className="text-[11px] font-black uppercase tracking-widest text-[#5a7a50]">Kitchen</th>
+                <th style={{ padding: "20px 24px" }} className="text-[11px] font-black uppercase tracking-widest text-[#5a7a50]">Cuisine Type</th>
+                <th style={{ padding: "20px 24px" }} className="text-[11px] font-black uppercase tracking-widest text-[#5a7a50]">Menu Items</th>
+                <th style={{ padding: "20px 24px" }} className="text-[11px] font-black uppercase tracking-widest text-[#5a7a50] text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[rgba(143,174,142,0.1)]">
+              {menus.length > 0 ? menus.map((menu, i) => (
+                <tr key={menu._id} className="table-row group">
+                  <td className="table-cell">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-[#8FAE8E]/20 rounded-2xl flex items-center justify-center text-[#5a7a50] group-hover:rotate-12 transition-transform shadow-inner">
+                        <Utensils size={20} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-black tracking-tight text-[#2d3b2d] group-hover:text-[#5a7a50] transition-colors">
+                          {menu.provider?.businessName || "Unknown Kitchen"}
+                        </span>
+                        <span className="text-[10px] text-[#888] font-bold uppercase tracking-widest">
+                          Owner: {menu.provider?.ownerName || "Staff"}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <div className="inline-flex px-3 py-1 bg-[#8FAE8E]/20 text-[#5a7a50] rounded-full text-[10px] font-black uppercase tracking-widest border border-[#8FAE8E]/30">
+                      {menu.cuisineType || "Mixed"}
+                    </div>
+                  </td>
+                  <td className="table-cell">
+                    <div className="flex items-center gap-2">
+                      <span className="font-black text-lg text-[#2d3b2d]">
+                        {menu.menuItems?.length || 0}
+                      </span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-[#aaa]">Dishes</span>
+                    </div>
+                  </td>
+                  <td className="table-cell text-right">
+                    <div className="flex justify-end gap-2">
+                      <button className="rounded-xl h-10 w-10 p-0 flex items-center justify-center text-[#aaa] hover:text-[#5a7a50] hover:bg-[#F4F4E4] transition-colors border-none bg-transparent">
+                        <Info size={18} />
+                      </button>
+                      <button className="rounded-xl h-10 w-10 p-0 flex items-center justify-center text-[#aaa] hover:text-[#c62828] hover:bg-[#ffebee] transition-colors border-none bg-transparent">
+                        <Trash2 size={18} />
+                      </button>
+                      <button className="rounded-xl h-10 px-4 group/btn flex items-center bg-transparent border-[1.5px] border-[rgba(143,174,142,0.3)] text-[#5a7a50] hover:bg-[#F4F4E4] transition-colors">
+                        <span className="text-[10px] font-black uppercase tracking-widest mr-2 group-hover/btn:text-[#2d3b2d]">View</span>
+                        <ExternalLink size={14} className="text-[#8FAE8E] group-hover/btn:text-[#2d3b2d]" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-muted/30">
-                {menus.length > 0 ? menus.map((menu, i) => (
-                  <tr key={menu._id} className="hover:bg-muted/10 transition-colors group">
-                    <td className="p-8">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:rotate-12 transition-transform">
-                          <Utensils size={20} />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
-                            {menu.provider?.businessName || "Unknown Kitchen"}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-                            Owner: {menu.provider?.ownerName || "Staff"}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-8">
-                      <div className="inline-flex px-3 py-1 bg-accent/10 text-accent rounded-full text-[10px] font-black uppercase tracking-widest border border-accent/5">
-                        {menu.cuisineType || "Mixed"}
-                      </div>
-                    </td>
-                    <td className="p-8">
-                      <div className="flex items-center gap-2">
-                        <Typography className="font-black text-lg text-foreground">
-                          {menu.menuItems?.length || 0}
-                        </Typography>
-                        <Typography variant="small" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dishes</Typography>
-                      </div>
-                    </td>
-                    <td className="p-8 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:text-primary">
-                          <Info size={18} />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:text-destructive">
-                          <Trash2 size={18} />
-                        </Button>
-                        <Button variant="outline" size="sm" className="rounded-xl h-10 px-4 group/btn">
-                          <span className="text-[10px] font-black uppercase tracking-widest mr-2 group-hover/btn:text-primary">View</span>
-                          <ExternalLink size={14} className="text-muted-foreground group-hover/btn:text-primary" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={4} className="p-24 text-center">
-                      <div className="space-y-4 opacity-40">
-                        <Utensils size={40} className="mx-auto text-muted-foreground" />
-                        <Typography className="font-black uppercase tracking-widest text-xs">No menus found.</Typography>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+              )) : (
+                <tr>
+                  <td colSpan={4} className="p-24 text-center">
+                    <div className="space-y-4 opacity-50">
+                      <Utensils size={40} className="mx-auto text-[#8FAE8E]" />
+                      <p className="font-black uppercase tracking-widest text-[#888] text-xs m-0">No menus found.</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };

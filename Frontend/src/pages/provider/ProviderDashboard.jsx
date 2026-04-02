@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useSelector, useDispatch } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../../store/authSlice";
 import {
     fetchProviderDashboard,
     toggleProviderService,
@@ -66,96 +68,97 @@ const DashboardOverview = ({ stats, loading, isServiceActive }) => {
     ];
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-10">
+            <header className="mb-8">
+                <h2 className="admin-title">TSP Dashboard Overview</h2>
+                <p className="admin-subtitle m-0">Quick stats and recent activity.</p>
+            </header>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statsConfig.map((stat, i) => (
-                    <Card key={i} className="border-none shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
-                        <CardContent className="p-6">
-                            <div className="flex justify-between items-start">
-                                <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110", stat.bg)}>
-                                    <stat.icon className={stat.color} size={24} />
-                                </div>
-                                <span className={cn("text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider", stat.bg, stat.color)}>
-                                    {stat.trend}
-                                </span>
+                    <div key={i} className="stat-card p-6 flex flex-col group min-h-[140px] justify-between">
+                        <div className="flex justify-between items-start">
+                            <div className="w-12 h-12 bg-white/60 rounded-2xl flex items-center justify-center text-[#5a7a50] shadow-sm group-hover:scale-110 transition-transform">
+                                <stat.icon size={22} className={stat.color} />
                             </div>
-                            <div className="mt-4">
-                                <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                                <h3 className="text-2xl font-bold mt-1 text-gray-900">{stat.value}</h3>
-                            </div>
-                        </CardContent>
-                    </Card>
+                            <span className="text-[10px] font-black uppercase tracking-widest bg-white/60 px-3 py-1 rounded-full text-[#8FA873] shadow-sm">
+                                {stat.trend}
+                            </span>
+                        </div>
+                        <div className="mt-4">
+                            <p className="text-[#5a7a50] font-bold text-xs uppercase tracking-wider m-0 mb-1">{stat.label}</p>
+                            <h3 className="text-[#2d3b2d] text-2xl font-black m-0" style={{ fontFamily: "Lora, serif" }}>{stat.value}</h3>
+                        </div>
+                    </div>
                 ))}
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <Card className="lg:col-span-2 border-none shadow-sm flex flex-col">
-                    <CardHeader className="border-b border-gray-50 pb-5">
-                        <CardTitle className="text-xl font-serif">Recent Subscriptions</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 flex-1">
+                <div className="lg:col-span-2 table-container h-full flex flex-col">
+                    <div className="p-6 border-b border-[rgba(143,174,142,0.2)]">
+                        <h3 className="text-xl font-serif font-bold text-[#2d3b2d] m-0">Recent Subscriptions</h3>
+                    </div>
+                    <div className="p-0 flex-1 overflow-x-auto">
                         {loading ? (
                             <div className="h-64 flex items-center justify-center">
-                                <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+                                <div className="w-8 h-8 border-4 border-[#8FA873]/30 border-t-[#8FA873] rounded-full animate-spin" />
                             </div>
                         ) : !stats?.recentActivity || stats.recentActivity.length === 0 ? (
-                            <div className="h-64 flex flex-col items-center justify-center text-gray-400 italic">
-                                <Users size={40} className="mb-4 opacity-20" />
-                                <p>No recent subscription activity</p>
+                            <div className="h-64 flex flex-col items-center justify-center text-[#888] italic">
+                                <Users size={40} className="mb-4 opacity-20 text-[#8FA873]" />
+                                <p className="m-0 font-bold uppercase tracking-widest text-[#888] text-xs">No recent subscription activity</p>
                             </div>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left">
-                                    <thead>
-                                        <tr className="bg-gray-50/50">
-                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Customer</th>
-                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Plan</th>
-                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Amount</th>
-                                            <th className="px-6 py-4 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</th>
+                            <table className="w-full text-left border-collapse">
+                                <thead className="table-header">
+                                    <tr>
+                                        <th className="px-6 py-4 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Customer</th>
+                                        <th className="px-6 py-4 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Plan</th>
+                                        <th className="px-6 py-4 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Amount</th>
+                                        <th className="px-6 py-4 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[rgba(143,174,142,0.1)]">
+                                    {stats.recentActivity.map((activity, idx) => (
+                                        <tr key={idx} className="table-row">
+                                            <td className="px-6 py-4">
+                                                <p className="font-bold text-[#2d3b2d] m-0">{activity.user?.name || "Customer"}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className="text-[10px] font-black px-3 py-1 bg-[#8FAE8E]/20 text-[#5a7a50] border border-[#8FAE8E]/30 rounded-full capitalize">
+                                                    {activity.planType}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 font-black text-[#6b8a5e]">₹{activity.amountPaid}</td>
+                                            <td className="px-6 py-4 text-sm text-[#888] font-bold">
+                                                {new Date(activity.createdAt).toLocaleDateString()}
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                        {stats.recentActivity.map((activity, idx) => (
-                                            <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <p className="font-bold text-gray-800">{activity.user?.name || "Customer"}</p>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className="text-xs font-medium px-2 py-1 bg-blue-50 text-blue-600 rounded-md capitalize">
-                                                        {activity.planType}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 font-bold text-gray-700">₹{activity.amountPaid}</td>
-                                                <td className="px-6 py-4 text-sm text-gray-500">
-                                                    {new Date(activity.createdAt).toLocaleDateString()}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                    ))}
+                                </tbody>
+                            </table>
                         )}
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
 
-                <Card className="border-none shadow-sm">
-                    <CardHeader className="border-b border-gray-50 pb-5">
-                        <CardTitle className="text-xl font-serif">Quick Stats</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-6 space-y-6">
+                <div className="stat-card h-full flex flex-col">
+                    <div className="p-6 border-b border-[rgba(143,174,142,0.2)]">
+                        <h3 className="text-xl font-serif font-bold text-[#2d3b2d] m-0">Quick Stats</h3>
+                    </div>
+                    <div className="p-6 space-y-6">
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center text-orange-600">
-                                        <Clock size={18} />
+                                    <div className="w-8 h-8 bg-white/60 rounded-lg flex items-center justify-center text-[#f59e0b] shadow-inner">
+                                        <Clock size={16} />
                                     </div>
-                                    <span className="text-sm font-medium">Lunch Deliveries</span>
+                                    <span className="text-sm font-bold text-[#2d3b2d]">Lunch Deliveries</span>
                                 </div>
-                                <span className="text-sm font-bold text-gray-900">{stats?.lunchCount || 0}</span>
+                                <span className="text-sm font-black text-[#2d3b2d]">{stats?.lunchCount || 0}</span>
                             </div>
-                            <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-[#E7E6B6] h-2 rounded-full overflow-hidden shadow-inner">
                                 <div
-                                    className="bg-orange-400 h-full transition-all duration-1000"
+                                    className="bg-[#f59e0b] h-full transition-all duration-1000 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
                                     style={{ width: `${(stats?.todaysMeals > 0 ? (stats.lunchCount / stats.todaysMeals) * 100 : 0) || 0}%` }}
                                 />
                             </div>
@@ -164,36 +167,36 @@ const DashboardOverview = ({ stats, loading, isServiceActive }) => {
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-                                        <Clock size={18} />
+                                    <div className="w-8 h-8 bg-white/60 rounded-lg flex items-center justify-center text-[#3b82f6] shadow-inner">
+                                        <Clock size={16} />
                                     </div>
-                                    <span className="text-sm font-medium">Dinner Deliveries</span>
+                                    <span className="text-sm font-bold text-[#2d3b2d]">Dinner Deliveries</span>
                                 </div>
-                                <span className="text-sm font-bold text-gray-900">{stats?.dinnerCount || 0}</span>
+                                <span className="text-sm font-black text-[#2d3b2d]">{stats?.dinnerCount || 0}</span>
                             </div>
-                            <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                            <div className="w-full bg-[#E7E6B6] h-2 rounded-full overflow-hidden shadow-inner">
                                 <div
-                                    className="bg-blue-400 h-full transition-all duration-1000"
+                                    className="bg-[#3b82f6] h-full transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
                                     style={{ width: `${(stats?.todaysMeals > 0 ? (stats.dinnerCount / stats.todaysMeals) * 100 : 0) || 0}%` }}
                                 />
                             </div>
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-gray-50">
-                            <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
-                                <div className="flex items-center gap-2 text-primary mb-1">
+                        <div className="mt-8 pt-6 border-t border-[rgba(143,174,142,0.2)]">
+                            <div className="bg-[#8FAE8E]/10 p-5 rounded-2xl border-[1.5px] border-[#8FAE8E]/30 backdrop-blur-sm">
+                                <div className="flex items-center gap-2 text-[#5a7a50] mb-2">
                                     <TrendingUp size={16} />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Efficiency Tip</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Efficiency Tip</span>
                                 </div>
-                                <p className="text-xs text-gray-600 leading-relaxed font-medium">
+                                <p className="text-xs text-[#2d3b2d] leading-relaxed font-bold m-0">
                                     {stats?.lunchCount > stats?.dinnerCount
                                         ? "Lunch hours are your peak. Consider prepping side dishes earlier."
                                         : "Dinner demand is rising. Ensure your evening staff is ready."}
                                 </p>
                             </div>
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                </div>
             </div>
         </div>
     );
@@ -220,9 +223,15 @@ import api from "../../services/api";
 
 // --- Main Dashboard Component ---
 
-export const ProviderDashboard = ({ onLogout = () => console.log("Logout triggered") }) => {
+export const ProviderDashboard = () => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("Dashboard");
+
+    const handleLogout = () => {
+        dispatch(logout());
+        navigate("/login");
+    };
 
     const {
         stats,
@@ -239,7 +248,8 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
             const userData = JSON.parse(localStorage.getItem("user") || "{}");
             const nearbyRes = await api.get("/api/tiffins/nearby?lat=0&lng=0&distance=100000");
             if (Array.isArray(nearbyRes.data)) {
-                const myProfile = nearbyRes.data.find(p => p.user === userData.id);
+                const userId = userData._id || userData.id;
+                const myProfile = nearbyRes.data.find(p => p.user === userId);
                 if (myProfile) {
                     dispatch(setProviderProfile(myProfile));
                     dispatch(setServiceActive(true));
@@ -270,40 +280,67 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
     ];
 
     return (
-        <div className="flex min-h-screen bg-[#F8FAF8]">
+        <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
+            <style>{`
+                *, *::before, *::after { box-sizing: border-box; }
+                .provider-sidebar { background: linear-gradient(160deg,#8FA873,#6b8a5e); position: sticky; top: 0; min-height: 100vh; overflow-y: auto; z-index: 50; }
+                .provider-sidebar::-webkit-scrollbar { width: 4px; }
+                .provider-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
+                .provider-main { flex: 1; padding: 40px; overflow-y: auto; max-height: 100vh; position: relative; }
+                .provider-main::-webkit-scrollbar { width: 5px; }
+                .provider-main::-webkit-scrollbar-track { background: transparent; }
+                .provider-main::-webkit-scrollbar-thumb { background: #8FAE8E; border-radius: 10px; }
+                .nav-item { transition: all 0.3s cubic-bezier(.22,.68,0,1.2); }
+                .nav-item.active { background: rgba(255,255,255,0.92); color: #2d3b2d !important; box-shadow: 0 8px 24px rgba(90,120,70,0.2) !important; transform: scale(1.03); }
+                .nav-item.active * { color: #8FA873 !important; }
+                .stat-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); border: 1.5px solid rgba(143,174,142,0.2); border-radius: 28px; box-shadow: 0 4px 24px rgba(90,120,70,0.08); transition: all 0.3s cubic-bezier(.22,.68,0,1.2); }
+                .stat-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(90,120,70,0.18); border-color: rgba(143,174,142,0.45); }
+                .admin-title { font-family: 'Lora', serif; color: #2d3b2d; font-size: 32px; font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
+                .admin-subtitle { color: #5a7a50; font-size: 14px; font-weight: 600; }
+                .table-container { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); border: 1.5px solid rgba(143,174,142,0.2); border-radius: 32px; box-shadow: 0 12px 36px rgba(90,120,70,0.1); overflow: hidden; }
+                .table-header { background: rgba(143,174,142,0.1); border-bottom: 1.5px solid rgba(143,174,142,0.2); }
+                .table-header th { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #5a7a50; padding: 20px 24px; }
+                .table-row { border-bottom: 1px solid rgba(143,174,142,0.1); transition: background 0.2s; }
+                .table-row:hover { background: rgba(255,255,255,0.95); }
+                .table-cell { padding: 20px 24px; color: #2d3b2d; font-size: 14px; font-weight: 600; }
+                @keyframes spinSlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+            `}</style>
+            <div style={{ position: "fixed", width: 480, height: 480, borderRadius: "50%", background: "radial-gradient(circle, rgba(143,168,115,0.12) 0%, transparent 70%)", top: "-100px", right: "-80px", pointerEvents: "none", zIndex: 0 }} />
+            <div style={{ position: "fixed", width: 300, height: 300, borderRadius: "50%", border: "1.5px dashed rgba(143,174,142,0.2)", bottom: "10%", left: "25%", pointerEvents: "none", animation: "spinSlow 45s linear infinite", zIndex: 0 }} />
+
             {/* Sidebar */}
-            <aside className="fixed left-0 top-0 bottom-0 w-72 bg-[var(--primary)] text-primary-foreground flex flex-col z-50 shadow-xl">
-                <div className="p-8 flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center">
-                        <UtensilsCrossed className="text-[var(--primary)] w-6 h-6" />
+            <aside className="w-72 provider-sidebar text-white flex flex-col shadow-2xl">
+                <div className="p-8 pb-12 relative overflow-hidden">
+                    <div className="w-10 h-10 bg-white rounded-xl shadow-[0_4px_16px_rgba(143,174,142,0.2)] flex items-center justify-center mb-4">
+                        <UtensilsCrossed className="text-[#8FA873] w-6 h-6" />
                     </div>
-                    <Typography variant="h4" className="!text-primary-foreground font-serif tracking-tight">
+                    <h1 style={{ fontFamily: "'Lora',serif", fontSize: 24, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>
                         {profile?.businessName || stats?.businessName || "My Kitchen"}
-                    </Typography>
+                    </h1>
                 </div>
 
-                <nav className="flex-1 px-4 py-4 space-y-2">
+                <nav className="flex-1 px-4 space-y-2">
                     {menuItems.map((item) => (
                         <button
                             key={item.name}
                             onClick={() => setActiveTab(item.name)}
                             className={cn(
-                                "w-full flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all font-medium",
+                                "nav-item w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-bold text-[13px] tracking-wide",
                                 activeTab === item.name
-                                    ? "bg-white/20 text-primary-foreground shadow-inner backdrop-blur-sm"
-                                    : "text-primary-foreground/70 hover:bg-white/10 hover:text-primary-foreground"
+                                    ? "active"
+                                    : "text-white/80 hover:bg-white/10 hover:text-white"
                             )}
                         >
-                            <item.icon size={20} />
+                            <item.icon size={18} className="transition-transform group-hover:scale-110" />
                             {item.name}
                         </button>
                     ))}
                 </nav>
 
-                <div className="p-6 border-t border-white/10 space-y-6">
-                    <div className="flex items-center justify-between px-2">
+                <div className="p-6">
+                    <div className="flex items-center justify-between px-6 py-4 bg-white/10 rounded-2xl mb-4 text-white">
                         <div className="flex flex-col">
-                            <span className="text-[10px] font-bold text-primary-foreground/50 uppercase tracking-[0.2em]">Service Status</span>
+                            <span className="text-[10px] font-bold text-white/50 uppercase tracking-[0.2em]">Service Status</span>
                             <span className="text-sm font-semibold">{isServiceActive ? "Active" : "Paused"}</span>
                         </div>
                         <button
@@ -311,7 +348,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                             disabled={isStatusLoading}
                             className={cn(
                                 "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50",
-                                isServiceActive ? "bg-[var(--accent)]" : "bg-white/20"
+                                isServiceActive ? "bg-[#f59e0b]" : "bg-white/20"
                             )}
                         >
                             <span className={cn(
@@ -322,58 +359,18 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                     </div>
 
                     <button
-                        onClick={onLogout}
-                        className="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-primary-foreground/70 hover:bg-red-500/20 hover:text-red-100 transition-all font-medium"
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-4 text-white/70 hover:text-white hover:bg-red-500/20 rounded-2xl px-6 py-4 transition-all font-bold text-[13px]"
                     >
-                        <LogOut size={20} />
-                        Logout
+                        <LogOut size={18} />
+                        Sign Out
                     </button>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 ml-72">
-                {/* Top Header */}
-                <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-10 sticky top-0 z-40">
-                    <div className="relative w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search subscribers or orders..."
-                            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:ring-4 focus:ring-[var(--primary)]/10 outline-none transition-all"
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-6">
-                        <button className="relative p-2 text-gray-500 hover:bg-gray-100 rounded-xl transition-all">
-                            <Bell size={20} />
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                        </button>
-                        <div className="h-8 w-px bg-gray-100"></div>
-                        <div className="flex items-center gap-3 cursor-pointer group">
-                            <div className="text-right">
-                                <p className="text-sm font-bold text-gray-900 group-hover:text-[var(--primary)] transition-colors">
-                                    {profile?.businessName || stats?.businessName || "My Kitchen"}
-                                </p>
-                                <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">{profile?.ownerName || stats?.ownerName || "Chef"}</p>
-                            </div>
-                            <div className="w-10 h-10 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center border-2 border-[var(--primary)]/20 shadow-sm group-hover:scale-105 transition-transform">
-                                <span className="text-[var(--primary)] font-bold">
-                                    {(profile?.businessName || stats?.businessName || "K").charAt(0).toUpperCase()}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </header>
-
-                {/* View Render */}
-                <div className="p-10 max-w-7xl mx-auto text-left">
-                    <Typography
-                        variant="h2"
-                        className="mb-8 font-serif !text-[32px] !font-bold"
-                    >
-                        {activeTab === "Dashboard" ? "TSP Dashboard Overview" : activeTab}
-                    </Typography>
+            <main className="provider-main z-10 w-full overflow-hidden">
+                <div className="max-w-7xl mx-auto relative animate-in fade-in slide-in-from-bottom-4 duration-700">
 
                     <AnimatePresence mode="wait">
                         <motion.div
@@ -396,7 +393,7 @@ export const ProviderDashboard = ({ onLogout = () => console.log("Logout trigger
                                     isServiceActive={isServiceActive}
                                     toggleServiceStatus={handleToggleService}
                                     isStatusLoading={isStatusLoading}
-                                    profileData={profile || stats} // Fallback to stats if scraper fails
+                                    profileData={profile || stats}
                                 />
                             ) : (
                                 <ViewPlaceholder title={activeTab} />

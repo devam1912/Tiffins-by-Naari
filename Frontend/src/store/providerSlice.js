@@ -11,10 +11,7 @@ export const fetchProviderDashboard = createAsyncThunk(
                 headers: { Authorization: `Bearer ${token}` }
             });
 
-            if (res.data.success) {
-                return res.data.data;
-            }
-            return rejectWithValue("Failed to fetch dashboard data");
+            return res.data;
         } catch (err) {
             return rejectWithValue(err.response?.data?.message || "Error fetching dashboard stats");
         }
@@ -26,7 +23,7 @@ export const toggleProviderService = createAsyncThunk(
     async (isCurrentlyActive, { getState, dispatch, rejectWithValue }) => {
         try {
             const { token } = getState().auth;
-            const endpoint = isCurrentlyActive ? "/api/tiffin/deactivate" : "/api/tiffin/reactivate";
+            const endpoint = isCurrentlyActive ? "/api/tiffins/deactivate" : "/api/tiffins/reactivate";
 
             await api.patch(endpoint, {}, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -80,6 +77,9 @@ const providerSlice = createSlice({
             .addCase(toggleProviderService.fulfilled, (state, action) => {
                 state.statusLoading = false;
                 state.isServiceActive = action.payload;
+                if (state.profile) {
+                    state.profile.isActive = action.payload;
+                }
             })
             .addCase(toggleProviderService.rejected, (state, action) => {
                 state.statusLoading = false;

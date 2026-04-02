@@ -88,33 +88,33 @@ export const ProviderMenu = () => {
         const isPending = item.status === "pending";
 
         return (
-            <Card key={item.id} className={cn(
-                "border-none shadow-sm hover:shadow-md transition-all group",
-                isPending && "ring-1 ring-amber-100",
+            <div key={item.id} className={cn(
+                "stat-card transition-all group overflow-hidden border-[1.5px] border-[rgba(143,174,142,0.3)] bg-white/60",
+                isPending && "ring-2 ring-orange-200 border-orange-200",
                 item.status === "rejected" && "opacity-60",
             )}>
-                <CardContent className="p-4">
+                <div className="p-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             <div className={cn(
-                                "w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shrink-0 border",
-                                isPending ? "bg-amber-50 border-amber-100" : "bg-gray-50 border-gray-100"
+                                "w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 shadow-inner",
+                                isPending ? "bg-amber-50" : "bg-white/80"
                             )}>
-                                <UtensilsCrossed size={18} className={isPending ? "text-amber-400" : "text-gray-300"} />
+                                <UtensilsCrossed size={18} className={isPending ? "text-amber-500" : "text-[#8FA873]"} />
                             </div>
                             <div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <Typography className="font-bold text-sm">{item.name}</Typography>
-                                    <span className="bg-gray-100 text-[9px] font-bold text-gray-500 px-1.5 py-0.5 rounded uppercase">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                    <p className="font-black text-sm text-[#2d3b2d] m-0 leading-none">{item.name}</p>
+                                    <span className="bg-[#8FAE8E]/20 text-[9px] font-black text-[#5a7a50] px-2 py-0.5 rounded-full uppercase border border-[#8FAE8E]/30 tracking-widest shadow-sm">
                                         {item.type}
                                     </span>
                                     <StatusBadge status={item.status} />
                                 </div>
-                                <div className="flex items-center gap-1 mt-1">
-                                    <Leaf size={10} className="text-green-600" />
-                                    <Typography variant="small" className="text-[10px] text-gray-400">
+                                <div className="flex items-center gap-1.5 mt-1.5">
+                                    <span className="w-2 h-2 rounded-full bg-green-500 shadow-sm" />
+                                    <p className="text-[10px] font-bold text-[#5a7a50] uppercase tracking-widest m-0">
                                         Pure Veg
-                                    </Typography>
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -127,45 +127,47 @@ export const ProviderMenu = () => {
                                             setEditingItem({ day: selectedDay, mealType, item });
                                             setIsModalOpen(true);
                                         }}
-                                        className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                        className="p-2 text-[#5a7a50] hover:text-[#2d3b2d] hover:bg-white rounded-xl transition-all shadow-sm"
                                     >
                                         <Edit3 size={16} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(selectedDay, mealType, item.id)}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all shadow-sm"
                                     >
                                         <Trash2 size={16} />
                                     </button>
                                 </>
                             )}
                             {isApproved && (
-                                <div className="text-green-600 p-1.5" title="Approved items are locked">
+                                <div className="text-[#5a7a50] p-2 bg-white/60 rounded-xl shadow-sm border border-[rgba(143,174,142,0.2)]" title="Approved items are locked">
                                     <ShieldCheck size={16} />
                                 </div>
                             )}
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+            </div>
         );
     };
 
     return (
-        <div className="space-y-8 pb-10">
+        <div className="space-y-8 pb-10 mt-2">
+            <h2 className="admin-title mb-8">Menu Management</h2>
+
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div className="lg:col-span-3 space-y-8">
                     {/* Day Tabs */}
-                    <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto no-scrollbar">
+                    <div className="flex bg-white/40 backdrop-blur-md p-1.5 rounded-[20px] shadow-[0_4px_16px_rgba(90,120,70,0.08)] border border-[rgba(143,174,142,0.3)] overflow-x-auto no-scrollbar">
                         {DAYS.map((day) => (
                             <button
                                 key={day}
                                 onClick={() => setSelectedDay(day)}
                                 className={cn(
-                                    "flex-1 min-w-[100px] py-3 text-sm font-bold rounded-xl transition-all",
+                                    "flex-1 min-w-[100px] py-3 text-xs uppercase tracking-widest font-black rounded-2xl transition-all shadow-sm",
                                     selectedDay === day
-                                        ? "bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/20"
-                                        : "text-gray-500 hover:bg-gray-50"
+                                        ? "bg-[#8FA873] text-white shadow-md shadow-[#8FA873]/30"
+                                        : "text-[#5a7a50] hover:bg-white/60"
                                 )}
                             >
                                 {day}
@@ -175,64 +177,64 @@ export const ProviderMenu = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Lunch Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
+                        <div className="stat-card p-6 border-[1.5px] border-[rgba(143,174,142,0.3)]">
+                            <div className="flex items-center justify-between mb-8 border-b border-[rgba(143,174,142,0.2)] pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white/80 rounded-2xl flex items-center justify-center text-[#f59e0b] shadow-inner">
                                         <CircleDot size={20} />
                                     </div>
-                                    <Typography variant="h4" className="font-serif">Lunch Menu</Typography>
+                                    <h4 className="text-2xl font-black text-[#2d3b2d] m-0" style={{ fontFamily: "Lora, serif" }}>Lunch Menu</h4>
                                 </div>
                                 <Button
                                     size="sm"
-                                    variant="ghost"
-                                    className="text-primary font-bold h-8 hover:bg-primary/10"
+                                    variant="outline"
+                                    className="text-[#8FA873] border-[#8FA873] font-black h-9 hover:bg-[#8FAE8E]/10 rounded-xl px-4 uppercase tracking-wider text-[10px] shadow-sm"
                                     onClick={() => {
                                         setEditingItem({ day: selectedDay, mealType: "lunch" });
                                         setIsModalOpen(true);
                                     }}
                                 >
-                                    <Plus size={16} className="mr-1" /> Add
+                                    <Plus size={14} className="mr-1" /> Add
                                 </Button>
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {currentDayData.lunch.items.map((item) => renderMenuItemCard(item, "lunch"))}
                                 {currentDayData.lunch.items.length === 0 && (
-                                    <div className="py-10 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
-                                        <Typography className="text-gray-400 text-sm italic">Empty for Lunch</Typography>
+                                    <div className="py-12 flex flex-col items-center gap-2 text-center bg-white/40 rounded-[24px] border-2 border-dashed border-[rgba(143,174,142,0.3)] inset-shadow-sm">
+                                        <p className="text-[#5a7a50] font-black tracking-widest uppercase text-xs m-0 opacity-60">Empty for Lunch</p>
                                     </div>
                                 )}
                             </div>
                         </div>
 
                         {/* Dinner Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
+                        <div className="stat-card p-6 border-[1.5px] border-[rgba(143,174,142,0.3)]">
+                            <div className="flex items-center justify-between mb-8 border-b border-[rgba(143,174,142,0.2)] pb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-white/80 rounded-2xl flex items-center justify-center text-[#3b82f6] shadow-inner">
                                         <CircleDot size={20} />
                                     </div>
-                                    <Typography variant="h4" className="font-serif">Dinner Menu</Typography>
+                                    <h4 className="text-2xl font-black text-[#2d3b2d] m-0" style={{ fontFamily: "Lora, serif" }}>Dinner Menu</h4>
                                 </div>
                                 <Button
                                     size="sm"
-                                    variant="ghost"
-                                    className="text-primary font-bold h-8 hover:bg-primary/10"
+                                    variant="outline"
+                                    className="text-[#8FA873] border-[#8FA873] font-black h-9 hover:bg-[#8FAE8E]/10 rounded-xl px-4 uppercase tracking-wider text-[10px] shadow-sm"
                                     onClick={() => {
                                         setEditingItem({ day: selectedDay, mealType: "dinner" });
                                         setIsModalOpen(true);
                                     }}
                                 >
-                                    <Plus size={16} className="mr-1" /> Add
+                                    <Plus size={14} className="mr-1" /> Add
                                 </Button>
                             </div>
 
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                                 {currentDayData.dinner.items.map((item) => renderMenuItemCard(item, "dinner"))}
                                 {currentDayData.dinner.items.length === 0 && (
-                                    <div className="py-10 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
-                                        <Typography className="text-gray-400 text-sm italic">Empty for Dinner</Typography>
+                                    <div className="py-12 flex flex-col items-center gap-2 text-center bg-white/40 rounded-[24px] border-2 border-dashed border-[rgba(143,174,142,0.3)] inset-shadow-sm">
+                                        <p className="text-[#5a7a50] font-black tracking-widest uppercase text-xs m-0 opacity-60">Empty for Dinner</p>
                                     </div>
                                 )}
                             </div>
@@ -243,46 +245,46 @@ export const ProviderMenu = () => {
                 {/* Right Sidebar */}
                 <div className="lg:col-span-1">
                     <div className="sticky top-28 space-y-6">
-                        <Card className="border-none shadow-sm overflow-hidden bg-white">
-                            <div className="bg-primary p-4 text-white flex items-center gap-2">
+                        <div className="stat-card overflow-hidden bg-white/60 border-[1.5px] border-[rgba(143,174,142,0.3)]">
+                            <div className="bg-[#8FA873] p-4 text-white flex items-center gap-2 shadow-inner">
                                 <Eye size={18} />
-                                <Typography className="!text-white font-bold text-sm">Subscriber View</Typography>
+                                <span className="font-bold text-sm tracking-wide uppercase">Subscriber View</span>
                             </div>
-                            <CardContent className="p-6">
-                                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <Typography className="font-bold text-sm">{selectedDay}'s Menu</Typography>
-                                        <Leaf size={16} className="text-green-600" />
+                            <div className="p-6">
+                                <div className="bg-white/80 rounded-2xl p-5 border-[1.5px] border-[rgba(143,174,142,0.2)] space-y-4 shadow-sm">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="font-black text-[#2d3b2d] m-0 text-sm uppercase tracking-wider">{selectedDay}'s Menu</p>
+                                        <Leaf size={16} className="text-[#8FA873]" />
                                     </div>
 
-                                    <div className="space-y-3">
+                                    <div className="space-y-2.5">
                                         {currentDayData.lunch.items
                                             .filter(item => item.status === "approved")
                                             .map((item, i) => (
                                                 <div key={i} className="flex items-center gap-3">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                                    <Typography className="text-xs">{item.name}</Typography>
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#8FA873] shadow-sm" />
+                                                    <span className="text-xs font-bold text-[#5a7a50]">{item.name}</span>
                                                 </div>
                                             ))}
                                     </div>
                                 </div>
                                 <div className="mt-6 flex flex-col gap-2">
-                                    <Typography variant="small" className="text-gray-400 text-center text-[10px]">Tiffin Price</Typography>
-                                    <div className="relative">
-                                        <Input className="pl-8 font-bold text-center bg-gray-50" value={currentDayData.lunch.price} readOnly />
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                                    <p className="font-black text-center text-[10px] uppercase tracking-widest text-[#5a7a50] m-0">Tiffin Price</p>
+                                    <div className="relative shadow-sm rounded-xl overflow-hidden border-[1.5px] border-[rgba(143,174,142,0.3)]">
+                                        <Input className="pl-10 font-black text-center bg-white/80 h-10 text-[#2d3b2d] border-none focus-visible:ring-0" value={currentDayData.lunch.price} readOnly />
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA873] font-black">₹</span>
                                     </div>
                                 </div>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        </div>
 
-                        <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex gap-4">
-                            <ShieldCheck className="text-blue-600 shrink-0" size={20} />
+                        <div className="stat-card bg-[#8FAE8E]/10 p-5 border-[1.5px] border-[#8FAE8E]/30 flex gap-4 backdrop-blur-sm">
+                            <ShieldCheck className="text-[#5a7a50] shrink-0" size={20} />
                             <div>
-                                <Typography className="text-xs font-bold text-blue-900 mb-1">Provider Notice</Typography>
-                                <Typography variant="small" className="text-[10px] text-blue-800/70 leading-relaxed">
+                                <p className="text-xs font-black text-[#2d3b2d] uppercase tracking-widest m-0 mb-1.5">Provider Notice</p>
+                                <p className="text-[11px] font-bold text-[#5a7a50] leading-relaxed m-0 opacity-80">
                                     Only veg items are allowed. Admin approval is required for all new submissions.
-                                </Typography>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -304,26 +306,26 @@ export const ProviderMenu = () => {
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl p-6"
+                            className="relative bg-[#E7E6B6] w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl p-8 border-[1.5px] border-[rgba(143,174,142,0.2)]"
                         >
-                            <div className="flex justify-between items-center mb-6">
-                                <Typography variant="h3" className="font-serif text-xl">{editingItem?.item ? "Edit Item" : "New Menu Item"}</Typography>
-                                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                            <div className="flex justify-between items-center mb-8">
+                                <h3 className="text-2xl font-black text-[#2d3b2d] m-0" style={{ fontFamily: "Lora, serif" }}>{editingItem?.item ? "Edit Item" : "New Menu Item"}</h3>
+                                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-white/60 rounded-full transition-colors shadow-sm bg-white/40 text-[#5a7a50]">
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <div className="space-y-5 text-left">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 ml-1">Item Name</label>
-                                    <Input placeholder="e.g. Paneer Bhurji" defaultValue={editingItem?.item?.name} />
+                            <div className="space-y-6 text-left">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black uppercase tracking-wider text-[#5a7a50] ml-1">Item Name</label>
+                                    <Input className="bg-white/60 border-[1.5px] border-[rgba(143,174,142,0.3)] shadow-sm rounded-2xl h-12 text-[#2d3b2d] font-bold px-4 focus-visible:ring-[#8FA873]" placeholder="e.g. Paneer Bhurji" defaultValue={editingItem?.item?.name} />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 ml-1">Type</label>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-wider text-[#5a7a50] ml-1">Type</label>
                                         <select
-                                            className="w-full h-11 bg-gray-50 border-none rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20 appearance-none transition-all"
+                                            className="w-full h-12 bg-white/60 border-[1.5px] border-[rgba(143,174,142,0.3)] shadow-sm rounded-2xl px-4 text-sm font-bold text-[#2d3b2d] outline-none focus:ring-2 focus:ring-[#8FA873]/40 appearance-none transition-all"
                                             defaultValue={editingItem?.item?.type || "Sabzi"}
                                         >
                                             <option>Dal</option>
@@ -333,18 +335,18 @@ export const ProviderMenu = () => {
                                             <option>Dessert</option>
                                         </select>
                                     </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 ml-1">Dietary</label>
-                                        <div className="h-11 bg-green-50 rounded-xl px-4 flex items-center gap-2 border border-green-100">
-                                            <Leaf size={14} className="text-green-600" />
-                                            <span className="text-xs font-bold text-green-700">Veg Only</span>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-black uppercase tracking-wider text-[#5a7a50] ml-1">Dietary</label>
+                                        <div className="h-12 bg-emerald-50/80 rounded-2xl px-4 flex items-center gap-2 border-[1.5px] border-emerald-200/60 shadow-inner">
+                                            <Leaf size={14} className="text-emerald-600" />
+                                            <span className="text-[11px] font-black uppercase tracking-widest text-emerald-700">Veg Only</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-3 pt-4">
-                                    <Button variant="outline" className="flex-1" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                                    <Button className="flex-1" onClick={() => {
+                                <div className="flex gap-4 pt-6 mt-4 border-t border-[rgba(143,174,142,0.2)]">
+                                    <Button variant="outline" className="flex-1 h-12 rounded-2xl border-[#8FA873] text-[#5a7a50] hover:bg-white font-bold bg-white/40 backdrop-blur-md" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                                    <Button className="flex-1 h-12 rounded-2xl shadow-md bg-[#8FA873] hover:bg-[#6b8a5e] text-white font-bold" onClick={() => {
                                         toast.success("Submitted for Approval");
                                         setIsModalOpen(false);
                                     }}>

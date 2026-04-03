@@ -137,40 +137,47 @@ export const OrdersToday = () => {
     return (
         <div className="space-y-8">
             {/* Header + Stats */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8 mt-2">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
                 <div>
-                    <h2 className="admin-title">Orders Today</h2>
-                    <p className="admin-subtitle m-0">Managing {orders.length} deliveries for {formatDate()}</p>
+                    <Typography
+                        variant="h2"
+                        className="font-serif !text-[32px] !font-bold"
+                    >
+                        Orders Today
+                    </Typography>
+                    <Typography variant="small" className="text-gray-500">
+                        Managing {orders.length} deliveries for {formatDate()}
+                    </Typography>
                 </div>
-                <div className="flex gap-4 flex-wrap h-14">
-                    <div className="stat-card px-5 flex items-center gap-4 py-2 border-[1.5px] border-[rgba(143,174,142,0.3)] min-w-[140px] m-0 h-full">
-                        <div className="w-10 h-10 bg-blue-50/80 rounded-2xl flex items-center justify-center text-blue-600 shadow-inner">
-                            <ShoppingBag size={18} />
+                <div className="flex gap-4 flex-wrap">
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+                        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
+                            <ShoppingBag size={20} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-[#5a7a50] uppercase tracking-widest mb-0.5 m-0">Total</p>
-                            <p className="text-xl font-black text-[#2d3b2d] m-0 leading-none" style={{ fontFamily: "Lora, serif" }}>{orders.length}</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total</p>
+                            <p className="text-xl font-bold">{orders.length}</p>
                         </div>
                     </div>
-                    <div className="stat-card px-5 flex items-center gap-4 py-2 border-[1.5px] border-[rgba(245,158,11,0.3)] min-w-[140px] m-0 h-full">
-                        <div className="w-10 h-10 bg-amber-50/80 rounded-2xl flex items-center justify-center text-amber-600 shadow-inner">
-                            <Clock3 size={18} />
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+                        <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
+                            <Clock3 size={20} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-[#5a7a50] uppercase tracking-widest mb-0.5 m-0">Preparing</p>
-                            <p className="text-xl font-black text-[#2d3b2d] m-0 leading-none" style={{ fontFamily: "Lora, serif" }}>{preparingCount}</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Preparing</p>
+                            <p className="text-xl font-bold">{preparingCount}</p>
                         </div>
                     </div>
-                    <div className="stat-card px-5 flex items-center gap-4 py-2 border-[1.5px] border-[rgba(16,185,129,0.3)] min-w-[140px] m-0 h-full">
-                        <div className="w-10 h-10 bg-emerald-50/80 rounded-2xl flex items-center justify-center text-emerald-600 shadow-inner">
-                            <CheckCircle2 size={18} />
+                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center text-green-600">
+                            <CheckCircle2 size={20} />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-[#5a7a50] uppercase tracking-widest mb-0.5 m-0">Completed</p>
-                            <p className="text-xl font-black text-[#2d3b2d] m-0 leading-none" style={{ fontFamily: "Lora, serif" }}>{completedCount}</p>
+                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed</p>
+                            <p className="text-xl font-bold">{completedCount}</p>
                         </div>
                     </div>
-                    <Button variant="outline" className="h-full rounded-2xl font-bold border-[#8FA873] text-[#5a7a50] hover:bg-[#8FAE8E]/10 px-6" onClick={fetchOrders}>
+                    <Button variant="outline" className="h-auto py-3" onClick={fetchOrders}>
                         <RefreshCw size={18} className="mr-2" />
                         Refresh
                     </Button>
@@ -194,116 +201,120 @@ export const OrdersToday = () => {
             ) : (
                 <div className="grid grid-cols-1 gap-4">
                     {orders.map((order) => (
-                        <div key={order._id} className="stat-card p-0 transition-all overflow-hidden group flex flex-col md:flex-row border-[1.5px] border-[rgba(143,174,142,0.3)]">
-                            {/* Colored accent bar */}
-                            <div className={cn(
-                                "md:w-3 w-full h-2 md:h-auto shrink-0",
-                                order.timeSlot === "lunch" ? "bg-[#f59e0b] shadow-[0_0_10px_rgba(245,158,11,0.5)]" : "bg-[#3b82f6] shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                            )} />
+                        <Card key={order._id} className="border-none shadow-sm hover:shadow-md transition-all overflow-hidden group">
+                            <CardContent className="p-0">
+                                <div className="flex flex-col md:flex-row">
+                                    {/* Colored accent bar */}
+                                    <div className={cn(
+                                        "md:w-2 w-full h-2 md:h-auto shrink-0",
+                                        order.timeSlot === "lunch" ? "bg-[var(--primary)]" : "bg-[var(--accent)]"
+                                    )} />
 
-                            <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/40">
-                                {/* Order info */}
-                                <div className="space-y-4">
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                            {formatOrderId(order._id)}
-                                        </span>
-                                        <div className={cn(
-                                            "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border capitalize",
-                                            getStatusColor(order.status)
-                                        )}>
-                                            {getStatusIcon(order.status)}
-                                            {getStatusLabel(order.status)}
-                                        </div>
-                                        <span className={cn(
-                                            "text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-tighter",
-                                            order.paymentStatus === "paid" ? "bg-green-100 text-green-700"
-                                                : order.paymentStatus === "partial" ? "bg-amber-100 text-amber-700"
-                                                    : "bg-gray-100 text-gray-500"
-                                        )}>
-                                            {order.paymentStatus || "pending"}
-                                        </span>
-                                    </div>
+                                    <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                                        {/* Order info */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                                    {formatOrderId(order._id)}
+                                                </span>
+                                                <div className={cn(
+                                                    "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border capitalize",
+                                                    getStatusColor(order.status)
+                                                )}>
+                                                    {getStatusIcon(order.status)}
+                                                    {getStatusLabel(order.status)}
+                                                </div>
+                                                <span className={cn(
+                                                    "text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-tighter",
+                                                    order.paymentStatus === "paid" ? "bg-green-100 text-green-700"
+                                                        : order.paymentStatus === "partial" ? "bg-amber-100 text-amber-700"
+                                                            : "bg-gray-100 text-gray-500"
+                                                )}>
+                                                    {order.paymentStatus || "pending"}
+                                                </span>
+                                            </div>
 
-                                    <div className="flex items-center gap-4 mt-2">
-                                        <div className="w-12 h-12 rounded-2xl bg-white/60 shadow-sm border border-[rgba(143,174,142,0.2)] flex items-center justify-center text-[#8FA873]">
-                                            <User size={22} />
-                                        </div>
-                                        <div>
-                                            <p className="font-black text-[#2d3b2d] m-0 mb-1">{order.user?.name || "Unknown"}</p>
-                                            <div className="flex items-center gap-2 text-xs font-bold text-[#5a7a50]">
-                                                <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-sm" />
-                                                Veg • {(order.items || []).map(i => i.name).join(", ") || "—"}
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
+                                                    <User size={20} />
+                                                </div>
+                                                <div>
+                                                    <Typography className="font-bold">{order.user?.name || "Unknown"}</Typography>
+                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                                                        Veg • {(order.items || []).map(i => i.name).join(", ") || "—"}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </div>
 
-                                {/* Slot & contact info */}
-                                <div className="flex flex-col md:items-end gap-3">
-                                    <div className="flex items-center gap-2 text-[#5a7a50] bg-white/50 px-4 py-2 rounded-xl shadow-sm border border-[rgba(143,174,142,0.1)]">
-                                        <Clock size={16} className="text-[#8FA873]" />
-                                        <span className="font-black text-sm uppercase tracking-wide">{getSlotLabel(order.timeSlot)} Slot</span>
-                                        <span className="text-[rgba(143,174,142,0.4)] px-1">|</span>
-                                        <span className="font-black text-[#2d3b2d]">₹{order.totalPrice || 0}</span>
-                                    </div>
-                                    {order.user?.phone && (
-                                        <div className="flex items-center gap-2 text-[13px] font-bold text-[#5a7a50]">
-                                            <Phone size={14} className="text-[#8FA873]" />
-                                            <span>{order.user.phone}</span>
+                                        {/* Slot & contact info */}
+                                        <div className="flex flex-col md:items-end gap-2">
+                                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                <Clock size={16} className="text-gray-400" />
+                                                <span className="font-medium">{getSlotLabel(order.timeSlot)} Slot</span>
+                                                <span className="text-gray-300">|</span>
+                                                <span className="font-bold text-[var(--primary)]">₹{order.totalPrice || 0}</span>
+                                            </div>
+                                            {order.user?.phone && (
+                                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <Phone size={16} className="text-gray-400" />
+                                                    <span>{order.user.phone}</span>
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* Action buttons */}
-                                <div className="flex gap-2 shrink-0">
-                                    {(order.status === "confirmed" || order.status === "pending") && (
-                                        <Button
-                                            size="sm"
-                                            className="h-9"
-                                            onClick={() => handleStatusUpdate(order._id, "preparing")}
-                                            disabled={actionLoading === order._id}
-                                        >
-                                            {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                                            Start Preparing
-                                        </Button>
-                                    )}
-                                    {order.status === "preparing" && (
-                                        <Button
-                                            size="sm"
-                                            className="h-9"
-                                            onClick={() => handleStatusUpdate(order._id, "ready")}
-                                            disabled={actionLoading === order._id}
-                                        >
-                                            {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                                            Mark Ready
-                                        </Button>
-                                    )}
-                                    {order.status === "ready" && (
-                                        <Button
-                                            size="sm"
-                                            className="h-9"
-                                            onClick={() => handleStatusUpdate(order._id, "completed")}
-                                            disabled={actionLoading === order._id}
-                                        >
-                                            {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                                            Mark Picked Up
-                                        </Button>
-                                    )}
-                                    {order.status !== "completed" && order.status !== "cancelled" && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-9 text-red-500 hover:bg-red-50"
-                                            onClick={() => handleStatusUpdate(order._id, "cancelled")}
-                                            disabled={actionLoading === order._id}
-                                        >
-                                            Cancel
-                                        </Button>
-                                    )}
+                                        {/* Action buttons */}
+                                        <div className="flex gap-2 shrink-0">
+                                            {(order.status === "confirmed" || order.status === "pending") && (
+                                                <Button
+                                                    size="sm"
+                                                    className="h-9"
+                                                    onClick={() => handleStatusUpdate(order._id, "preparing")}
+                                                    disabled={actionLoading === order._id}
+                                                >
+                                                    {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+                                                    Start Preparing
+                                                </Button>
+                                            )}
+                                            {order.status === "preparing" && (
+                                                <Button
+                                                    size="sm"
+                                                    className="h-9"
+                                                    onClick={() => handleStatusUpdate(order._id, "ready")}
+                                                    disabled={actionLoading === order._id}
+                                                >
+                                                    {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+                                                    Mark Ready
+                                                </Button>
+                                            )}
+                                            {order.status === "ready" && (
+                                                <Button
+                                                    size="sm"
+                                                    className="h-9"
+                                                    onClick={() => handleStatusUpdate(order._id, "completed")}
+                                                    disabled={actionLoading === order._id}
+                                                >
+                                                    {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
+                                                    Mark Picked Up
+                                                </Button>
+                                            )}
+                                            {order.status !== "completed" && order.status !== "cancelled" && (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="h-9 text-red-500 hover:bg-red-50"
+                                                    onClick={() => handleStatusUpdate(order._id, "cancelled")}
+                                                    disabled={actionLoading === order._id}
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </CardContent>
+                        </Card>
                     ))}
                 </div>
             )}

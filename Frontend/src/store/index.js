@@ -2,12 +2,10 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./authSlice";
 import tiffinReducer from "./tiffinSlice";
-import providerReducer from "./providerSlice";
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     tiffins: tiffinReducer,
-    provider: providerReducer,
   },
 });

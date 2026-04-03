@@ -60,12 +60,12 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
         <div className="space-y-8 max-w-5xl">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="admin-title">Profile Settings</h2>
-                    <p className="admin-subtitle">Manage your kitchen identity, contact info, and certifications.</p>
+                    <Typography variant="h2" className="font-serif">Profile Settings</Typography>
+                    <Typography className="text-gray-500">Manage your kitchen identity, contact info, and certifications.</Typography>
                 </div>
                 <Button
                     onClick={handleSave}
-                    className="bg-[#8FA873] text-white hover:bg-[#6b8a5e] flex items-center gap-2 rounded-2xl h-12 px-6 shadow-md"
+                    className="bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 flex items-center gap-2"
                 >
                     {isSaved ? <CheckCircle2 size={18} /> : <Save size={18} />}
                     {isSaved ? "Saved Successfully" : "Save Profile"}
@@ -75,10 +75,10 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     {/* Identity Section */}
-                    <Card className="border-[1.5px] border-[rgba(143,174,142,0.2)] bg-white/60 backdrop-blur-md shadow-[0_12px_36px_rgba(90,120,70,0.1)] rounded-[32px]">
-                        <CardHeader className="border-b border-[rgba(143,174,142,0.2)] pb-5">
-                            <CardTitle className="text-xl flex items-center gap-2 font-serif text-[#2d3b2d]">
-                                <Store className="text-[#8FA873]" size={24} />
+                    <Card className="border-none shadow-sm rounded-2xl">
+                        <CardHeader className="border-b border-gray-50 pb-5">
+                            <CardTitle className="text-xl flex items-center gap-2 font-serif">
+                                <Store className="text-[var(--primary)]" size={24} />
                                 Kitchen Identity
                             </CardTitle>
                         </CardHeader>
@@ -127,9 +127,9 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                     </Card>
 
                     {/* Contact Section */}
-                    <Card className="border-[1.5px] border-[rgba(143,174,142,0.2)] bg-white/60 backdrop-blur-md shadow-[0_12px_36px_rgba(90,120,70,0.1)] rounded-[32px]">
-                        <CardHeader className="border-b border-[rgba(143,174,142,0.2)] pb-5">
-                            <CardTitle className="text-xl flex items-center gap-2 font-serif text-[#2d3b2d]">
+                    <Card className="border-none shadow-sm rounded-2xl">
+                        <CardHeader className="border-b border-gray-50 pb-5">
+                            <CardTitle className="text-xl flex items-center gap-2 font-serif">
                                 <Phone className="text-blue-500" size={24} />
                                 Contact & Location
                             </CardTitle>
@@ -169,29 +169,28 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
 
                 <div className="space-y-8">
                     {/* Profile Photo */}
-                    <Card className="border-[1.5px] border-[rgba(143,174,142,0.2)] bg-white/60 backdrop-blur-md shadow-[0_12px_36px_rgba(90,120,70,0.1)] overflow-hidden text-center rounded-[32px]">
-                        <div className="h-28 bg-gradient-to-tr from-[#8FA873] to-[#6b8a5e] opacity-80" />
+                    <Card className="border-none shadow-sm overflow-hidden text-center rounded-2xl">
+                        <div className="h-28 bg-gradient-to-tr from-[var(--primary)] to-[var(--accent)] opacity-80" />
                         <div className="px-6 pb-8 -mt-14 text-center">
                             <div className="relative inline-block">
                                 <div className="w-28 h-28 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden mx-auto flex items-center justify-center font-bold text-4xl text-[var(--primary)]">
-                                    {formData.kitchenName?.charAt(0) || '👩‍🍳'}
+                                    {formData.kitchenName.charAt(0)}
                                 </div>
                                 <button className="absolute bottom-1 right-1 p-2 bg-white rounded-full shadow-md text-gray-600 hover:text-[var(--primary)] border border-gray-100 transition-colors">
                                     <Upload size={16} />
                                 </button>
                             </div>
-                            <Typography variant="h3" className="mt-4 font-serif">{formData.kitchenName || 'Kitchen Profile'}</Typography>
-                            <Typography className="text-gray-500 font-medium">{formData.chefName || 'Chef'}</Typography>
+                            <Typography variant="h3" className="mt-4 font-serif">{formData.kitchenName}</Typography>
+                            <Typography className="text-gray-500 font-medium">{formData.chefName}</Typography>
                             <div className="mt-6 flex flex-wrap justify-center gap-2">
-                                {profileData?.isApproved && (
-                                    <span className="text-[10px] font-bold px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 uppercase tracking-widest">Verified Partner</span>
-                                )}
+                                <span className="text-[10px] font-bold px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 uppercase tracking-widest">Verified</span>
+                                <span className="text-[10px] font-bold px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 uppercase tracking-widest">Top Rated</span>
                             </div>
                         </div>
                     </Card>
 
                     {/* Certification Card */}
-                    <Card className="bg-amber-50/90 backdrop-blur-md border-[1.5px] border-amber-200 shadow-[0_12px_36px_rgba(90,120,70,0.1)] rounded-[32px]">
+                    <Card className="bg-amber-50/50 border-amber-200 border shadow-sm rounded-2xl">
                         <CardContent className="p-8">
                             <div className="flex items-center gap-3 text-amber-900 mb-6">
                                 <ShieldCheck className="text-amber-600" size={28} />
@@ -208,9 +207,9 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                             <div className="mt-6 p-4 bg-white rounded-xl border border-amber-100 shadow-sm">
                                 <div className="flex items-center gap-2 text-sm font-bold text-green-700">
                                     <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                                    {profileData?.fssaiCertificate ? 'Certificate Uploaded & Valid' : 'Certificate Pending Verification'}
+                                    Currently Active & Valid
                                 </div>
-                                <p className="text-xs text-amber-600 mt-1 font-medium ml-4.5">Last updated: {profileData?.updatedAt ? new Date(profileData.updatedAt).toLocaleDateString() : '—'}</p>
+                                <p className="text-xs text-amber-600 mt-1 font-medium ml-4.5">Expiry: Jan 15, 2027</p>
                             </div>
                         </CardContent>
                     </Card>

@@ -4,8 +4,6 @@ const {
   createProviderRequest,
   approveProvider,
   rejectProvider,
-  deactivateTSP,
-  reactivateTSP,
 } = require("./tiffin.controller");
 const { createOrUpdateMenu, submitForApproval, approveMenu, rejectMenu, getAllMenus } = require("./menu.controller");
 const { protect, authorize } = require("../../middlewares/auth.middleware");
@@ -25,8 +23,6 @@ router.patch("/menu/:menuId/reject",protect,authorize("admin"),rejectMenu);
 router.patch("/approve/:providerId", protect, authorize("admin"), approveProvider);
 router.patch("/reject/:providerId", protect, authorize("admin"), rejectProvider);
 router.get("/nearby", getNearbyTiffins);
-router.patch("/deactivate", protect, authorize("provider"), deactivateTSP);
-router.patch("/reactivate", protect, authorize("provider"), reactivateTSP);
 
 router.post("/upload-image", protect, authorize("provider"), upload.single("image"), uploadImage);
 module.exports = router;

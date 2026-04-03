@@ -33,22 +33,35 @@ import { cn } from "../../lib/utils";
 
 function ApproveModal({ provider, onClose, onApprove, loading }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[32px] overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="h-2 bg-gradient-to-r from-primary to-accent" />
-        <CardContent className="p-8 text-center">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ChefHat size={40} className="text-primary" />
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-[#2d3b2d]/40 backdrop-blur-md animate-in fade-in duration-300">
+      <Card className="w-full max-w-md border-none shadow-[0_32px_120px_rgba(45,59,45,0.3)] rounded-[40px] overflow-hidden animate-in zoom-in-95 duration-500 bg-[#E7E6B6]">
+        <div className="h-2 bg-gradient-to-r from-[#8FA873] to-[#D9D9A8]" />
+        <CardContent className="p-10 text-center">
+          <div className="w-24 h-24 bg-white/60 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-sm border border-[rgba(143,174,142,0.1)]">
+            <div className="w-16 h-16 bg-[#8FA873]/10 rounded-2xl flex items-center justify-center animate-pulse">
+              <CheckCircle size={40} className="text-[#8FA873]" />
+            </div>
           </div>
-          <Typography variant="h3" className="mb-2">Approve Kitchen?</Typography>
-          <Typography className="text-muted-foreground mb-8">
-            Authorize <strong>{provider?.businessName}</strong>? This will enable their menu and notify <strong>{provider?.ownerName}</strong>.
+
+          <Typography variant="h3" className="mb-3 text-[#2d3b2d]" style={{ fontFamily: "Lora, serif" }}>Approve Kitchen?</Typography>
+          <Typography className="text-[#5a7a50] font-medium leading-relaxed mb-10 px-2">
+            You are about to authorize <span className="font-black text-[#2d3b2d]">"{provider?.businessName}"</span>. This will enable their menu and notify the owner.
           </Typography>
+
           <div className="flex gap-4">
-            <Button variant="outline" onClick={onClose} className="flex-1 rounded-2xl">Cancel</Button>
-            <Button onClick={onApprove} disabled={loading} className="flex-[2] rounded-2xl shadow-lg shadow-primary/20">
-              {loading ? "Processing..." : "Confirm Approval"}
-            </Button>
+            <button
+              onClick={onClose}
+              className="flex-1 h-14 rounded-2xl border-2 border-[rgba(143,174,142,0.2)] text-[#5a7a50] hover:bg-white/40 font-black uppercase tracking-widest text-[11px] transition-all"
+            >
+              Back
+            </button>
+            <button
+              onClick={onApprove}
+              disabled={loading}
+              className="flex-[2] h-14 rounded-2xl bg-[#8FA873] hover:bg-[#6b8a5e] text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-[#8FA873]/30 transition-all transform hover:-translate-y-1 disabled:opacity-50"
+            >
+              {loading ? "Approving..." : "Confirm Approval"}
+            </button>
           </div>
         </CardContent>
       </Card>
@@ -59,25 +72,45 @@ function ApproveModal({ provider, onClose, onApprove, loading }) {
 function RejectModal({ provider, onClose, onReject, loading }) {
   const [reason, setReason] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[32px] overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="h-2 bg-destructive" />
-        <CardContent className="p-8">
-          <Typography variant="h3" className="mb-1">Decline Application</Typography>
-          <Typography variant="small" className="text-destructive font-bold mb-6">Kitchen: {provider?.businessName}</Typography>
-          <div className="space-y-4">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Reason for Rejection</label>
-            <textarea
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-              placeholder="e.g., FSSAI document blurry..."
-              className="w-full min-h-[120px] p-4 rounded-2xl border-2 border-muted bg-muted/30 focus:border-destructive focus:ring-0 transition-all outline-none text-sm"
-            />
+    <div className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-[#2d3b2d]/40 backdrop-blur-md animate-in fade-in duration-300">
+      <Card className="w-full max-w-md border-none shadow-[0_32px_120px_rgba(239,83,80,0.2)] rounded-[40px] overflow-hidden animate-in zoom-in-95 duration-500 bg-[#E7E6B6]">
+        <div className="h-2 bg-[#ef5350]" />
+        <CardContent className="p-10">
+          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-[rgba(143,174,142,0.1)]">
+            <div className="w-14 h-14 bg-red-100/50 rounded-2xl flex items-center justify-center shrink-0">
+              <XCircle size={28} className="text-red-500" />
+            </div>
+            <div>
+              <Typography variant="h3" className="mb-0 text-[#2d3b2d]" style={{ fontFamily: "Lora, serif" }}>Decline Application</Typography>
+              <Typography variant="small" className="text-red-500 font-bold uppercase tracking-widest text-[9px]">Target: {provider?.businessName}</Typography>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div>
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5a7a50] ml-1 mb-2 block">Reason for Rejection</label>
+              <textarea
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                placeholder="e.g., FSSAI document blurry or invalid..."
+                className="w-full min-h-[140px] p-5 rounded-[24px] border-2 border-[rgba(143,174,142,0.2)] bg-white/50 focus:border-red-400 focus:bg-white transition-all outline-none text-sm font-medium text-[#2d3b2d] resize-none shadow-inner"
+              />
+            </div>
+
             <div className="flex gap-4">
-              <Button variant="outline" onClick={onClose} className="flex-1 rounded-2xl">Back</Button>
-              <Button onClick={() => onReject(reason)} disabled={!reason.trim() || loading} variant="secondary" className="flex-[2] bg-destructive text-white hover:bg-destructive/90 rounded-2xl">
+              <button
+                onClick={onClose}
+                className="flex-1 h-14 rounded-2xl border-2 border-[rgba(143,174,142,0.1)] text-[#5a7a50] hover:bg-white/40 font-black uppercase tracking-widest text-[11px] transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onReject(reason)}
+                disabled={!reason.trim() || loading}
+                className="flex-[2] h-14 rounded-2xl bg-red-500 hover:bg-red-600 text-white font-black uppercase tracking-widest text-[11px] shadow-xl shadow-red-500/20 transition-all transform hover:-translate-y-1 disabled:opacity-50"
+              >
                 {loading ? "Sending..." : "Confirm Rejection"}
-              </Button>
+              </button>
             </div>
           </div>
         </CardContent>
@@ -88,48 +121,123 @@ function RejectModal({ provider, onClose, onReject, loading }) {
 
 function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
   const isPdf = provider?.fssaiCertificate?.toLowerCase().includes(".pdf");
-  const DataField = ({ label, value }) => (
-    <div className="py-3 border-b border-muted last:border-0">
-      <Typography variant="small" className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">{label}</Typography>
-      <Typography className="font-semibold text-foreground text-sm">{value || "Not Provided"}</Typography>
+
+  const DataField = ({ label, value, icon: Icon }) => (
+    <div className="p-4 bg-white/50 rounded-2xl border border-[rgba(143,174,142,0.1)] shadow-sm hover:shadow-md transition-all">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Typography variant="small" className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5a7a50] opacity-60 m-0">{label}</Typography>
+      </div>
+      <Typography className="font-bold text-[#2d3b2d] text-sm truncate m-0">{value || "Not Provided"}</Typography>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-      <Card className="w-full max-w-2xl max-h-[90vh] border-none shadow-2xl rounded-[40px] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b bg-muted/30 flex justify-between items-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#2d3b2d]/40 backdrop-blur-md animate-in fade-in duration-300">
+      <Card className="w-full max-w-3xl max-h-[92vh] border-none shadow-[0_32px_120px_rgba(45,59,45,0.3)] rounded-[48px] overflow-hidden flex flex-col animate-in zoom-in-95 duration-500 bg-[#E7E6B6]">
+        {/* Header */}
+        <div className="px-10 py-8 border-b border-[rgba(143,174,142,0.2)] bg-white/30 flex justify-between items-center relative">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#8FA873] via-[#D9D9A8] to-[#8FA873]" />
           <div>
-            <Typography variant="h3">Kitchen Dossier</Typography>
-            <Typography variant="small" className="text-muted-foreground">ID: {provider?._id?.slice(-8).toUpperCase()}</Typography>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="rounded-full h-10 w-10 p-0"><X size={20} /></Button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-            <DataField label="Business Entity" value={provider?.businessName} />
-            <DataField label="Owner/Chef" value={provider?.ownerName} />
-            <DataField label="FSSAI Registration" value={provider?.fssaiNumber} />
-            <DataField label="Contact Email" value={provider?.email} />
-            <DataField label="Phone" value={provider?.phone} />
-          </div>
-          <div className="space-y-4">
-            <Typography variant="small" className="uppercase tracking-widest text-primary font-bold">Verification Document</Typography>
-            <div className="aspect-video relative rounded-3xl border-2 border-dashed border-muted bg-muted/20 flex items-center justify-center overflow-hidden">
-              {provider?.fssaiCertificate ? (
-                isPdf ? (
-                  <div className="text-center">
-                    <Typography className="mb-4">📜 Certificate PDF</Typography>
-                    <Button as="a" href={provider.fssaiCertificate} target="_blank" size="sm" className="rounded-xl">View Full PDF</Button>
-                  </div>
-                ) : <img src={provider.fssaiCertificate} className="w-full h-full object-contain" alt="FSSAI" />
-              ) : <Typography className="text-destructive">Document missing</Typography>}
+            <Typography variant="h3" className="m-0 text-[#2d3b2d]" style={{ fontFamily: "Lora, serif" }}>Kitchen Dossier</Typography>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="w-2 h-2 rounded-full bg-[#8FA873] animate-pulse" />
+              <Typography variant="small" className="text-[#5a7a50] font-black uppercase tracking-widest text-[9px]">Verification ID: {provider?._id?.slice(-8).toUpperCase()}</Typography>
             </div>
           </div>
+          <button
+            onClick={onClose}
+            className="w-12 h-12 rounded-2xl bg-white/60 hover:bg-white text-[#5a7a50] flex items-center justify-center transition-all shadow-sm border border-[rgba(143,174,142,0.1)]"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-10 space-y-10 no-scrollbar">
+          {/* Quick Info Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <DataField label="Business" value={provider?.businessName} />
+            <DataField label="Owner" value={provider?.ownerName} />
+            <DataField label="FSSAI Code" value={provider?.fssaiNumber} />
+            <DataField label="Email" value={provider?.email} />
+            <DataField label="Phone" value={provider?.phone} />
+            <DataField label="Status" value={provider?.isApproved ? "Approved" : "Pending Review"} />
+          </div>
+
+          {/* Document Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <Typography className="uppercase tracking-[0.2em] text-[11px] font-black text-[#5a7a50]">Verification Document</Typography>
+              {provider?.fssaiCertificate && !isPdf && (
+                <a
+                  href={provider.fssaiCertificate}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] font-black text-[#8FA873] hover:underline uppercase tracking-wider"
+                >
+                  Open Original View ↗
+                </a>
+              )}
+            </div>
+
+            <div className="group relative rounded-[32px] border-4 border-dashed border-[rgba(143,174,142,0.3)] bg-white/40 flex items-center justify-center overflow-hidden min-h-[340px] shadow-inner transition-all hover:border-[#8FA873]/50">
+              {provider?.fssaiCertificate ? (
+                isPdf ? (
+                  <div className="text-center p-12">
+                    <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-md border border-[rgba(143,174,142,0.1)]">
+                      <Package size={32} className="text-[#8FA873]" />
+                    </div>
+                    <Typography className="mb-6 font-bold text-[#2d3b2d]">📜 FSSAI Certificate (PDF)</Typography>
+                    <Button as="a" href={provider.fssaiCertificate} target="_blank" className="rounded-2xl h-12 px-8 bg-[#8FA873] hover:bg-[#6b8a5e] shadow-lg shadow-[#8FA873]/20">
+                      View Full Certificate
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4">
+                    <img
+                      src={provider.fssaiCertificate}
+                      className="max-w-full max-h-[500px] object-contain rounded-xl shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
+                      alt="FSSAI Certificate"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://placehold.co/600x400/8FA873/white?text=Document+Load+Error";
+                      }}
+                    />
+                    <div className="mt-4 py-2 px-4 bg-white/80 backdrop-blur-sm rounded-full text-[10px] font-black text-[#5a7a50] border border-[rgba(143,174,142,0.1)] shadow-sm">
+                      FSSAI CERTIFICATE PREVIEW
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="text-center py-20">
+                  <AlertCircle size={48} className="text-destructive mx-auto mb-4 opacity-40" />
+                  <Typography className="text-destructive font-black uppercase tracking-widest text-xs">Document missing from application</Typography>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Address Section */}
+          <div className="p-6 bg-white/40 rounded-3xl border border-[rgba(143,174,142,0.1)]">
+            <Typography variant="small" className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5a7a50] opacity-60 mb-2 block">Registered Kitchen Address</Typography>
+            <Typography className="text-sm font-bold text-[#2d3b2d] leading-relaxed italic m-0">"{provider?.address || "No address provided"}"</Typography>
+          </div>
+
+          {/* Actions */}
           {(!provider?.isApproved && !provider?.isActive) && (
-            <div className="flex gap-4 pt-4">
-              <Button variant="outline" onClick={() => { onClose(); onReject(provider); }} className="flex-1 border-destructive text-destructive hover:bg-destructive/10 rounded-2xl">Decline</Button>
-              <Button onClick={() => { onClose(); onApprove(provider); }} className="flex-1 rounded-2xl shadow-lg shadow-primary/20">Approve Credentials</Button>
+            <div className="flex gap-4 pt-4 sticky bottom-0 bg-[#E7E6B6]/80 backdrop-blur-sm py-4">
+              <button
+                onClick={() => { onClose(); onReject(provider); }}
+                className="flex-1 h-14 rounded-2xl border-2 border-destructive/20 text-destructive hover:bg-destructive/10 font-black uppercase tracking-widest text-xs transition-all"
+              >
+                Decline Application
+              </button>
+              <button
+                onClick={() => { onClose(); onApprove(provider); }}
+                className="flex-[1.5] h-14 rounded-2xl bg-[#8FA873] hover:bg-[#6b8a5e] text-white font-black uppercase tracking-widest text-xs shadow-xl shadow-[#8FA873]/30 transition-all transform hover:-translate-y-1"
+              >
+                Approve Credentials
+              </button>
             </div>
           )}
         </div>

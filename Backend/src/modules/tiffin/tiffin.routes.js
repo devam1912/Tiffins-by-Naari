@@ -16,10 +16,10 @@ const router = express.Router();
 router.post("/register", protect, upload.single("fssaiCertificate"), createProviderRequest);
 router.post("/menu", protect, authorize("provider"), createOrUpdateMenu);
 
-router.get("/menu",protect,authorize("admin"),getAllMenus);
+router.get("/menu", protect, authorize("admin"), getAllMenus);
 router.patch("/menu/submit", protect, authorize("provider"), submitForApproval);
-router.patch("/menu/:menuId/approve",protect,authorize("admin"),approveMenu);
-router.patch("/menu/:menuId/reject",protect,authorize("admin"),rejectMenu);
+router.patch("/menu/:menuId/approve", protect, authorize("admin"), approveMenu);
+router.patch("/menu/:menuId/reject", protect, authorize("admin"), rejectMenu);
 
 
 router.patch("/approve/:providerId", protect, authorize("admin"), approveProvider);

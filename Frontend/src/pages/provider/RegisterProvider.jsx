@@ -2,7 +2,10 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function Modal({ variant, title, message, onClose }) {
+function Modal({ variant, title, message, onClose, onSave }) {
+  const [manualLat, setManualLat] = useState("23.0225");
+  const [manualLng, setManualLng] = useState("72.5714");
+
   useEffect(() => {
     const fn = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", fn);
@@ -13,26 +16,38 @@ function Modal({ variant, title, message, onClose }) {
     success: { bar: "linear-gradient(90deg,#4caf50,#66bb6a,#a5d6a7)", circle: "linear-gradient(135deg,#4caf50,#66bb6a)", glow: "rgba(76,175,80,0.38)", tag: "Application Submitted", tagClr: "#4caf50", btn: "linear-gradient(135deg,#4caf50,#66bb6a)" },
     error: { bar: "linear-gradient(90deg,#ef5350,#e57373,#ffcdd2)", circle: "linear-gradient(135deg,#ef5350,#e57373)", glow: "rgba(239,83,80,0.35)", tag: "Something Went Wrong", tagClr: "#ef5350", btn: "linear-gradient(135deg,#8FAE8E,#8FA873)" },
     location: { bar: "linear-gradient(90deg,#1976d2,#42a5f5,#bbdefb)", circle: "linear-gradient(135deg,#1976d2,#42a5f5)", glow: "rgba(25,118,210,0.35)", tag: "Location Captured", tagClr: "#1976d2", btn: "linear-gradient(135deg,#8FAE8E,#8FA873)" },
+    manual_location: { bar: "linear-gradient(90deg,#8FA873,#D9D9A8,#8FA873)", circle: "linear-gradient(135deg,#8FA873,#8FAE8E)", glow: "rgba(143,174,142,0.35)", tag: "Manual Coordinates", tagClr: "#5a7a50", btn: "linear-gradient(135deg,#8FAE8E,#8FA873)" },
   };
   const c = cfg[variant] || cfg.error;
 
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,35,20,0.6)", backdropFilter: "blur(14px)", padding: 20, animation: "overlayIn 0.25s ease" }}>
-      {variant === "success" && ["#8FAE8E", "#D9D9A8", "#8FA873", "#fff", "#4caf50", "#c5d490", "#a5d6a7", "#ffeb3b"].map((col, i) => (
-        <div key={i} style={{ position: "absolute", pointerEvents: "none", width: i % 2 === 0 ? 11 : 7, height: i % 2 === 0 ? 11 : 7, borderRadius: i % 3 === 0 ? "50%" : 3, background: col, top: `${28 + (i % 5) * 5}%`, left: `${28 + i * 5.5}%`, animation: `confetti ${0.85 + i * 0.18}s ease forwards`, animationDelay: `${i * 0.06}s` }} />
-      ))}
       <div style={{ background: "#fff", borderRadius: 28, padding: "56px 44px 44px", maxWidth: 430, width: "100%", textAlign: "center", boxShadow: "0 48px 96px rgba(20,35,20,0.28)", animation: "modalIn 0.45s cubic-bezier(.22,.68,0,1.2)", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 5, background: c.bar, borderRadius: "28px 28px 0 0" }} />
         <div style={{ width: 88, height: 88, borderRadius: "50%", background: c.circle, display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", boxShadow: `0 16px 48px ${c.glow}`, animation: "iconPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.15s both" }}>
           {variant === "success" && <svg width="44" height="44" viewBox="0 0 44 44" fill="none"><path d="M10 22l9 9 16-18" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" /></svg>}
           {variant === "error" && <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M12 12l14 14M26 12L12 26" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" /></svg>}
-          {variant === "location" && <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M19 4C13.477 4 9 8.477 9 14c0 8.25 10 20 10 20s10-11.75 10-20c0-5.523-4.477-10-10-10zm0 13.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="#fff" /></svg>}
+          {(variant === "location" || variant === "manual_location") && <svg width="38" height="38" viewBox="0 0 38 38" fill="none"><path d="M19 4C13.477 4 9 8.477 9 14c0 8.25 10 20 10 20s10-11.75 10-20c0-5.523-4.477-10-10-10zm0 13.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" fill="#fff" /></svg>}
         </div>
         <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: c.tagClr, marginBottom: 10 }}>{c.tag}</p>
         <h2 style={{ fontFamily: "'Lora',serif", fontSize: 26, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.25, marginBottom: 14 }}>{title}</h2>
-        <p style={{ color: "#777", fontSize: 15, lineHeight: 1.8, marginBottom: 32, whiteSpace: "pre-line" }}>{message}</p>
-        <button onClick={onClose} style={{ width: "100%", padding: "15px", background: c.btn, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 20px ${c.glow}`, transition: "all 0.25s ease" }} onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "none"; }}>
-          {variant === "success" ? "Go to Dashboard →" : "Got it"}
+        <p style={{ color: "#777", fontSize: 15, lineHeight: 1.8, marginBottom: 24, whiteSpace: "pre-line" }}>{message}</p>
+
+        {variant === "manual_location" && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 24 }}>
+            <div style={{ textAlign: "left" }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: "#999", marginLeft: 4 }}>LATITUDE</label>
+              <input type="text" value={manualLat} onChange={(e) => setManualLat(e.target.value)} style={{ width: "100%", padding: "12px", border: "2.5px solid #eee", borderRadius: 12, fontSize: 14, fontWeight: 700 }} />
+            </div>
+            <div style={{ textAlign: "left" }}>
+              <label style={{ fontSize: 11, fontWeight: 800, color: "#999", marginLeft: 4 }}>LONGITUDE</label>
+              <input type="text" value={manualLng} onChange={(e) => setManualLng(e.target.value)} style={{ width: "100%", padding: "12px", border: "2.5px solid #eee", borderRadius: 12, fontSize: 14, fontWeight: 700 }} />
+            </div>
+          </div>
+        )}
+
+        <button onClick={() => variant === "manual_location" ? onSave(manualLat, manualLng) : onClose()} style={{ width: "100%", padding: "15px", background: c.btn, color: "#fff", border: "none", borderRadius: 14, fontSize: 15, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: `0 4px 20px ${c.glow}`, transition: "all 0.25s ease" }} onMouseEnter={e => { e.currentTarget.style.opacity = "0.9"; e.currentTarget.style.transform = "translateY(-2px)"; }} onMouseLeave={e => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "none"; }}>
+          {variant === "success" ? "Go to Dashboard →" : variant === "manual_location" ? "Save Coordinates" : "Got it"}
         </button>
       </div>
     </div>
@@ -69,13 +84,13 @@ export default function RegisterProvider() {
 
     // Strict Image-only validation
     if (!file.type.startsWith("image/")) {
-        setModal({ 
-            variant: "error", 
-            title: "Invalid File", 
-            message: "Please upload an image (JPG, PNG). PDF files are not supported for the certificate." 
-        });
-        e.target.value = ""; // clear input
-        return;
+      setModal({
+        variant: "error",
+        title: "Invalid File",
+        message: "Please upload an image (JPG, PNG). PDF files are not supported for the certificate."
+      });
+      e.target.value = ""; // clear input
+      return;
     }
 
     setFssaiFile(file);
@@ -116,11 +131,40 @@ export default function RegisterProvider() {
           setLocating(false);
         }
       },
-      () => {
+      (err) => {
         setLocating(false);
-        setModal({ variant: "error", title: "Permission Denied", message: "Please allow location in your browser settings." });
-      }
+        if (err.code === 1) { // PERMISSION_DENIED
+          setModal({
+            variant: "error",
+            title: "Permission Denied",
+            message: "Please allow location in your browser settings. \n\nTIP: If it keeps failing, you can long-press the 'Pin GPS' button to enter manual coordinates."
+          });
+        } else {
+          setModal({
+            variant: "error",
+            title: "Location Error",
+            message: "Failed to get GPS. Try again or enter manually."
+          });
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     );
+  };
+
+  const handleManualLocation = () => {
+    setModal({
+      variant: "manual_location",
+      title: "Enter Coordinates",
+      message: "Since the browser blocked your location, please type in your kitchen's GPS coordinates below:",
+      onSave: (lat, lng) => {
+        if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+          setCoords([parseFloat(lng), parseFloat(lat)]);
+          setModal({ variant: "location", title: "Location Set!", message: `GPS coordinates captured manually!` });
+        } else {
+          setModal({ variant: "error", title: "Invalid Input", message: "Please enter valid numbers for latitude and longitude." });
+        }
+      }
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -175,7 +219,7 @@ export default function RegisterProvider() {
         .upload-zone:hover { border-color:#8FAE8E !important; background:rgba(143,174,142,0.1) !important; }
       `}</style>
 
-      {modal && <Modal variant={modal.variant} title={modal.title} message={modal.message} onClose={closeModal} />}
+      {modal && <Modal variant={modal.variant} title={modal.title} message={modal.message} onClose={closeModal} onSave={modal.onSave} />}
 
       {/* LEFT PANEL */}
       <div style={{ flex: 1, background: "linear-gradient(145deg,#8FA873,#6b8a5e)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", position: "relative", overflow: "hidden" }}>
@@ -246,7 +290,7 @@ export default function RegisterProvider() {
                   <p style={{ fontSize: 14, fontWeight: 800, color: "#2d3b2d", margin: 0 }}>{coords ? "GPS Captured ✓" : "Pin Location"}</p>
                   <p style={{ fontSize: 12, color: "#999", margin: 0 }}>Required for matching</p>
                 </div>
-                <button type="button" onClick={handleAutoLocate} disabled={locating} style={{ padding: "8px 16px", borderRadius: 10, border: "1.5px solid #8FAE8E", background: "rgba(143,174,142,0.1)", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#5a7a50" }}>
+                <button type="button" onClick={handleAutoLocate} onContextMenu={(e) => { e.preventDefault(); handleManualLocation(); }} disabled={locating} style={{ padding: "8px 16px", borderRadius: 10, border: "1.5px solid #8FAE8E", background: "rgba(143,174,142,0.1)", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#5a7a50" }}>
                   {locating ? "Locating..." : coords ? "Re-pin" : "Pin GPS"}
                 </button>
               </div>

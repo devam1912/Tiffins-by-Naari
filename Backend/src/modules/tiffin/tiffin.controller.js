@@ -45,8 +45,8 @@ const createProviderRequest = async (req, res) => {
       location,
     } = req.body;
 
-  const email = req.user.email;
-  const phone = req.user.phone;
+    const email = req.user.email;
+    const phone = req.user.phone;
 
     // ===== Check existing provider =====
     const existing = await Provider.findOne({ user: req.user._id });
@@ -90,13 +90,13 @@ const createProviderRequest = async (req, res) => {
     });
 
     if (email) {
-        await sendEmail(
-          email,
-          "Application Submitted",
-          `Thank you for applying to list your kitchen on our platform.
+      await sendEmail(
+        email,
+        "Application Submitted",
+        `Thank you for applying to list your kitchen on our platform.
             Your application will be reviewed shortly.`
-        );
-      }
+      );
+    }
 
     res.status(201).json({
       message: "Provider registration request submitted",
@@ -124,16 +124,16 @@ const approveProvider = async (req, res) => {
     await provider.save();
 
     await User.findByIdAndUpdate(provider.user, {
-    role: "provider"
-  });
+      role: "provider"
+    });
 
-  if (provider.email) {
-        await sendEmail(
-          provider.email,
-          "Application Accepted",
-          `Congratualations you now eligible to reach your customers through our Platform!`
-        );
-      }
+    if (provider.email) {
+      await sendEmail(
+        provider.email,
+        "Application Accepted",
+        `Congratualations you now eligible to reach your customers through our Platform!`
+      );
+    }
 
     res.status(200).json({
       message: "Provider approved successfully",
@@ -145,44 +145,44 @@ const approveProvider = async (req, res) => {
 };
 
 const rejectProvider = async (req, res) => {
-try {
-const { providerId } = req.params;
-const { reason } = req.body;
+  try {
+    const { providerId } = req.params;
+    const { reason } = req.body;
 
 
-const provider = await Provider.findById(providerId).populate("user");
+    const provider = await Provider.findById(providerId).populate("user");
 
-if (!provider) {
-  return res.status(404).json({ message: "Provider request not found" });
-}
+    if (!provider) {
+      return res.status(404).json({ message: "Provider request not found" });
+    }
 
-provider.isApproved = false;
-provider.isActive = false;
-provider.rejectionReason = reason || "Application did not meet our requirements.";
+    provider.isApproved = false;
+    provider.isActive = false;
+    provider.rejectionReason = reason || "Application did not meet our requirements.";
 
-await provider.save();
+    await provider.save();
 
-if (provider.email) {
-  await sendEmail(
-    provider.email,
-    "Provider Application Rejected",
-    `We regret to inform you that your application to list your kitchen "${provider.businessName}" on our platform has been rejected.
+    if (provider.email) {
+      await sendEmail(
+        provider.email,
+        "Provider Application Rejected",
+        `We regret to inform you that your application to list your kitchen "${provider.businessName}" on our platform has been rejected.
 
 Reason: ${provider.rejectionReason}
 
 You may reapply after correcting the mentioned issues.`
-);
-}
+      );
+    }
 
 
-res.status(200).json({
-  message: "Provider application rejected successfully",
-  provider,
-});
+    res.status(200).json({
+      message: "Provider application rejected successfully",
+      provider,
+    });
 
-} catch (error) {
-res.status(500).json({ message: error.message });
-}
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 

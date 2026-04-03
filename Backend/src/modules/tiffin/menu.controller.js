@@ -57,13 +57,13 @@ const submitForApproval = async (req, res) => {
         message: "Provider not eligible to publish menu",
       });
     }
-  
-  //enforcing menu completion
-  if (!provider.profileCompleted) {
-    return res.status(403).json({
-      message: "Complete profile before publishing menu",
-    });
-  }
+
+    //enforcing menu completion
+    if (!provider.profileCompleted) {
+      return res.status(403).json({
+        message: "Complete profile before publishing menu",
+      });
+    }
 
 
     const menu = await Menu.findOne({ provider: provider._id });
@@ -131,8 +131,8 @@ const rejectMenu = async (req, res) => {
         sub.planType === "weekly"
           ? 7
           : sub.planType === "monthly"
-          ? 30
-          : 365;
+            ? 30
+            : 365;
 
       const pricePerDay = sub.totalPrice / totalDays;
 
@@ -208,6 +208,19 @@ const getAllMenus = async (req, res) => {
   }
 };
 
+const getProviderMenu = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const menu = await Menu.findOne({ provider: id });
 
+    if (!menu) {
+      return res.status(404).json({ message: "Menu not found" });
+    }
 
-module.exports = { createOrUpdateMenu, submitForApproval, approveMenu, rejectMenu, getAllMenus };
+    res.status(200).json(menu);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { createOrUpdateMenu, submitForApproval, approveMenu, rejectMenu, getAllMenus, getProviderMenu };

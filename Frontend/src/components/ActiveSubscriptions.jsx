@@ -190,169 +190,165 @@ export const ActiveSubscriptions = () => {
 
     return (
         <div className="space-y-8">
-            {/* Stats Row */}
-            {dashboardStats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {[
-                        { label: "Active Subscribers", value: dashboardStats.activeSubscribers, color: "text-green-600", bg: "bg-green-50" },
-                        { label: "Today's Meals", value: dashboardStats.todaysMeals, color: "text-blue-600", bg: "bg-blue-50" },
-                        { label: "Lunch Orders", value: dashboardStats.lunchCount, color: "text-amber-600", bg: "bg-amber-50" },
-                        { label: "Dinner Orders", value: dashboardStats.dinnerCount, color: "text-purple-600", bg: "bg-purple-50" },
-                    ].map((stat, i) => (
-                        <Card key={i} className="border-none shadow-sm">
-                            <CardContent className="p-5">
-                                <Typography variant="small" className="text-gray-400 uppercase font-bold tracking-widest">{stat.label}</Typography>
-                                <Typography className={cn("text-2xl font-bold mt-1", stat.color)}>{stat.value}</Typography>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            )}
-
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 mt-2">
                 <div>
-                    <Typography variant="h2" className="font-serif">Active Subscriptions</Typography>
-                    <Typography className="text-gray-500">View and manage your current customer plans.</Typography>
+                    <h2 className="admin-title">Active Subscriptions</h2>
+                    <p className="admin-subtitle m-0">View and manage your current customer plans.</p>
                 </div>
                 <div className="flex gap-3">
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8FA873]" size={18} />
                         <Input
-                            className="pl-10 w-64 h-11"
+                            className="pl-10 w-64 h-12 border-[1.5px] border-[rgba(143,174,142,0.3)] bg-white/60 focus:bg-white rounded-2xl shadow-sm text-[#2d3b2d]"
                             placeholder="Search customers..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <Button variant="outline" className="h-11" onClick={fetchDashboard}>
+                    <Button variant="outline" className="h-12 rounded-2xl border-[#8FA873] text-[#5a7a50] hover:bg-[#8FAE8E]/10 px-6 font-bold" onClick={fetchDashboard}>
                         <RefreshCw size={18} className="mr-2" />
                         Refresh
                     </Button>
                 </div>
             </div>
 
+            {/* Stats Row */}
+            {dashboardStats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                    {[
+                        { label: "Active Subscribers", value: dashboardStats.activeSubscribers, color: "text-[#5a7a50]", outlineColor: "rgba(143,174,142,0.45)" },
+                        { label: "Today's Meals", value: dashboardStats.todaysMeals, color: "text-[#5a7a50]", outlineColor: "rgba(143,174,142,0.45)" },
+                        { label: "Lunch Orders", value: dashboardStats.lunchCount, color: "text-[#d97706]", outlineColor: "rgba(245,158,11,0.3)" },
+                        { label: "Dinner Orders", value: dashboardStats.dinnerCount, color: "text-[#2563eb]", outlineColor: "rgba(59,130,246,0.3)" },
+                    ].map((stat, i) => (
+                        <div key={i} className="stat-card p-6 flex flex-col justify-center gap-2" style={{ borderColor: stat.outlineColor }}>
+                            <p className="text-[#5a7a50] font-bold text-[10px] uppercase tracking-widest m-0">{stat.label}</p>
+                            <h3 className={cn("text-3xl font-black m-0", stat.color)} style={{ fontFamily: "Lora, serif" }}>{stat.value}</h3>
+                        </div>
+                    ))}
+                </div>
+            )}
+
             {/* Error Banner */}
             {error && (
-                <div className="bg-amber-50 text-amber-800 px-6 py-3 rounded-xl border border-amber-200 text-sm font-medium flex items-center gap-2">
-                    <AlertCircle size={16} />
+                <div className="bg-red-50 text-red-800 px-6 py-4 rounded-2xl border border-red-200 text-sm font-bold flex items-center gap-3 mb-8 shadow-sm">
+                    <AlertCircle size={18} />
                     {error}
                 </div>
             )}
 
             {/* Table */}
-            <Card className="border-none shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100">
-                                <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Customer</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Plan</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Slot</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Timeline</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Status</th>
-                                <th className="px-6 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest">Meals Left</th>
-                                <th className="px-8 py-5 text-xs font-bold text-gray-400 uppercase tracking-widest text-right">Action</th>
+            <div className="table-container">
+                <table className="w-full text-left border-collapse">
+                    <thead className="table-header">
+                        <tr>
+                            <th className="px-8 py-5 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Customer</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Plan</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Slot</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Timeline</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Status</th>
+                            <th className="px-6 py-5 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest">Meals Left</th>
+                            <th className="px-8 py-5 text-[10px] font-black text-[#5a7a50] uppercase tracking-widest text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[rgba(143,174,142,0.1)]">
+                        {filteredSubs.length === 0 ? (
+                            <tr>
+                                <td colSpan={7} className="px-8 py-16 text-center">
+                                    <p className="text-[#888] italic font-medium m-0">No subscriptions found.</p>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50">
-                            {filteredSubs.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-8 py-16 text-center">
-                                        <Typography className="text-gray-400 italic">No subscriptions found.</Typography>
+                        ) : filteredSubs.map((sub) => {
+                            const totalMeals = getTotalMeals(sub);
+                            const remaining = sub.remainingMeals ?? 0;
+                            const subId = `SUB-${(sub._id || "").slice(-6).toUpperCase()}`;
+
+                            return (
+                                <tr key={sub._id} className="table-row">
+                                    <td className="px-8 py-5">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-2xl overflow-hidden shadow-sm shrink-0 bg-white/60 flex items-center justify-center border border-[rgba(143,174,142,0.3)]">
+                                                <span className="text-[#8FA873] font-black text-xl" style={{ fontFamily: "Lora, serif" }}>
+                                                    {(sub.user?.name || "?").charAt(0).toUpperCase()}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-sm leading-none m-0 mb-1 text-[#2d3b2d]">{sub.user?.name || "Unknown"}</p>
+                                                <p className="text-[10px] uppercase font-bold text-[#5a7a50] m-0">{subId}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <span className={cn(
+                                            "text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-sm border",
+                                            sub.planType === "monthly" ? "bg-purple-50 text-purple-700 border-purple-200"
+                                                : sub.planType === "yearly" ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                                    : "bg-[#e8f5e9] text-[#2e7d32] border-[#a5d6a7]"
+                                        )}>
+                                            {getPlanLabel(sub.planType)}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="flex items-center gap-1.5 text-[#5a7a50]">
+                                            <Clock size={14} className="opacity-70" />
+                                            <span className="text-sm font-bold">{getSlotLabel(sub.timeSlot)}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="flex flex-col">
+                                            <span className="text-xs font-black text-[#2d3b2d]">{formatDate(sub.startDate)}</span>
+                                            <span className="text-[10px] text-[#5a7a50] uppercase font-bold">to {formatDate(sub.endDate)}</span>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <span className={cn(
+                                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm",
+                                            sub.status === "active" ? "bg-[#e8f5e9] text-[#2e7d32]"
+                                                : sub.status === "paused" ? "bg-[#fff8e1] text-[#f57f17]"
+                                                    : sub.status === "cancelled" ? "bg-[#ffebee] text-[#c62828]"
+                                                        : "bg-gray-100 text-gray-700"
+                                        )}>
+                                            <div className={cn("w-2 h-2 rounded-full",
+                                                sub.status === "active" ? "bg-[#4caf50]"
+                                                    : sub.status === "paused" ? "bg-[#ffb300]"
+                                                        : sub.status === "cancelled" ? "bg-[#f44336]"
+                                                            : "bg-gray-600"
+                                            )} />
+                                            {sub.status}
+                                        </span>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        <div className="w-32 space-y-2">
+                                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-[#5a7a50]">
+                                                <span>{remaining} / {totalMeals}</span>
+                                                <span>{totalMeals > 0 ? Math.round((remaining / totalMeals) * 100) : 0}%</span>
+                                            </div>
+                                            <div className="h-2 w-full bg-[#E7E6B6] rounded-full overflow-hidden shadow-inner">
+                                                <div
+                                                    className={cn(
+                                                        "h-full rounded-full transition-all duration-1000",
+                                                        totalMeals > 0 && (remaining / totalMeals) < 0.2 ? "bg-[#f44336] shadow-[0_0_10px_rgba(244,67,54,0.5)]" : "bg-[#8FA873] shadow-[0_0_10px_rgba(143,168,115,0.5)]"
+                                                    )}
+                                                    style={{ width: `${totalMeals > 0 ? (remaining / totalMeals) * 100 : 0}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-8 py-5 text-right">
+                                        <button
+                                            onClick={() => setSelectedSub(sub)}
+                                            className="p-2 text-[#5a7a50] hover:bg-[#8FAE8E]/20 rounded-xl transition-all"
+                                        >
+                                            <Eye size={20} />
+                                        </button>
                                     </td>
                                 </tr>
-                            ) : filteredSubs.map((sub) => {
-                                const totalMeals = getTotalMeals(sub);
-                                const remaining = sub.remainingMeals ?? 0;
-                                const subId = `SUB-${(sub._id || "").slice(-6).toUpperCase()}`;
-
-                                return (
-                                    <tr key={sub._id} className="hover:bg-gray-50/50 transition-colors group">
-                                        <td className="px-8 py-5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-[var(--primary)]/10 flex items-center justify-center">
-                                                    <span className="text-[var(--primary)] font-bold text-sm">
-                                                        {(sub.user?.name || "?").charAt(0).toUpperCase()}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <Typography className="font-bold text-sm leading-none mb-1">{sub.user?.name || "Unknown"}</Typography>
-                                                    <Typography variant="small" className="text-xs text-gray-400">{subId}</Typography>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <span className={cn(
-                                                "text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-tighter shadow-sm",
-                                                sub.planType === "monthly" ? "bg-purple-100 text-purple-700"
-                                                    : sub.planType === "yearly" ? "bg-emerald-100 text-emerald-700"
-                                                        : "bg-blue-100 text-blue-700"
-                                            )}>
-                                                {getPlanLabel(sub.planType)}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex items-center gap-1.5 text-gray-600">
-                                                <Clock size={14} className="text-gray-400" />
-                                                <Typography className="text-sm font-medium">{getSlotLabel(sub.timeSlot)}</Typography>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="flex flex-col">
-                                                <Typography className="text-xs font-bold">{formatDate(sub.startDate)}</Typography>
-                                                <Typography variant="small" className="text-[10px] text-gray-400 uppercase">to {formatDate(sub.endDate)}</Typography>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <span className={cn(
-                                                "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                                sub.status === "active" ? "bg-green-100 text-green-700"
-                                                    : sub.status === "paused" ? "bg-amber-100 text-amber-700"
-                                                        : sub.status === "cancelled" ? "bg-red-100 text-red-700"
-                                                            : "bg-gray-100 text-gray-700"
-                                            )}>
-                                                <div className={cn("w-1.5 h-1.5 rounded-full",
-                                                    sub.status === "active" ? "bg-green-600"
-                                                        : sub.status === "paused" ? "bg-amber-600"
-                                                            : sub.status === "cancelled" ? "bg-red-600"
-                                                                : "bg-gray-600"
-                                                )} />
-                                                {sub.status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-5">
-                                            <div className="w-32 space-y-2">
-                                                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                                                    <span>{remaining} / {totalMeals}</span>
-                                                    <span>{totalMeals > 0 ? Math.round((remaining / totalMeals) * 100) : 0}%</span>
-                                                </div>
-                                                <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                    <div
-                                                        className={cn(
-                                                            "h-full rounded-full transition-all duration-1000",
-                                                            totalMeals > 0 && (remaining / totalMeals) < 0.2 ? "bg-red-500" : "bg-[var(--primary)]"
-                                                        )}
-                                                        style={{ width: `${totalMeals > 0 ? (remaining / totalMeals) * 100 : 0}%` }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="px-8 py-5 text-right">
-                                            <button
-                                                onClick={() => setSelectedSub(sub)}
-                                                className="p-2 text-gray-400 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10 rounded-lg transition-all"
-                                            >
-                                                <Eye size={20} />
-                                            </button>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
+                            );
+                        })}
+                    </tbody>
+                </table>
+            </div>
 
             {/* Detail Modal */}
             <AnimatePresence>
@@ -369,7 +365,7 @@ export const ActiveSubscriptions = () => {
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative bg-[#F8FAF8] w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl flex flex-col md:flex-row"
+                            className="relative bg-[#E7E6B6] w-full max-w-4xl rounded-[40px] overflow-hidden shadow-2xl flex flex-col md:flex-row border-2 border-white/20"
                         >
                             {/* Left Panel */}
                             <div className="w-full md:w-80 bg-white p-8 border-r border-gray-100 space-y-8 shrink-0">

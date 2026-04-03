@@ -11,6 +11,7 @@ export default function CustomerDashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [stats, setStats] = useState({ tiffins: 0, subscriptions: 0, orders: 0 });
+  const [recommendations, setRecommendations] = useState([]);
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
 
   // ✅ Redux se user aur token
@@ -22,7 +23,25 @@ export default function CustomerDashboard() {
   if (!token) { navigate("/login"); return; }
 
   useEffect(() => {
-    // 1. Get Coordinates from Browser
+    const fetchStats = (lat = 23.0225, lng = 72.5714) => {
+      const headers = { Authorization: `Bearer ${token}` };
+      Promise.all([
+        axios.get(`http://localhost:5000/api/tiffins/nearby?lat=${lat}&lng=${lng}&distance=15`),
+        axios.get("http://localhost:5000/api/subscriptions/my", { headers }),
+        axios.get("http://localhost:5000/api/orders/my", { headers }),
+        axios.get(`http://localhost:5000/api/recommendations/nearby?lat=${lat}&lng=${lng}&radius=15`).catch(() => ({ data: { providers: [] } })),
+      ])
+        .then(([tiffinsRes, subsRes, ordersRes, recRes]) => {
+          setStats({
+            tiffins: tiffinsRes.data.length || 0,
+            subscriptions: subsRes.data.length || 0,
+            orders: ordersRes.data.length || 0,
+          });
+          setRecommendations(recRes.data?.providers || []);
+        })
+        .catch(err => console.error("Dashboard fetch error:", err));
+    };
+
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -46,18 +65,22 @@ export default function CustomerDashboard() {
               lng: longitude,
               loading: false
             });
+            fetchStats(latitude, longitude);
           } catch (error) {
             console.error("Geocoding error:", error);
             setLocation({ address: "Location unavailable", loading: false });
+            fetchStats();
           }
         },
         (error) => {
           console.error("Geolocation error:", error);
           setLocation({ address: "Location access denied", loading: false });
+          fetchStats();
         }
       );
     } else {
       setLocation({ address: "Geolocation not supported", loading: false });
+      fetchStats();
     }
 
     // Fonts
@@ -66,22 +89,7 @@ export default function CustomerDashboard() {
     link.rel = "stylesheet";
     document.head.appendChild(link);
 
-    // ✅ Token ab Redux se aa raha hai, localStorage se nahi
-    const headers = { Authorization: `Bearer ${token}` };
-
-    Promise.all([
-      axios.get("http://localhost:5000/api/tiffins"),
-      axios.get("http://localhost:5000/api/subscriptions", { headers }),
-      axios.get("http://localhost:5000/api/orders", { headers }),
-    ])
-      .then(([tiffinsRes, subsRes, ordersRes]) => {
-        setStats({
-          tiffins: tiffinsRes.data.length || 0,
-          subscriptions: subsRes.data.length || 0,
-          orders: ordersRes.data.length || 0,
-        });
-      })
-      .catch(err => console.error("Dashboard fetch error:", err));
+    // fetchStats is called inside geolocation block
 
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);
@@ -175,13 +183,13 @@ export default function CustomerDashboard() {
       `}</style>
 
       {/* ══════════════ SIDEBAR ══════════════ */}
-      <Sidebar 
-        collapsed={collapsed} 
-        setCollapsed={setCollapsed} 
-        activeNav={activeNav} 
-        setActiveNav={setActiveNav} 
-        user={user} 
-        location={location} 
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
+        user={user}
+        location={location}
         logout={handleLogout}
       />
 
@@ -281,6 +289,53 @@ export default function CustomerDashboard() {
               <div style={{ marginTop: 16, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>Open →</div>
             </button>
           ))}
+        </div>
+
+        {/* ── Recommendations ── */}
+        <div style={{ marginBottom: 44, ...anim(300) }}>
+          <div style={{ marginBottom: 16 }}>
+            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>Recommended For You ✨</h2>
+            <p style={{ color: "#888", fontSize: 14 }}>Personalized kitchens based on your location and history</p>
+          </div>
+          
+          {recommendations.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
+              {recommendations.slice(0, 4).map((rec) => (
+                <div key={rec.id} className="stat-card" style={{
+                  background: "rgba(255,255,255,0.72)", backdropFilter: "blur(14px)",
+                  border: "1px solid rgba(143,174,142,0.2)", borderRadius: 22, padding: "24px",
+                  boxShadow: "0 4px 20px rgba(143,174,142,0.1)", display: "flex", flexDirection: "column",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c5d490,#9ab870)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                      🥗
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 12, background: "#e8f5e9", color: "#5a7a50", textTransform: "uppercase", letterSpacing: 1 }}>
+                      {rec.cuisineType || "Mixed"}
+                    </span>
+                  </div>
+                  <h3 style={{ fontFamily: "'Lora',serif", fontSize: 18, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{rec.businessName}</h3>
+                  <p style={{ fontSize: 13, color: "#777", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
+                    🛒 <strong>Owner:</strong> {rec.ownerName}
+                  </p>
+                  <button onClick={() => navigate(`/tiffin/${rec.id}`)} style={{ 
+                    marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50", 
+                    borderRadius: 14, padding: "10px", fontWeight: 700, fontSize: 14, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
+                  }}>
+                    View Kitchen →
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ 
+              background: "rgba(255,255,255,0.5)", border: "1px dashed rgba(143,174,142,0.5)", 
+              borderRadius: 22, padding: "40px", textAlign: "center", color: "#777",
+              fontFamily: "'Nunito',sans-serif", fontSize: 14
+            }}>
+              Discovering the best kitchens near you... Stay tuned for top recommendations!
+            </div>
+          )}
         </div>
 
         {/* ── Bottom row: activity + today's meal ── */}

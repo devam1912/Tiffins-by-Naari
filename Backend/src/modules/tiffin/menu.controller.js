@@ -208,6 +208,19 @@ const getAllMenus = async (req, res) => {
   }
 };
 
+const getProviderMenu = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const menu = await Menu.findOne({ provider: id });
 
+    if (!menu) {
+      return res.status(404).json({ message: "Menu not found" });
+    }
 
-module.exports = { createOrUpdateMenu, submitForApproval, approveMenu, rejectMenu, getAllMenus };
+    res.status(200).json(menu);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { createOrUpdateMenu, submitForApproval, approveMenu, rejectMenu, getAllMenus, getProviderMenu };

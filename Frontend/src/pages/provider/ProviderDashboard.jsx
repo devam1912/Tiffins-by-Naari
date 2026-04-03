@@ -31,7 +31,7 @@ import { cn } from "../../lib/utils";
 
 // --- Placeholder Sub-components ---
 
-const DashboardOverview = ({ stats, loading, isServiceActive }) => {
+const DashboardOverview = ({ stats, loading, isServiceActive, displayName, greeting }) => {
     const statsConfig = [
         {
             label: "Monthly Revenue",
@@ -69,9 +69,12 @@ const DashboardOverview = ({ stats, loading, isServiceActive }) => {
 
     return (
         <div className="space-y-10">
-            <header className="mb-8">
-                <h2 className="admin-title">TSP Dashboard Overview</h2>
-                <p className="admin-subtitle m-0">Quick stats and recent activity.</p>
+            <header className="mb-10">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#8FA873] mb-2">{greeting}, Namaste! �</p>
+                <h1 className="admin-title text-4xl mb-2 leading-tight">
+                    What's cooking in <span className="text-[#8FA873]"> {displayName}?</span>
+                </h1>
+                <p className="admin-subtitle m-0 opacity-70 italic font-medium">Ready to serve some delicious meals today? Here's the kitchen gossip.</p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -279,6 +282,12 @@ export const ProviderDashboard = () => {
         { name: "Profile Settings", icon: Settings },
     ];
 
+    // --- Greeting Logic ---
+    const displayName = profile?.businessName || user?.name?.split(" ")[0] || "Partner";
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+    const firstInitial = (user?.name || "P")[0].toUpperCase();
+
     return (
         <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
             <style>{`
@@ -286,7 +295,7 @@ export const ProviderDashboard = () => {
                 .provider-sidebar { background: linear-gradient(160deg,#8FA873,#6b8a5e); position: sticky; top: 0; min-height: 100vh; overflow-y: auto; z-index: 50; }
                 .provider-sidebar::-webkit-scrollbar { width: 4px; }
                 .provider-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 4px; }
-                .provider-main { flex: 1; padding: 40px; overflow-y: auto; max-height: 100vh; position: relative; }
+                .provider-main { flex: 1; padding: 30px 40px; overflow-y: auto; max-height: 100vh; position: relative; }
                 .provider-main::-webkit-scrollbar { width: 5px; }
                 .provider-main::-webkit-scrollbar-track { background: transparent; }
                 .provider-main::-webkit-scrollbar-thumb { background: #8FAE8E; border-radius: 10px; }
@@ -295,7 +304,7 @@ export const ProviderDashboard = () => {
                 .nav-item.active * { color: #8FA873 !important; }
                 .stat-card { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); border: 1.5px solid rgba(143,174,142,0.2); border-radius: 28px; box-shadow: 0 4px 24px rgba(90,120,70,0.08); transition: all 0.3s cubic-bezier(.22,.68,0,1.2); }
                 .stat-card:hover { transform: translateY(-6px); box-shadow: 0 16px 48px rgba(90,120,70,0.18); border-color: rgba(143,174,142,0.45); }
-                .admin-title { font-family: 'Lora', serif; color: #2d3b2d; font-size: 32px; font-weight: 700; line-height: 1.1; margin-bottom: 8px; }
+                .admin-title { font-family: 'Lora', serif; color: #2d3b2d; font-weight: 700; line-height: 1.1; }
                 .admin-subtitle { color: #5a7a50; font-size: 14px; font-weight: 600; }
                 .table-container { background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); border: 1.5px solid rgba(143,174,142,0.2); border-radius: 32px; box-shadow: 0 12px 36px rgba(90,120,70,0.1); overflow: hidden; }
                 .table-header { background: rgba(143,174,142,0.1); border-bottom: 1.5px solid rgba(143,174,142,0.2); }
@@ -304,6 +313,7 @@ export const ProviderDashboard = () => {
                 .table-row:hover { background: rgba(255,255,255,0.95); }
                 .table-cell { padding: 20px 24px; color: #2d3b2d; font-size: 14px; font-weight: 600; }
                 @keyframes spinSlow { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+                @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.1); } }
             `}</style>
             <div style={{ position: "fixed", width: 480, height: 480, borderRadius: "50%", background: "radial-gradient(circle, rgba(143,168,115,0.12) 0%, transparent 70%)", top: "-100px", right: "-80px", pointerEvents: "none", zIndex: 0 }} />
             <div style={{ position: "fixed", width: 300, height: 300, borderRadius: "50%", border: "1.5px dashed rgba(143,174,142,0.2)", bottom: "10%", left: "25%", pointerEvents: "none", animation: "spinSlow 45s linear infinite", zIndex: 0 }} />
@@ -372,6 +382,20 @@ export const ProviderDashboard = () => {
             <main className="provider-main z-10 w-full overflow-hidden">
                 <div className="max-w-7xl mx-auto relative animate-in fade-in slide-in-from-bottom-4 duration-700">
 
+                    {/* Top Bar Overlay */}
+                    <div className="flex justify-end items-center gap-4 mb-6">
+                        <div className="flex items-center gap-2 bg-white/60 backdrop-blur-md px-4 py-2 rounded-2xl border border-[rgba(143,174,142,0.2)] shadow-sm">
+                            <div className="w-2 h-2 rounded-full bg-green-500 animate-[pulseDot_1.8s_ease-in-out_infinite]" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#5a7a50]">Server Online</span>
+                        </div>
+                        <div className="w-10 h-10 bg-white/70 backdrop-blur-md rounded-xl border border-[rgba(143,174,142,0.25)] flex items-center justify-center text-lg cursor-pointer shadow-sm hover:scale-105 transition-transform">
+                            <Bell size={18} className="text-[#8FA873]" />
+                        </div>
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#8FAE8E] to-[#8FA873] rounded-xl flex items-center justify-center font-serif text-white font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                            {firstInitial}
+                        </div>
+                    </div>
+
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={activeTab}
@@ -381,7 +405,13 @@ export const ProviderDashboard = () => {
                             transition={{ duration: 0.3 }}
                         >
                             {activeTab === "Dashboard" ? (
-                                <DashboardOverview stats={stats} loading={loadingStats} isServiceActive={isServiceActive} />
+                                <DashboardOverview
+                                    stats={stats}
+                                    loading={loadingStats}
+                                    isServiceActive={isServiceActive}
+                                    displayName={displayName}
+                                    greeting={greeting}
+                                />
                             ) : activeTab === "Menu Management" ? (
                                 <ProviderMenu />
                             ) : activeTab === "Active Subscriptions" ? (

@@ -267,6 +267,8 @@ export default function AdminDashboard() {
 
   const [approveTarget, setApproveTarget] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
+  const [menuApproveTarget, setMenuApproveTarget] = useState(null);
+  const [menuRejectTarget, setMenuRejectTarget] = useState(null);
   const [viewTarget, setViewTarget] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -317,6 +319,34 @@ export default function AdminDashboard() {
       setRejectTarget(null);
       fetchAllData();
     } catch { alert("Error rejecting provider"); }
+    finally { setActionLoading(false); }
+  };
+
+  const confirmApproveMenu = async () => {
+    if (!menuApproveTarget) return;
+    setActionLoading(true);
+    try {
+      await axios.patch(`http://localhost:5000/api/tiffins/menu/${menuApproveTarget._id}/approve`, {}, { headers });
+      setMenuApproveTarget(null);
+      fetchAllData();
+    } catch (err) {
+      console.error(err);
+      alert("Error approving menu");
+    }
+    finally { setActionLoading(false); }
+  };
+
+  const confirmRejectMenu = async (remark) => {
+    if (!menuRejectTarget) return;
+    setActionLoading(true);
+    try {
+      await axios.patch(`http://localhost:5000/api/tiffins/menu/${menuRejectTarget._id}/reject`, { remark }, { headers });
+      setMenuRejectTarget(null);
+      fetchAllData();
+    } catch (err) {
+      console.error(err);
+      alert("Error rejecting menu");
+    }
     finally { setActionLoading(false); }
   };
 
@@ -371,6 +401,24 @@ export default function AdminDashboard() {
       {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={actionLoading} />}
       {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={actionLoading} />}
       {viewTarget && <ViewApplicationModal provider={viewTarget} onClose={() => setViewTarget(null)} onApprove={setApproveTarget} onReject={setRejectTarget} />}
+
+      {/* Menu Modals */}
+      {menuApproveTarget && (
+        <ApproveModal
+          provider={{ businessName: `Menu for ${menuApproveTarget.provider?.businessName}` }}
+          onClose={() => setMenuApproveTarget(null)}
+          onApprove={confirmApproveMenu}
+          loading={actionLoading}
+        />
+      )}
+      {menuRejectTarget && (
+        <RejectModal
+          provider={{ businessName: `Menu for ${menuRejectTarget.provider?.businessName}` }}
+          onClose={() => setMenuRejectTarget(null)}
+          onReject={confirmRejectMenu}
+          loading={actionLoading}
+        />
+      )}
 
       {/* SIDEBAR */}
       <aside className="w-72 admin-sidebar text-white flex flex-col shadow-2xl z-10">
@@ -481,7 +529,14 @@ export default function AdminDashboard() {
           <div className="section-container">
             {activeNav === "users" && <AdminUsers users={allUsers} />}
             {activeNav === "feedbacks" && <AdminFeedback feedbacks={allFeedbacks} loading={loading} />}
-            {activeNav === "menus" && <AdminMenu menus={allMenus} loading={loading} />}
+            {activeNav === "menus" && (
+              <AdminMenu
+                menus={allMenus}
+                loading={loading}
+                onApprove={setMenuApproveTarget}
+                onReject={setMenuRejectTarget}
+              />
+            )}
 
             {activeNav === "orders" && (
               <div className="space-y-8">

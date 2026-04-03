@@ -20,30 +20,129 @@ import { Input } from "./ui/Input";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "../lib/utils";
 import { toast } from "sonner";
+import { useSelector } from "react-redux";
+import api from "../services/api";
+import { useEffect } from "react";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
 export const ProviderMenu = () => {
+    const { profile } = useSelector((state) => state.provider);
+
+    // 1. All State Hooks first
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [isMenuPublished, setIsMenuPublished] = useState(false);
+    const [isMenuApproved, setIsMenuApproved] = useState(false);
+    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [rejectionRemark, setRejectionRemark] = useState("");
     const [selectedDay, setSelectedDay] = useState("Monday");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
 
-    // Backend-aligned structure: array of daily objects
-    const [weekMenu, setWeekMenu] = useState(
-        DAYS.map(day => ({
-            day,
-            lunch: {
-                items: [], // NO STATIC MOCK DATA
-                price: 0
-            },
-            dinner: {
-                items: [], // NO STATIC MOCK DATA
-                price: 0
-            }
-        }))
-    );
+    // Initial empty state
+    const initialMenu = DAYS.map(day => ({
+        day,
+        lunch: { items: [], price: 0 },
+        dinner: { items: [], price: 0 }
+    }));
 
-    const currentDayData = weekMenu.find(d => d.day === selectedDay) || { lunch: { items: [], price: 0 }, dinner: { items: [], price: 0 } };
+    const [weekMenu, setWeekMenu] = useState(initialMenu);
+
+    // 2. Derived Data (Must come AFTER state declarations)
+    const currentDayData = weekMenu.find(d => d.day === selectedDay) || {
+        lunch: { items: [], price: 0 },
+        dinner: { items: [], price: 0 }
+    };
+
+    // 3. Effects
+    useEffect(() => {
+        if (!profile?._id) return;
+
+        const loadMenu = async () => {
+            try {
+                setLoading(true);
+                const res = await api.get(`/api/tiffins/${profile._id}/menu`);
+                if (res.data) {
+                    setWeekMenu(res.data.weekMenu || initialMenu);
+                    setIsMenuPublished(res.data.isPublished);
+                    setIsMenuApproved(res.data.isApproved);
+                    setIsSubmitted(res.data.submittedForApproval);
+                    setRejectionRemark(res.data.rejectionRemark || "");
+                }
+            } catch (err) {
+                if (err.response?.status !== 404) {
+                    console.error("Error loading menu:", err);
+                    toast.error("Failed to load menu");
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        loadMenu();
+    }, [profile?._id]);
+
+    // 4. Handlers
+    const handleSaveMenu = async () => {
+        if (!profile?._id) return;
+        try {
+            setSaving(true);
+            await api.post("/api/tiffins/menu", { weekMenu });
+            toast.success("Menu saved successfully");
+            // Allow resubmission after saving changes
+            setIsSubmitted(false);
+        } catch (err) {
+            console.error("Error saving menu:", err);
+            toast.error(err.response?.data?.message || "Failed to save menu");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSubmitForApproval = async () => {
+        // 🔒 Validation: Must have at least one meal for the first 5 days (Mon-Fri)
+        const firstFiveDays = DAYS.slice(0, 5);
+        const incompleteDays = firstFiveDays.filter(dayName => {
+            const dayData = weekMenu.find(d => d.day === dayName);
+            const hasLunch = dayData?.lunch?.items?.length > 0;
+            const hasDinner = dayData?.dinner?.items?.length > 0;
+            return !hasLunch && !hasDinner;
+        });
+
+        if (incompleteDays.length > 0) {
+            toast.error(
+                `Submission Blocked: Please add at least one meal for ${incompleteDays.join(", ")}.`,
+                { description: "Approvals require a minimum 5-day meal plan." }
+            );
+            return;
+        }
+
+        try {
+            setSaving(true);
+            await api.patch("/api/tiffins/menu/submit");
+            setIsSubmitted(true);
+            setRejectionRemark(""); // Clear remark on resubmit
+            toast.success("Menu submitted for admin approval");
+        } catch (err) {
+            console.error("Error submitting menu:", err);
+            toast.error(err.response?.data?.message || "Failed to submit menu");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handlePriceChange = (mealType, value) => {
+        const price = value === "" ? 0 : Math.max(0, Number(value));
+        setWeekMenu(prev => prev.map(day => {
+            if (day.day !== selectedDay) return day;
+            return {
+                ...day,
+                [mealType]: { ...day[mealType], price }
+            };
+        }));
+        setIsSubmitted(false);
+    };
 
     const handleDelete = (dayName, mealType, itemId) => {
         setWeekMenu(prev => prev.map(day => {
@@ -52,11 +151,11 @@ export const ProviderMenu = () => {
                 ...day,
                 [mealType]: {
                     ...day[mealType],
-                    items: day[mealType].items.filter(i => i.id !== itemId)
+                    items: day[mealType].items.filter(i => (i._id || i.id) !== itemId)
                 }
             };
         }));
-        toast.success("Item Removed");
+        toast.success("Item Removed locally (Click Save to update)");
     };
 
     const StatusBadge = ({ status }) => {
@@ -88,7 +187,7 @@ export const ProviderMenu = () => {
         const isPending = item.status === "pending";
 
         return (
-            <div key={item.id} className={cn(
+            <div key={item._id || item.id} className={cn(
                 "stat-card transition-all group overflow-hidden border-[1.5px] border-[rgba(143,174,142,0.3)] bg-white/60",
                 isPending && "ring-2 ring-orange-200 border-orange-200",
                 item.status === "rejected" && "opacity-60",
@@ -108,7 +207,7 @@ export const ProviderMenu = () => {
                                     <span className="bg-[#8FAE8E]/20 text-[9px] font-black text-[#5a7a50] px-2 py-0.5 rounded-full uppercase border border-[#8FAE8E]/30 tracking-widest shadow-sm">
                                         {item.type}
                                     </span>
-                                    <StatusBadge status={item.status} />
+                                    {(isMenuPublished || isMenuApproved || isSubmitted) && <StatusBadge status={isMenuApproved ? "approved" : (isSubmitted ? "pending" : "pending")} />}
                                 </div>
                                 <div className="flex items-center gap-1.5 mt-1.5">
                                     <span className="w-2 h-2 rounded-full bg-green-500 shadow-sm" />
@@ -120,7 +219,7 @@ export const ProviderMenu = () => {
                         </div>
 
                         <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {!isApproved && (
+                            {!isMenuApproved && (
                                 <>
                                     <button
                                         onClick={() => {
@@ -132,14 +231,14 @@ export const ProviderMenu = () => {
                                         <Edit3 size={16} />
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(selectedDay, mealType, item.id)}
+                                        onClick={() => handleDelete(selectedDay, mealType, item._id || item.id)}
                                         className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all shadow-sm"
                                     >
                                         <Trash2 size={16} />
                                     </button>
                                 </>
                             )}
-                            {isApproved && (
+                            {isMenuApproved && (
                                 <div className="text-[#5a7a50] p-2 bg-white/60 rounded-xl shadow-sm border border-[rgba(143,174,142,0.2)]" title="Approved items are locked">
                                     <ShieldCheck size={16} />
                                 </div>
@@ -153,7 +252,49 @@ export const ProviderMenu = () => {
 
     return (
         <div className="space-y-8 pb-10 mt-2">
-            <h2 className="admin-title mb-8">Menu Management</h2>
+            {rejectionRemark && (
+                <div className="stat-card bg-red-50 border-red-200 border p-4 mb-6 flex items-start gap-3 shadow-sm animate-in slide-in-from-top-4 duration-500">
+                    <Ban className="text-red-500 shrink-0 mt-0.5" size={18} />
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-red-600 mb-1">Menu Rejected by Admin</p>
+                        <p className="text-sm font-bold text-red-800 m-0">"{rejectionRemark}"</p>
+                        <p className="text-[11px] text-red-600/70 mt-1">Please update your menu and resubmit for approval.</p>
+                    </div>
+                </div>
+            )}
+
+            <div className="flex items-center justify-between mb-8">
+                <h2 className="admin-title m-0">Menu Management</h2>
+                <div className="flex gap-4">
+                    <Button
+                        onClick={handleSaveMenu}
+                        disabled={saving || loading}
+                        className="bg-white/60 text-[#5a7a50] border-[1.5px] border-[#8FA873] hover:bg-white font-black rounded-2xl px-8 h-12 uppercase tracking-widest shadow-sm"
+                    >
+                        {saving ? "Saving..." : "Save Menu"}
+                    </Button>
+                    <Button
+                        onClick={handleSubmitForApproval}
+                        disabled={saving || loading || isMenuApproved}
+                        className={cn(
+                            "font-black rounded-2xl px-8 h-12 uppercase tracking-widest shadow-md transition-all",
+                            isMenuApproved
+                                ? "bg-green-100 text-green-700 border border-green-200 cursor-default"
+                                : isSubmitted && !rejectionRemark
+                                    ? "bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200"
+                                    : "bg-[#8FA873] hover:bg-[#6b8a5e] text-white shadow-[#8FA873]/20"
+                        )}
+                    >
+                        {isMenuApproved
+                            ? "Published"
+                            : (isSubmitted && !rejectionRemark)
+                                ? "Pending Approval"
+                                : rejectionRemark
+                                    ? "Resubmit Menu"
+                                    : "Publish Menu"}
+                    </Button>
+                </div>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 <div className="lg:col-span-3 space-y-8">
@@ -198,12 +339,30 @@ export const ProviderMenu = () => {
                                 </Button>
                             </div>
 
+                            <div className="mb-4 flex items-center gap-3 bg-white/40 p-3 rounded-2xl border border-[rgba(143,174,142,0.2)]">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#5a7a50] ml-1">Lunch Price (₹)</span>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={currentDayData.lunch.price || ""}
+                                    onChange={(e) => handlePriceChange("lunch", e.target.value)}
+                                    placeholder="0"
+                                    className="w-24 h-9 bg-white/80 border-[#8FA873]/30 font-black text-center text-[#2d3b2d] rounded-xl focus-visible:ring-[#8FA873]"
+                                />
+                            </div>
+
                             <div className="space-y-4">
-                                {currentDayData.lunch.items.map((item) => renderMenuItemCard(item, "lunch"))}
-                                {currentDayData.lunch.items.length === 0 && (
-                                    <div className="py-12 flex flex-col items-center gap-2 text-center bg-white/40 rounded-[24px] border-2 border-dashed border-[rgba(143,174,142,0.3)] inset-shadow-sm">
-                                        <p className="text-[#5a7a50] font-black tracking-widest uppercase text-xs m-0 opacity-60">Empty for Lunch</p>
-                                    </div>
+                                {loading ? (
+                                    <div className="py-12 flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#8FA873]/20 border-t-[#8FA873] rounded-full animate-spin" /></div>
+                                ) : (
+                                    <>
+                                        {currentDayData.lunch.items.map((item) => renderMenuItemCard(item, "lunch"))}
+                                        {currentDayData.lunch.items.length === 0 && (
+                                            <div className="py-12 flex flex-col items-center gap-2 text-center bg-white/40 rounded-[24px] border-2 border-dashed border-[rgba(143,174,142,0.3)] inset-shadow-sm">
+                                                <p className="text-[#5a7a50] font-black tracking-widest uppercase text-xs m-0 opacity-60">Empty for Lunch</p>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -230,12 +389,30 @@ export const ProviderMenu = () => {
                                 </Button>
                             </div>
 
+                            <div className="mb-4 flex items-center gap-3 bg-white/40 p-3 rounded-2xl border border-[rgba(143,174,142,0.2)]">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-[#5a7a50] ml-1">Dinner Price (₹)</span>
+                                <Input
+                                    type="number"
+                                    min="0"
+                                    value={currentDayData.dinner.price || ""}
+                                    onChange={(e) => handlePriceChange("dinner", e.target.value)}
+                                    placeholder="0"
+                                    className="w-24 h-9 bg-white/80 border-[#8FA873]/30 font-black text-center text-[#2d3b2d] rounded-xl focus-visible:ring-[#8FA873]"
+                                />
+                            </div>
+
                             <div className="space-y-4">
-                                {currentDayData.dinner.items.map((item) => renderMenuItemCard(item, "dinner"))}
-                                {currentDayData.dinner.items.length === 0 && (
-                                    <div className="py-12 flex flex-col items-center gap-2 text-center bg-white/40 rounded-[24px] border-2 border-dashed border-[rgba(143,174,142,0.3)] inset-shadow-sm">
-                                        <p className="text-[#5a7a50] font-black tracking-widest uppercase text-xs m-0 opacity-60">Empty for Dinner</p>
-                                    </div>
+                                {loading ? (
+                                    <div className="py-12 flex items-center justify-center"><div className="w-8 h-8 border-4 border-[#8FA873]/20 border-t-[#8FA873] rounded-full animate-spin" /></div>
+                                ) : (
+                                    <>
+                                        {currentDayData.dinner.items.map((item) => renderMenuItemCard(item, "dinner"))}
+                                        {currentDayData.dinner.items.length === 0 && (
+                                            <div className="py-12 flex flex-col items-center gap-2 text-center bg-white/40 rounded-[24px] border-2 border-dashed border-[rgba(143,174,142,0.3)] inset-shadow-sm">
+                                                <p className="text-[#5a7a50] font-black tracking-widest uppercase text-xs m-0 opacity-60">Empty for Dinner</p>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -259,20 +436,47 @@ export const ProviderMenu = () => {
 
                                     <div className="space-y-2.5">
                                         {currentDayData.lunch.items
-                                            .filter(item => item.status === "approved")
                                             .map((item, i) => (
                                                 <div key={i} className="flex items-center gap-3">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-[#8FA873] shadow-sm" />
                                                     <span className="text-xs font-bold text-[#5a7a50]">{item.name}</span>
                                                 </div>
                                             ))}
+                                        {currentDayData.dinner.items
+                                            .map((item, i) => (
+                                                <div key={i} className="flex items-center gap-3">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-[#3b82f6] shadow-sm" />
+                                                    <span className="text-xs font-bold text-[#2d3b2d]">{item.name} (Dinner)</span>
+                                                </div>
+                                            ))}
                                     </div>
                                 </div>
-                                <div className="mt-6 flex flex-col gap-2">
-                                    <p className="font-black text-center text-[10px] uppercase tracking-widest text-[#5a7a50] m-0">Tiffin Price</p>
-                                    <div className="relative shadow-sm rounded-xl overflow-hidden border-[1.5px] border-[rgba(143,174,142,0.3)]">
-                                        <Input className="pl-10 font-black text-center bg-white/80 h-10 text-[#2d3b2d] border-none focus-visible:ring-0" value={currentDayData.lunch.price} readOnly />
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8FA873] font-black">₹</span>
+                                <div className="mt-6 flex flex-col gap-4">
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-black text-center text-[9px] uppercase tracking-widest text-[#5a7a50] m-0">Lunch Price</p>
+                                        <div className="relative shadow-sm rounded-xl overflow-hidden border-[1.5px] border-[rgba(143,174,142,0.3)] bg-white/80 p-0">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8FA873] font-black text-xs">₹</span>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                value={currentDayData.lunch.price || ""}
+                                                onChange={(e) => handlePriceChange("lunch", e.target.value)}
+                                                className="pl-8 h-9 border-none bg-transparent font-black text-center text-[#2d3b2d] focus-visible:ring-0"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <p className="font-black text-center text-[9px] uppercase tracking-widest text-[#5a7a50] m-0">Dinner Price</p>
+                                        <div className="relative shadow-sm rounded-xl overflow-hidden border-[1.5px] border-[rgba(143,174,142,0.3)] bg-white/80 p-0">
+                                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8FA873] font-black text-xs">₹</span>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                value={currentDayData.dinner.price || ""}
+                                                onChange={(e) => handlePriceChange("dinner", e.target.value)}
+                                                className="pl-8 h-9 border-none bg-transparent font-black text-center text-[#2d3b2d] focus-visible:ring-0"
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -347,10 +551,38 @@ export const ProviderMenu = () => {
                                 <div className="flex gap-4 pt-6 mt-4 border-t border-[rgba(143,174,142,0.2)]">
                                     <Button variant="outline" className="flex-1 h-12 rounded-2xl border-[#8FA873] text-[#5a7a50] hover:bg-white font-bold bg-white/40 backdrop-blur-md" onClick={() => setIsModalOpen(false)}>Cancel</Button>
                                     <Button className="flex-1 h-12 rounded-2xl shadow-md bg-[#8FA873] hover:bg-[#6b8a5e] text-white font-bold" onClick={() => {
-                                        toast.success("Submitted for Approval");
+                                        const modalEl = document.querySelector('.relative.bg-\\[\\#E7E6B6\\]');
+                                        const nameInput = modalEl.querySelector('input');
+                                        const typeSelect = modalEl.querySelector('select');
+
+                                        const name = nameInput.value;
+                                        const type = typeSelect.value;
+
+                                        if (!name) return toast.error("Item name required");
+
+                                        setWeekMenu(prev => prev.map(day => {
+                                            if (day.day !== selectedDay) return day;
+                                            const mealData = day[editingItem.mealType];
+                                            let newItems;
+
+                                            if (editingItem.item) {
+                                                // Edit existing
+                                                newItems = mealData.items.map(i => (i._id || i.id) === (editingItem.item._id || editingItem.item.id) ? { ...i, name, type } : i);
+                                            } else {
+                                                // Add new
+                                                newItems = [...mealData.items, { id: Date.now().toString(), name, type, status: 'pending' }];
+                                            }
+
+                                            return {
+                                                ...day,
+                                                [editingItem.mealType]: { ...mealData, items: newItems }
+                                            };
+                                        }));
+
+                                        toast.success(editingItem.item ? "Item Updated" : "Item Added");
                                         setIsModalOpen(false);
                                     }}>
-                                        Save Changes
+                                        {editingItem?.item ? "Update Item" : "Add Item"}
                                     </Button>
                                 </div>
                             </div>

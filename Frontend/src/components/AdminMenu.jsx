@@ -1,199 +1,177 @@
 import React, { useState, useEffect } from "react";
-import {
-    UtensilsCrossed,
-    Search,
-    Filter,
-    CheckCircle2,
-    XCircle,
-    Trash2,
-    Clock,
-    Store
-} from "lucide-react";
-import { Typography } from "./ui/Typography";
-import { Card } from "./ui/Card";
-import { Input } from "./ui/Input";
-import { Button } from "./ui/Button";
-import { cn } from "../lib/utils";
-import api from "../services/api";
+import API from "../api/auth";
 
-export const AdminMenu = ({ menus: initialMenus = [], loading: dataLoading }) => {
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+
+export const AdminMenu = ({ menus: initialMenus = [] }) => {
     const [menus, setMenus] = useState(initialMenus);
     const [searchTerm, setSearchTerm] = useState("");
     const [actionLoading, setActionLoading] = useState({});
+    const [selected, setSelected] = useState(null); // expanded menu
 
-    // Keep local state in sync with props from AdminDashboard
-    useEffect(() => {
-        setMenus(initialMenus);
-    }, [initialMenus]);
+    useEffect(() => { setMenus(initialMenus); }, [initialMenus]);
 
-    const filteredMenus = menus.filter(
-        (m) =>
-            m.provider?.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            m.provider?.ownerName?.toLowerCase().includes(searchTerm.toLowerCase())
+    const filtered = menus.filter(m =>
+        m.provider?.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.provider?.ownerName?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleStatusChange = async (menuId, newStatus) => {
-        setActionLoading(prev => ({ ...prev, [menuId]: true }));
+    const handleApprove = async (menuId) => {
+        setActionLoading(p => ({ ...p, [menuId]: true }));
         try {
-            const token = localStorage.getItem("token");
-            const action = newStatus === 'Approved' ? 'approve' : 'reject';
-
-            // Backend endpoint: PATCH /api/tiffins/menu/:menuId/approve|reject
-            await api.patch(`/api/tiffins/menu/${menuId}/${action}`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-
-            setMenus(prev =>
-                prev.map((m) =>
-                    m._id === menuId ? { ...m, isApproved: newStatus === 'Approved', submittedForApproval: newStatus !== 'Approved' } : m
-                )
-            );
-            alert(`Menu ${action}d successfully!`);
-        } catch (error) {
-            console.error(`Failed to ${newStatus.toLowerCase()} menu:`, error);
-            alert(error.response?.data?.message || `Failed to ${newStatus.toLowerCase()} menu.`);
-        } finally {
-            setActionLoading(prev => ({ ...prev, [menuId]: false }));
-        }
+            await API.patch(`/tiffins/menu/${menuId}/approve`);
+            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: true, submittedForApproval: false, isPublished: true } : m));
+        } catch (e) { alert(e.response?.data?.message || "Approve failed"); }
+        finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
     };
 
-    const handleDelete = (menuId) => {
-        if (window.confirm("Are you sure you want to remove this menu from view? (Note: Delete endpoint not available, this is UI only)")) {
-            setMenus(prev => prev.filter((m) => m._id !== menuId));
-        }
+    const handleReject = async (menuId) => {
+        setActionLoading(p => ({ ...p, [menuId]: true }));
+        try {
+            await API.patch(`/tiffins/menu/${menuId}/reject`);
+            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: false, isPublished: false } : m));
+        } catch (e) { alert(e.response?.data?.message || "Reject failed"); }
+        finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
+    };
+
+    const statusBadge = (menu) => {
+        if (menu.isApproved) return { label: "Live", bg: "#e8f5e9", color: "#2e7d32", dot: "#4caf50" };
+        if (menu.submittedForApproval) return { label: "Pending", bg: "#fff8e1", color: "#e65100", dot: "#ff9800" };
+        return { label: "Draft", bg: "#f5f5f5", color: "#757575", dot: "#9e9e9e" };
     };
 
     return (
-        <div className="space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div style={{ fontFamily: "'Nunito', sans-serif" }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>Menu & Tiffin Management</h2>
-                    <Typography className="text-gray-500 mt-1">Review and approve tiffin offerings from providers.</Typography>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Menu Moderation</h2>
+                    <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{menus.length} menus from registered kitchen partners</p>
                 </div>
-                <div className="flex gap-3">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <Input
-                            className="pl-10 w-64 h-11 bg-white border-gray-100 focus:border-[var(--primary)] transition-all"
-                            placeholder="Search meals or providers..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
+                <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: "#aaa" }}>🔍</span>
+                    <input
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="Search by kitchen or chef..."
+                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: "1px solid #eee", borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240 }}
+                    />
                 </div>
             </div>
 
-            <Card className="border-none shadow-sm overflow-hidden rounded-[32px]">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="bg-gray-50/50 border-b border-gray-100/50">
-                                <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Plan Details</th>
-                                <th className="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Provider</th>
-                                <th className="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Status</th>
-                                <th className="px-6 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Last Updated</th>
-                                <th className="px-8 py-5 text-[10px] font-bold text-gray-400 uppercase tracking-widest text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-50/50">
-                            {filteredMenus.map((menu) => (
-                                <tr key={menu._id} className="hover:bg-gray-50/30 transition-colors group">
-                                    <td className="px-8 py-5">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 shadow-sm border border-orange-100">
-                                                <UtensilsCrossed size={18} />
-                                            </div>
-                                            <div>
-                                                <Typography className="font-bold text-sm leading-none mb-1.5">
-                                                    {menu.weekMenu?.length > 0 ? `${menu.weekMenu.length} Day Schedule` : "Empty Menu"}
-                                                </Typography>
-                                                <Typography variant="small" className="text-[10px] text-gray-400 font-medium">
-                                                    Weekly Subscription Plan
-                                                </Typography>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2">
-                                            <Store size={14} className="text-gray-400" />
-                                            <div>
-                                                <Typography className="text-sm font-bold">{menu.provider?.businessName || "Unknown Kitchen"}</Typography>
-                                                <Typography variant="small" className="text-[10px] text-gray-400">{menu.provider?.ownerName}</Typography>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className={cn(
-                                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
-                                            menu.isApproved ? "bg-green-50 text-green-600 border border-green-100" :
-                                                menu.submittedForApproval ? "bg-amber-50 text-amber-600 border border-amber-100" :
-                                                    "bg-gray-50 text-gray-600 border border-gray-100"
-                                        )}>
-                                            <div className={cn(
-                                                "w-1.5 h-1.5 rounded-full",
-                                                menu.isApproved ? "bg-green-500" :
-                                                    menu.submittedForApproval ? "bg-amber-500" : "bg-gray-500"
-                                            )} />
-                                            {menu.isApproved ? 'Approved' : menu.submittedForApproval ? 'Pending' : 'Draft'}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-gray-500">
-                                        <Typography className="text-xs font-bold">
-                                            {menu.updatedAt ? new Date(menu.updatedAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' }) : "—"}
-                                        </Typography>
-                                    </td>
-                                    <td className="px-8 py-5 text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            {actionLoading[menu._id] ? (
-                                                <Clock className="animate-spin text-gray-400 mr-4" size={18} />
-                                            ) : (
-                                                <>
-                                                    {!menu.isApproved && menu.submittedForApproval && (
-                                                        <button
-                                                            onClick={() => handleStatusChange(menu._id, 'Approved')}
-                                                            className="p-2 text-green-500 hover:bg-green-50 rounded-xl transition-all"
-                                                            title="Approve Menu"
-                                                        >
-                                                            <CheckCircle2 size={18} />
-                                                        </button>
-                                                    )}
-                                                    {menu.isApproved && (
-                                                        <button
-                                                            onClick={() => handleStatusChange(menu._id, 'Rejected')}
-                                                            className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                                            title="Reject/Unpublish Menu"
-                                                        >
-                                                            <XCircle size={18} />
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => handleDelete(menu._id)}
-                                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
-                                                        title="Remove from View"
-                                                    >
-                                                        <Trash2 size={18} />
-                                                    </button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                    {filteredMenus.length === 0 && (
-                        <div className="py-32 text-center">
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
-                                <UtensilsCrossed size={40} />
-                            </div>
-                            <Typography variant="h3" className="font-serif text-gray-400 mb-2">No menus found</Typography>
-                            <Typography className="text-gray-400 max-w-xs mx-auto">
-                                {dataLoading ? "Fetching latest menus..." : "There are no kitchen menus to display currently. This could be because no providers have submitted menus for approval yet."}
-                            </Typography>
-                        </div>
-                    )}
+            {/* Table */}
+            {filtered.length === 0 ? (
+                <div style={{ padding: "80px 0", textAlign: "center" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🍱</div>
+                    <p style={{ color: "#ccc", fontSize: 16, fontStyle: "italic" }}>No menus found.</p>
                 </div>
-            </Card>
+            ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {filtered.map(menu => {
+                        const badge = statusBadge(menu);
+                        const isExpanded = selected === menu._id;
+                        const loading = actionLoading[menu._id];
+
+                        return (
+                            <div key={menu._id} style={{ border: "1px solid #f0f0f0", borderRadius: 20, overflow: "hidden", background: "#fcfdfc" }}>
+                                {/* Row */}
+                                <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, cursor: "pointer" }}
+                                    onClick={() => setSelected(isExpanded ? null : menu._id)}>
+                                    <div style={{ width: 42, height: 42, borderRadius: 12, background: "#fff8f0", border: "1px solid #ffe0b2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🍱</div>
+
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 800, fontSize: 15, color: "#2d3b2d" }}>{menu.provider?.businessName || "Unknown Kitchen"}</div>
+                                        <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Chef: {menu.provider?.ownerName || "—"} &bull; {menu.weekMenu?.length || 0} days scheduled</div>
+                                    </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 100, fontSize: 10, fontWeight: 800, textTransform: "uppercase", background: badge.bg, color: badge.color }}>
+                                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: badge.dot, display: "inline-block" }} />
+                                            {badge.label}
+                                        </span>
+
+                                        {!loading ? (
+                                            <div style={{ display: "flex", gap: 8 }}>
+                                                {menu.submittedForApproval && !menu.isApproved && (
+                                                    <button onClick={e => { e.stopPropagation(); handleApprove(menu._id); }}
+                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
+                                                        ✅ Approve
+                                                    </button>
+                                                )}
+                                                {menu.isApproved && (
+                                                    <button onClick={e => { e.stopPropagation(); handleReject(menu._id); }}
+                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
+                                                        ✕ Revoke
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span style={{ fontSize: 12, color: "#aaa" }}>Processing...</span>
+                                        )}
+
+                                        <span style={{ color: "#ccc", fontSize: 18 }}>{isExpanded ? "▲" : "▼"}</span>
+                                    </div>
+                                </div>
+
+                                {/* Expanded: weekly menu detail */}
+                                {isExpanded && (
+                                    <div style={{ borderTop: "1px solid #f5f5f5", padding: "20px 24px", background: "#fff" }}>
+                                        <p style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 }}>Weekly Schedule</p>
+                                        <div style={{ display: "flex", overflowX: "auto", gap: 12, paddingBottom: 8 }}>
+                                            {DAYS.map(day => {
+                                                const dayData = menu.weekMenu?.find(d => d.day === day);
+                                                const lunchItems = dayData?.lunch?.items || [];
+                                                const dinnerItems = dayData?.dinner?.items || [];
+                                                const hasItems = lunchItems.length > 0 || dinnerItems.length > 0;
+                                                return (
+                                                    <div key={day} style={{ minWidth: 140, borderRadius: 14, background: "#f9fafb", border: "1px solid #f0f0f0", padding: 14, flexShrink: 0 }}>
+                                                        <p style={{ fontWeight: 800, fontSize: 11, color: "#8FAE8E", textTransform: "uppercase", marginBottom: 10 }}>{day.slice(0, 3)}</p>
+                                                        {!hasItems && <p style={{ fontSize: 11, color: "#ddd", fontStyle: "italic" }}>No items</p>}
+                                                        {lunchItems.length > 0 && (
+                                                            <div style={{ marginBottom: 8 }}>
+                                                                <p style={{ fontSize: 10, fontWeight: 800, color: "#f59e0b", marginBottom: 4 }}>LUNCH</p>
+                                                                {lunchItems.map((item, i) => (
+                                                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                                                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#8FAE8E", flexShrink: 0, display: "inline-block" }} />
+                                                                        <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {dinnerItems.length > 0 && (
+                                                            <div>
+                                                                <p style={{ fontSize: 10, fontWeight: 800, color: "#6366f1", marginBottom: 4 }}>DINNER</p>
+                                                                {dinnerItems.map((item, i) => (
+                                                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                                                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6366f1", flexShrink: 0, display: "inline-block" }} />
+                                                                        <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                                            {dayData?.lunch?.price > 0 && (
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", background: "#fff8e1", padding: "2px 8px", borderRadius: 8 }}>🌞 ₹{dayData.lunch.price}</span>
+                                                            )}
+                                                            {dayData?.dinner?.price > 0 && (
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#6366f1", background: "#eef2ff", padding: "2px 8px", borderRadius: 8 }}>🌙 ₹{dayData.dinner.price}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <p style={{ fontSize: 11, color: "#ccc", marginTop: 12 }}>
+                                            Last updated: {menu.updatedAt ? new Date(menu.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 };

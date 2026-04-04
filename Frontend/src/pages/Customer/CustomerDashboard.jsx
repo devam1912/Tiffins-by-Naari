@@ -297,7 +297,7 @@ export default function CustomerDashboard() {
             <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>Recommended For You ✨</h2>
             <p style={{ color: "#888", fontSize: 14 }}>Personalized kitchens based on your location and history</p>
           </div>
-          
+
           {recommendations.length > 0 ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
               {recommendations.slice(0, 4).map((rec) => (
@@ -318,8 +318,8 @@ export default function CustomerDashboard() {
                   <p style={{ fontSize: 13, color: "#777", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
                     🛒 <strong>Owner:</strong> {rec.ownerName}
                   </p>
-                  <button onClick={() => navigate(`/tiffin/${rec.id}`)} style={{ 
-                    marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50", 
+                  <button onClick={() => navigate(`/tiffin/${rec.id}`)} style={{
+                    marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
                     borderRadius: 14, padding: "10px", fontWeight: 700, fontSize: 14, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
                   }}>
                     View Kitchen →
@@ -328,8 +328,8 @@ export default function CustomerDashboard() {
               ))}
             </div>
           ) : (
-            <div style={{ 
-              background: "rgba(255,255,255,0.5)", border: "1px dashed rgba(143,174,142,0.5)", 
+            <div style={{
+              background: "rgba(255,255,255,0.5)", border: "1px dashed rgba(143,174,142,0.5)",
               borderRadius: 22, padding: "40px", textAlign: "center", color: "#777",
               fontFamily: "'Nunito',sans-serif", fontSize: 14
             }}>

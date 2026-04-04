@@ -375,14 +375,7 @@ export default function BrowseTiffins() {
 
                     <p style={{ fontSize: 12, color: "#bbb", fontWeight: 600, marginBottom: 16 }}>by {p.ownerName}</p>
 
-                    <button
-                      className="view-menu-btn"
-                      onClick={() =>
-                        navigate(`/provider/${p._id}`, {
-                          state: { tiffin: p }
-                        })
-                      }
-                    >
+                    <button className="view-menu-btn" onClick={() => navigate(`/provider/${p._id}`)}>
                       View Menu & Subscribe →
                     </button>
                   </div>

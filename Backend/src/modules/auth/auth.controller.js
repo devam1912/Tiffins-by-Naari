@@ -74,8 +74,8 @@ const loginUser = async (req, res) => {
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
-    if (!user.isVerified) {
-     return res.status(403).json({ message: "Please verify OTP first" });
+    if (!user.isVerified && user.role !== "admin") {
+      return res.status(403).json({ message: "Please verify OTP first" });
     }
 
     const token = generateToken(user._id);
@@ -96,7 +96,7 @@ const loginUser = async (req, res) => {
 };
 
 
-const generateOTP = () => Math.floor(100000 + Math.random()*900000).toString();
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
 const sendOTP = async (req, res) => {
   try {
@@ -151,10 +151,10 @@ const verifyOTP = async (req, res) => {
     }
 
     if (
-  !user.otp ||
-  user.otp.toString() !== otp.toString() ||
-  user.otpExpiry < new Date()
-) {
+      !user.otp ||
+      user.otp.toString() !== otp.toString() ||
+      user.otpExpiry < new Date()
+    ) {
       return res.status(400).json({ message: "Invalid or expired OTP" });
     }
 

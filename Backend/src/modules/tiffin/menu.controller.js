@@ -57,13 +57,13 @@ const submitForApproval = async (req, res) => {
         message: "Provider not eligible to publish menu",
       });
     }
-  
-  //enforcing menu completion
-  if (!provider.profileCompleted) {
-    return res.status(403).json({
-      message: "Complete profile before publishing menu",
-    });
-  }
+
+    //enforcing menu completion
+    if (!provider.profileCompleted) {
+      return res.status(403).json({
+        message: "Complete profile before publishing menu",
+      });
+    }
 
 
     const menu = await Menu.findOne({ provider: provider._id });
@@ -131,8 +131,8 @@ const rejectMenu = async (req, res) => {
         sub.planType === "weekly"
           ? 7
           : sub.planType === "monthly"
-          ? 30
-          : 365;
+            ? 30
+            : 365;
 
       const pricePerDay = sub.totalPrice / totalDays;
 

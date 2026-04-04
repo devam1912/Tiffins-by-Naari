@@ -1,361 +1,376 @@
-import React, { useState } from "react";
-import {
-    Plus,
-    Trash2,
-    Edit3,
-    CheckCircle2,
-    X,
-    CircleDot,
-    Leaf,
-    UtensilsCrossed,
-    Clock,
-    Ban,
-    ShieldCheck,
-    Eye
-} from "lucide-react";
-import { Typography } from "./ui/Typography";
-import { Card, CardContent } from "./ui/Card";
-import { Button } from "./ui/Button";
-import { Input } from "./ui/Input";
-import { motion, AnimatePresence } from "motion/react";
-import { cn } from "../lib/utils";
-import { toast } from "sonner";
+import React, { useState, useEffect, useRef } from "react";
+import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send } from "lucide-react";
+import API from "../api/auth";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const EMPTY_DAY = () => ({ lunch: { items: [], price: 0 }, dinner: { items: [], price: 0 } });
+
+const buildWeekMenu = (serverWeekMenu = []) => {
+    return DAYS.map(day => {
+        const found = serverWeekMenu.find(d => d.day === day);
+        return found ? { day, lunch: found.lunch || EMPTY_DAY().lunch, dinner: found.dinner || EMPTY_DAY().dinner } : { day, ...EMPTY_DAY() };
+    });
+};
 
 export const ProviderMenu = () => {
     const [selectedDay, setSelectedDay] = useState("Monday");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
+    const [weekMenu, setWeekMenu] = useState(DAYS.map(day => ({ day, ...EMPTY_DAY() })));
+    const [menuStatus, setMenuStatus] = useState({ isApproved: false, submittedForApproval: false });
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState(null);
+    const nameRef = useRef();
+    const typeRef = useRef();
 
-    // Backend-aligned structure: array of daily objects
-    const [weekMenu, setWeekMenu] = useState(
-        DAYS.map(day => ({
-            day,
-            lunch: {
-                items: [], // NO STATIC MOCK DATA
-                price: 0
-            },
-            dinner: {
-                items: [], // NO STATIC MOCK DATA
-                price: 0
+    const showToast = (msg, type = "success") => {
+        setToast({ msg, type });
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    // ── Fetch provider's own menu on mount ──
+    useEffect(() => {
+        const fetchMenu = async () => {
+            try {
+                const res = await API.get("/tiffins/menu/my");
+                if (res.data?.menu?.weekMenu) {
+                    setWeekMenu(buildWeekMenu(res.data.menu.weekMenu));
+                    setMenuStatus({
+                        isApproved: res.data.menu.isApproved,
+                        submittedForApproval: res.data.menu.submittedForApproval,
+                    });
+                }
+            } catch (err) {
+                console.error("Menu fetch failed:", err);
+            } finally {
+                setLoading(false);
             }
-        }))
-    );
+        };
+        fetchMenu();
+    }, []);
 
-    const currentDayData = weekMenu.find(d => d.day === selectedDay) || { lunch: { items: [], price: 0 }, dinner: { items: [], price: 0 } };
+    const currentDayData = weekMenu.find(d => d.day === selectedDay) || { ...EMPTY_DAY() };
+
+    // ── Save menu to backend ──
+    const handleSaveMenu = async () => {
+        setIsSaving(true);
+        try {
+            const payload = weekMenu.map(d => ({
+                day: d.day,
+                lunch: d.lunch,
+                dinner: d.dinner,
+            }));
+            await API.post("/tiffins/menu", { weekMenu: payload });
+            showToast("Menu saved successfully!");
+        } catch (err) {
+            showToast(err.response?.data?.message || "Save failed. Are you an approved provider?", "error");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    // ── Submit for admin approval ──
+    const handleSubmitForApproval = async () => {
+        setIsSubmitting(true);
+        try {
+            await API.patch("/tiffins/menu/submit");
+            setMenuStatus(s => ({ ...s, submittedForApproval: true, isApproved: false }));
+            showToast("Submitted for admin approval!");
+        } catch (err) {
+            showToast(err.response?.data?.message || "Submission failed.", "error");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const handleDelete = (dayName, mealType, itemId) => {
-        setWeekMenu(prev => prev.map(day => {
-            if (day.day !== dayName) return day;
-            return {
-                ...day,
-                [mealType]: {
-                    ...day[mealType],
-                    items: day[mealType].items.filter(i => i.id !== itemId)
-                }
-            };
+        setWeekMenu(prev => prev.map(d => {
+            if (d.day !== dayName) return d;
+            return { ...d, [mealType]: { ...d[mealType], items: d[mealType].items.filter(i => i.id !== itemId) } };
         }));
-        toast.success("Item Removed");
+        showToast("Item removed", "info");
+    };
+
+    // ── Add / Edit item ──
+    const handleSaveItem = () => {
+        const name = nameRef.current?.value?.trim();
+        const type = typeRef.current?.value || "Sabzi";
+        if (!name) return;
+
+        const { day, mealType, item } = editingItem;
+        setWeekMenu(prev => prev.map(d => {
+            if (d.day !== day) return d;
+            const meal = d[mealType];
+            let newItems;
+            if (item) {
+                // editing
+                newItems = meal.items.map(i => i.id === item.id ? { ...i, name, type } : i);
+            } else {
+                // adding
+                newItems = [...meal.items, { id: Date.now().toString(), name, type, status: "pending" }];
+            }
+            return { ...d, [mealType]: { ...meal, items: newItems } };
+        }));
+        showToast(item ? "Item updated" : "Item added — save to sync with server");
+        setIsModalOpen(false);
+        setEditingItem(null);
     };
 
     const StatusBadge = ({ status }) => {
-        const styles = {
-            pending: "bg-amber-50 text-amber-700 border-amber-200",
-            approved: "bg-green-50 text-green-700 border-green-200",
-            rejected: "bg-red-50 text-red-700 border-red-200",
+        const map = {
+            pending: { cls: "background:#fef9e6;color:#b45309;border:1px solid #fde68a", label: "Pending", Icon: Clock },
+            approved: { cls: "background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0", label: "Approved", Icon: CheckCircle2 },
+            rejected: { cls: "background:#fff1f2;color:#be123c;border:1px solid #fecdd3", label: "Rejected", Icon: Ban },
         };
-        const icons = {
-            pending: <Clock size={10} />,
-            approved: <CheckCircle2 size={10} />,
-            rejected: <Ban size={10} />,
-        };
-        const labels = {
-            pending: "Pending",
-            approved: "Approved",
-            rejected: "Rejected",
-        };
+        const { cls, label, Icon } = map[status] || map.pending;
         return (
-            <span className={cn("inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider", styles[status])}>
-                {icons[status]}
-                {labels[status]}
+            <span style={{ ...Object.fromEntries(cls.split(";").filter(Boolean).map(s => { const [k, v] = s.split(":"); return [k.trim(), v.trim()]; })), display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase" }}>
+                <Icon size={9} />{label}
             </span>
         );
     };
 
     const renderMenuItemCard = (item, mealType) => {
         const isApproved = item.status === "approved";
-        const isPending = item.status === "pending";
-
         return (
-            <Card key={item.id} className={cn(
-                "border-none shadow-sm hover:shadow-md transition-all group",
-                isPending && "ring-1 ring-amber-100",
-                item.status === "rejected" && "opacity-60",
-            )}>
-                <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className={cn(
-                                "w-12 h-12 rounded-xl flex items-center justify-center overflow-hidden shrink-0 border",
-                                isPending ? "bg-amber-50 border-amber-100" : "bg-gray-50 border-gray-100"
-                            )}>
-                                <UtensilsCrossed size={18} className={isPending ? "text-amber-400" : "text-gray-300"} />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <Typography className="font-bold text-sm">{item.name}</Typography>
-                                    <span className="bg-gray-100 text-[9px] font-bold text-gray-500 px-1.5 py-0.5 rounded uppercase">
-                                        {item.type}
-                                    </span>
-                                    <StatusBadge status={item.status} />
-                                </div>
-                                <div className="flex items-center gap-1 mt-1">
-                                    <Leaf size={10} className="text-green-600" />
-                                    <Typography variant="small" className="text-[10px] text-gray-400">
-                                        Pure Veg
-                                    </Typography>
-                                </div>
-                            </div>
+            <div key={item.id} style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "#f9fafb", border: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <UtensilsCrossed size={16} color={item.status === "pending" ? "#f59e0b" : "#d1d5db"} />
+                    </div>
+                    <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: "#2d3b2d" }}>{item.name}</span>
+                            <span style={{ background: "#f3f4f6", color: "#6b7280", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6, textTransform: "uppercase" }}>{item.type}</span>
+                            <StatusBadge status={item.status} />
                         </div>
-
-                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            {!isApproved && (
-                                <>
-                                    <button
-                                        onClick={() => {
-                                            setEditingItem({ day: selectedDay, mealType, item });
-                                            setIsModalOpen(true);
-                                        }}
-                                        className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                    >
-                                        <Edit3 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(selectedDay, mealType, item.id)}
-                                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
-                                </>
-                            )}
-                            {isApproved && (
-                                <div className="text-green-600 p-1.5" title="Approved items are locked">
-                                    <ShieldCheck size={16} />
-                                </div>
-                            )}
+                        <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
+                            <Leaf size={10} color="#16a34a" />
+                            <span style={{ fontSize: 10, color: "#9ca3af" }}>Pure Veg</span>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                    {!isApproved && (
+                        <>
+                            <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setIsModalOpen(true); }}
+                                style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
+                                <Edit3 size={16} />
+                            </button>
+                            <button onClick={() => handleDelete(selectedDay, mealType, item.id)}
+                                style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
+                                <Trash2 size={16} />
+                            </button>
+                        </>
+                    )}
+                    {isApproved && <div style={{ padding: 8, color: "#16a34a" }}><ShieldCheck size={16} /></div>}
+                </div>
+            </div>
         );
     };
 
+    if (loading) return (
+        <div style={{ padding: 80, textAlign: "center", color: "#8FAE8E", fontWeight: 700 }}>Loading your menu...</div>
+    );
+
     return (
-        <div className="space-y-8 pb-10">
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="lg:col-span-3 space-y-8">
-                    {/* Day Tabs */}
-                    <div className="flex bg-white p-1.5 rounded-2xl shadow-sm border border-gray-100 overflow-x-auto no-scrollbar">
-                        {DAYS.map((day) => (
+        <div style={{ paddingBottom: 40, fontFamily: "'Nunito', sans-serif", position: "relative" }}>
+
+            {/* Toast */}
+            {toast && (
+                <div style={{ position: "fixed", top: 24, right: 24, zIndex: 9999, padding: "14px 24px", borderRadius: 14, fontWeight: 700, fontSize: 14, background: toast.type === "error" ? "#ef5350" : toast.type === "info" ? "#5c6bc0" : "#8FAE8E", color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.15)" }}>
+                    {toast.msg}
+                </div>
+            )}
+
+            {/* Header actions */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+                <div>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Menu Manager</h2>
+                    <p style={{ fontSize: 13, color: "#999", marginTop: 4 }}>
+                        {menuStatus.isApproved ? "✅ Menu is approved & live" : menuStatus.submittedForApproval ? "⏳ Awaiting admin approval" : "Draft — save and submit for approval"}
+                    </p>
+                </div>
+                <div style={{ display: "flex", gap: 10 }}>
+                    <button onClick={handleSaveMenu} disabled={isSaving}
+                        style={{ padding: "11px 22px", borderRadius: 12, border: "none", background: "#2d3b2d", color: "#fff", fontWeight: 800, fontSize: 14, cursor: isSaving ? "not-allowed" : "pointer" }}>
+                        {isSaving ? "Saving..." : "💾 Save Menu"}
+                    </button>
+                    {!menuStatus.isApproved && (
+                        <button onClick={handleSubmitForApproval} disabled={isSubmitting}
+                            style={{ padding: "11px 22px", borderRadius: 12, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 800, fontSize: 14, cursor: isSubmitting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                            <Send size={14} /> {isSubmitting ? "Submitting..." : "Submit for Approval"}
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 28 }}>
+                <div>
+                    {/* Day Tabs — FIXED: explicit colors, always readable */}
+                    <div style={{ display: "flex", background: "#fff", padding: 6, borderRadius: 18, border: "1px solid #f0f0f0", overflowX: "auto", gap: 4, marginBottom: 28 }}>
+                        {DAYS.map(day => (
                             <button
                                 key={day}
                                 onClick={() => setSelectedDay(day)}
-                                className={cn(
-                                    "flex-1 min-w-[100px] py-3 text-sm font-bold rounded-xl transition-all",
-                                    selectedDay === day
-                                        ? "bg-[var(--primary)] text-white shadow-lg shadow-[var(--primary)]/20"
-                                        : "text-gray-500 hover:bg-gray-50"
-                                )}
+                                style={{
+                                    flex: "1 1 0", minWidth: 90, padding: "10px 8px",
+                                    borderRadius: 12, border: "none", cursor: "pointer",
+                                    fontWeight: 800, fontSize: 13, transition: "all 0.2s",
+                                    background: selectedDay === day ? "#5a7a50" : "transparent",
+                                    color: selectedDay === day ? "#ffffff" : "#4b5563",
+                                    boxShadow: selectedDay === day ? "0 4px 14px rgba(90,122,80,0.3)" : "none",
+                                }}
+                                onMouseEnter={e => { if (selectedDay !== day) { e.target.style.background = "#f0f4f0"; e.target.style.color = "#2d3b2d"; } }}
+                                onMouseLeave={e => { if (selectedDay !== day) { e.target.style.background = "transparent"; e.target.style.color = "#4b5563"; } }}
                             >
                                 {day}
                             </button>
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {/* Lunch Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center text-amber-600">
-                                        <CircleDot size={20} />
-                                    </div>
-                                    <Typography variant="h4" className="font-serif">Lunch Menu</Typography>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                        {/* Lunch */}
+                        <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "#fffbeb", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#f59e0b" /></div>
+                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Lunch</span>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-primary font-bold h-8 hover:bg-primary/10"
-                                    onClick={() => {
-                                        setEditingItem({ day: selectedDay, mealType: "lunch" });
-                                        setIsModalOpen(true);
-                                    }}
-                                >
-                                    <Plus size={16} className="mr-1" /> Add
-                                </Button>
+                                <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "lunch" }); setIsModalOpen(true); }}
+                                    style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
+                                    <Plus size={15} /> Add
+                                </button>
                             </div>
-
-                            <div className="space-y-3">
-                                {currentDayData.lunch.items.map((item) => renderMenuItemCard(item, "lunch"))}
-                                {currentDayData.lunch.items.length === 0 && (
-                                    <div className="py-10 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
-                                        <Typography className="text-gray-400 text-sm italic">Empty for Lunch</Typography>
-                                    </div>
-                                )}
-                            </div>
+                            {currentDayData.lunch.items.map(item => renderMenuItemCard(item, "lunch"))}
+                            {currentDayData.lunch.items.length === 0 && (
+                                <div style={{ padding: "40px 0", textAlign: "center", background: "#fafafa", borderRadius: 14, border: "2px dashed #e5e7eb" }}>
+                                    <span style={{ color: "#d1d5db", fontSize: 13, fontStyle: "italic" }}>Empty for Lunch</span>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Dinner Section */}
-                        <div className="space-y-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center text-indigo-600">
-                                        <CircleDot size={20} />
-                                    </div>
-                                    <Typography variant="h4" className="font-serif">Dinner Menu</Typography>
+                        {/* Dinner */}
+                        <div>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: 10, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#6366f1" /></div>
+                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Dinner</span>
                                 </div>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    className="text-primary font-bold h-8 hover:bg-primary/10"
-                                    onClick={() => {
-                                        setEditingItem({ day: selectedDay, mealType: "dinner" });
-                                        setIsModalOpen(true);
-                                    }}
-                                >
-                                    <Plus size={16} className="mr-1" /> Add
-                                </Button>
+                                <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "dinner" }); setIsModalOpen(true); }}
+                                    style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
+                                    <Plus size={15} /> Add
+                                </button>
                             </div>
-
-                            <div className="space-y-3">
-                                {currentDayData.dinner.items.map((item) => renderMenuItemCard(item, "dinner"))}
-                                {currentDayData.dinner.items.length === 0 && (
-                                    <div className="py-10 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
-                                        <Typography className="text-gray-400 text-sm italic">Empty for Dinner</Typography>
-                                    </div>
-                                )}
-                            </div>
+                            {currentDayData.dinner.items.map(item => renderMenuItemCard(item, "dinner"))}
+                            {currentDayData.dinner.items.length === 0 && (
+                                <div style={{ padding: "40px 0", textAlign: "center", background: "#fafafa", borderRadius: 14, border: "2px dashed #e5e7eb" }}>
+                                    <span style={{ color: "#d1d5db", fontSize: 13, fontStyle: "italic" }}>Empty for Dinner</span>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Right Sidebar */}
-                <div className="lg:col-span-1">
-                    <div className="sticky top-28 space-y-6">
-                        <Card className="border-none shadow-sm overflow-hidden bg-white">
-                            <div className="bg-primary p-4 text-white flex items-center gap-2">
-                                <Eye size={18} />
-                                <Typography className="!text-white font-bold text-sm">Subscriber View</Typography>
-                            </div>
-                            <CardContent className="p-6">
-                                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-6">
-                                    <div className="flex items-center justify-between">
-                                        <Typography className="font-bold text-sm">{selectedDay}'s Menu</Typography>
-                                        <Leaf size={16} className="text-green-600" />
-                                    </div>
-
-                                    <div className="space-y-3">
-                                        {currentDayData.lunch.items
-                                            .filter(item => item.status === "approved")
-                                            .map((item, i) => (
-                                                <div key={i} className="flex items-center gap-3">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                                    <Typography className="text-xs">{item.name}</Typography>
-                                                </div>
-                                            ))}
+                {/* Subscriber Preview */}
+                <div style={{ position: "sticky", top: 28 }}>
+                    <div style={{ background: "#fff", borderRadius: 24, overflow: "hidden", border: "1px solid #f0f0f0", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}>
+                        <div style={{ background: "#5a7a50", padding: "16px 20px", display: "flex", alignItems: "center", gap: 8 }}>
+                            <Eye size={16} color="#fff" />
+                            <span style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>Subscriber View</span>
+                        </div>
+                        <div style={{ padding: 20 }}>
+                            <div style={{ background: "#f8fafc", borderRadius: 16, padding: 16, border: "1px solid #f0f0f0" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                                    <span style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{selectedDay}'s Menu</span>
+                                    <Leaf size={14} color="#16a34a" />
+                                </div>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].filter(i => i.status === "approved").map((item, i) => (
+                                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8FAE8E", flexShrink: 0 }} />
+                                            <span style={{ fontSize: 13, color: "#374151" }}>{item.name}</span>
+                                        </div>
+                                    ))}
+                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].filter(i => i.status === "approved").length === 0 && (
+                                        <p style={{ fontSize: 12, color: "#d1d5db", fontStyle: "italic", margin: 0 }}>No approved items yet</p>
+                                    )}
+                                </div>
+                                <div style={{ marginTop: 16 }}>
+                                    <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 6, fontWeight: 800, textTransform: "uppercase" }}>Tiffin Price</p>
+                                    <div style={{ display: "flex", alignItems: "center", background: "#f0f0f0", borderRadius: 10, padding: "10px 14px", fontWeight: 800, color: "#374151", gap: 6 }}>
+                                        <span>₹</span><span>{currentDayData.lunch.price || 0}</span>
                                     </div>
                                 </div>
-                                <div className="mt-6 flex flex-col gap-2">
-                                    <Typography variant="small" className="text-gray-400 text-center text-[10px]">Tiffin Price</Typography>
-                                    <div className="relative">
-                                        <Input className="pl-8 font-bold text-center bg-gray-50" value={currentDayData.lunch.price} readOnly />
-                                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <div className="bg-blue-50 p-5 rounded-2xl border border-blue-100 flex gap-4">
-                            <ShieldCheck className="text-blue-600 shrink-0" size={20} />
-                            <div>
-                                <Typography className="text-xs font-bold text-blue-900 mb-1">Provider Notice</Typography>
-                                <Typography variant="small" className="text-[10px] text-blue-800/70 leading-relaxed">
-                                    Only veg items are allowed. Admin approval is required for all new submissions.
-                                </Typography>
                             </div>
+                        </div>
+                    </div>
+
+                    <div style={{ marginTop: 16, background: "#eff6ff", padding: 16, borderRadius: 18, border: "1px solid #dbeafe", display: "flex", gap: 12 }}>
+                        <ShieldCheck size={18} color="#2563eb" style={{ flexShrink: 0, marginTop: 2 }} />
+                        <div>
+                            <p style={{ fontWeight: 800, fontSize: 12, color: "#1e40af", marginBottom: 4 }}>Provider Notice</p>
+                            <p style={{ fontSize: 11, color: "#3b82f6", lineHeight: 1.5, margin: 0 }}>Only veg items allowed. Admin approval required for all submissions.</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Modal placeholder */}
-            <AnimatePresence>
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => setIsModalOpen(false)}
-                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                            className="relative bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl p-6"
-                        >
-                            <div className="flex justify-between items-center mb-6">
-                                <Typography variant="h3" className="font-serif text-xl">{editingItem?.item ? "Edit Item" : "New Menu Item"}</Typography>
-                                <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                                    <X size={20} />
+            {/* Add/Edit Modal */}
+            {isModalOpen && (
+                <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+                    <div onClick={() => setIsModalOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)" }} />
+                    <div style={{ position: "relative", background: "#fff", width: "100%", maxWidth: 440, borderRadius: 26, padding: 32, boxShadow: "0 40px 80px rgba(0,0,0,0.2)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+                            <h3 style={{ fontFamily: "'Lora', serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>
+                                {editingItem?.item ? "Edit Item" : "New Menu Item"}
+                            </h3>
+                            <button onClick={() => setIsModalOpen(false)} style={{ padding: 8, border: "none", background: "#f5f5f5", borderRadius: "50%", cursor: "pointer" }}>
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Name</label>
+                                <input ref={nameRef} defaultValue={editingItem?.item?.name || ""}
+                                    placeholder="e.g. Paneer Bhurji"
+                                    style={{ width: "100%", padding: "12px 16px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box" }} />
+                            </div>
+
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                                <div>
+                                    <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Type</label>
+                                    <select ref={typeRef} defaultValue={editingItem?.item?.type || "Sabzi"}
+                                        style={{ width: "100%", padding: "12px 16px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", appearance: "none", background: "#f9fafb" }}>
+                                        {["Dal", "Sabzi", "Rice", "Bread", "Dessert"].map(t => <option key={t}>{t}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
+                                    <div style={{ padding: "12px 16px", border: "2px solid #d1fae5", borderRadius: 14, background: "#ecfdf5", display: "flex", alignItems: "center", gap: 8 }}>
+                                        <Leaf size={14} color="#16a34a" />
+                                        <span style={{ fontSize: 13, fontWeight: 800, color: "#065f46" }}>Veg Only</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                                <button onClick={() => setIsModalOpen(false)}
+                                    style={{ flex: 1, padding: 14, border: "2px solid #e5e7eb", borderRadius: 14, background: "none", fontWeight: 800, cursor: "pointer", color: "#6b7280" }}>
+                                    Cancel
+                                </button>
+                                <button onClick={handleSaveItem}
+                                    style={{ flex: 2, padding: 14, border: "none", borderRadius: 14, background: "#5a7a50", color: "#fff", fontWeight: 800, cursor: "pointer" }}>
+                                    Save Item
                                 </button>
                             </div>
-
-                            <div className="space-y-5 text-left">
-                                <div className="space-y-1.5">
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 ml-1">Item Name</label>
-                                    <Input placeholder="e.g. Paneer Bhurji" defaultValue={editingItem?.item?.name} />
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 ml-1">Type</label>
-                                        <select
-                                            className="w-full h-11 bg-gray-50 border-none rounded-xl px-4 text-sm outline-none focus:ring-2 focus:ring-primary/20 appearance-none transition-all"
-                                            defaultValue={editingItem?.item?.type || "Sabzi"}
-                                        >
-                                            <option>Dal</option>
-                                            <option>Sabzi</option>
-                                            <option>Rice</option>
-                                            <option>Bread</option>
-                                            <option>Dessert</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 ml-1">Dietary</label>
-                                        <div className="h-11 bg-green-50 rounded-xl px-4 flex items-center gap-2 border border-green-100">
-                                            <Leaf size={14} className="text-green-600" />
-                                            <span className="text-xs font-bold text-green-700">Veg Only</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-3 pt-4">
-                                    <Button variant="outline" className="flex-1" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                                    <Button className="flex-1" onClick={() => {
-                                        toast.success("Submitted for Approval");
-                                        setIsModalOpen(false);
-                                    }}>
-                                        Save Changes
-                                    </Button>
-                                </div>
-                            </div>
-                        </motion.div>
+                        </div>
                     </div>
-                )}
-            </AnimatePresence>
+                </div>
+            )}
         </div>
     );
 };

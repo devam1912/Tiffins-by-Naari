@@ -3,204 +3,180 @@ import {
     Users,
     Store,
     Calendar,
-    IndianRupee,
+    UtensilsCrossed,
     TrendingUp,
     ArrowUpRight,
     ArrowDownRight,
-    Clock,
-    Activity,
-    Package
+    Clock
 } from "lucide-react";
 import { Typography } from "./ui/Typography";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
+import { dashboardStats, mockActivities } from "../data/adminMockData";
 import { cn } from "../lib/utils";
 
-const StatsCard = ({ title, value, icon: Icon, description, color, bgColor, trend, index }) => {
+const StatsCard = ({ title, value, icon: Icon, description, color, bgColor, trend }) => {
     return (
-        <Card className={cn(
-            "group relative overflow-hidden border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[32px] bg-white h-full",
-            "animate-in fade-in slide-in-from-bottom-4"
-        )} style={{ animationDelay: `${index * 100}ms` }}>
-            <CardContent className="p-8 flex flex-col justify-between h-full relative z-10">
-                <div className="flex justify-between items-start mb-8">
-                    <div className={cn("p-4 rounded-2xl shadow-inner transition-transform group-hover:scale-110 group-hover:-rotate-3 duration-500", bgColor, color)}>
+        <Card className="border-none shadow-sm hover:shadow-md transition-all rounded-[32px] overflow-hidden group">
+            <CardContent className="p-8">
+                <div className="flex justify-between items-start mb-6">
+                    <div className={cn("p-4 rounded-2xl shadow-sm border border-white/50", bgColor, color)}>
                         <Icon size={24} />
                     </div>
                     <div className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm border",
+                        "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border",
                         trend === 'up' ? "bg-green-50 text-green-600 border-green-100" : "bg-red-50 text-red-600 border-red-100"
                     )}>
                         {trend === 'up' ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                        <span>{description}</span>
+                        {description.split(' ')[0]}
                     </div>
                 </div>
                 <div>
-                    <Typography variant="small" className="text-muted-foreground font-black uppercase tracking-[0.2em] mb-2">{title}</Typography>
-                    <div className="flex items-baseline gap-2">
-                        <Typography variant="h2" className="font-serif !text-4xl tracking-tighter text-foreground group-hover:text-primary transition-colors">
-                            {typeof value === 'number' ? value.toLocaleString() : value}
-                        </Typography>
-                        <Typography variant="small" className="text-muted-foreground/50 font-bold uppercase tracking-widest">Total</Typography>
+                    <Typography variant="small" className="text-gray-400 font-bold uppercase tracking-widest mb-1.5">{title}</Typography>
+                    <div className="flex items-end gap-3">
+                        <Typography variant="h2" className="font-serif leading-none">{value.toLocaleString()}</Typography>
+                        <Typography variant="small" className="text-gray-400 font-medium mb-1.5">Total</Typography>
                     </div>
                 </div>
             </CardContent>
-            {/* Background Decorative Element */}
-            <div className={cn("absolute -right-8 -bottom-8 w-32 h-32 rounded-full opacity-[0.03] transition-transform duration-700 group-hover:scale-150", bgColor)} />
         </Card>
     );
 };
 
-export const AdminOverview = ({ stats, activities = [] }) => {
-    const statCardsVisible = [
+export const AdminOverview = () => {
+    const stats = [
         {
             title: 'Total Users',
-            value: (stats?.totalUsers || 0) + (stats?.totalProviders || 0),
+            value: dashboardStats.totalUsers,
             icon: Users,
-            description: 'Platform Members',
+            description: '+12% from last month',
             color: 'text-blue-600',
-            bgColor: 'bg-blue-100/50',
+            bgColor: 'bg-blue-50',
             trend: 'up'
         },
         {
-            title: 'Active Kitchens',
-            value: stats?.totalProviders || 0,
+            title: 'Total Providers',
+            value: dashboardStats.totalProviders,
             icon: Store,
-            description: 'Verified Partners',
-            color: 'text-primary',
-            bgColor: 'bg-primary/10',
+            description: '+3 new this month',
+            color: 'text-[var(--primary)]',
+            bgColor: 'bg-[var(--primary)]/10',
             trend: 'up'
         },
         {
-            title: 'Orders Processed',
-            value: stats?.totalOrders || 0,
-            icon: Package,
-            description: 'Lifetime Total',
-            color: 'text-accent',
-            bgColor: 'bg-accent/10',
+            title: 'Active Subs',
+            value: dashboardStats.activeSubscriptions,
+            icon: Calendar,
+            description: '+8% from last month',
+            color: 'text-[var(--accent)]',
+            bgColor: 'bg-[var(--accent)]/10',
             trend: 'up'
         },
         {
-            title: 'Gross Revenue',
-            value: `₹${(stats?.totalRevenue || 0).toLocaleString()}`,
-            icon: IndianRupee,
-            description: 'Earnings',
+            title: 'Menu Items',
+            value: dashboardStats.totalMenuItems,
+            icon: UtensilsCrossed,
+            description: '+15 items added',
             color: 'text-orange-600',
-            bgColor: 'bg-orange-100/50',
+            bgColor: 'bg-orange-50',
             trend: 'up'
         },
     ];
 
     return (
-        <div className="space-y-12 animate-in fade-in duration-1000">
-            {/* HEADER AREA */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div className="space-y-1">
-                    <Typography variant="h2" className="font-serif tracking-tight">Admin Dashboard</Typography>
-                    <Typography className="text-muted-foreground max-w-lg">Overview of platform performance and recent activity.</Typography>
+        <div className="space-y-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <Typography variant="h2" className="font-serif text-3xl">Dashboard Overview</Typography>
+                    <Typography className="text-gray-500 mt-1">Platform performance and recent registrations at a glance.</Typography>
                 </div>
-                <div className="flex p-1 bg-white/50 backdrop-blur-md rounded-2xl border border-muted-foreground/10 shadow-sm">
-                    {['Overview', 'Analysis', 'Trends'].map((tab) => (
-                        <button key={tab} className={cn(
-                            "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                            tab === 'Overview' ? "bg-white text-primary shadow-sm ring-1 ring-black/5" : "text-muted-foreground hover:text-foreground"
+                <div className="flex gap-2 bg-gray-50 p-1.5 rounded-2xl border border-gray-100">
+                    {['24h', '7d', '30d', 'All'].map((range) => (
+                        <button key={range} className={cn(
+                            "px-5 py-2 rounded-xl text-xs font-bold transition-all",
+                            range === '30d' ? "bg-white text-[var(--primary)] shadow-sm border border-gray-100" : "text-gray-400 hover:text-gray-600"
                         )}>
-                            {tab}
+                            {range}
                         </button>
                     ))}
                 </div>
             </div>
 
-            {/* STAT CARDS GRID */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {statCardsVisible.map((stat, i) => (
-                    <StatsCard key={stat.title} {...stat} index={i} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                {stats.map((stat) => (
+                    <StatsCard key={stat.title} {...stat} />
                 ))}
             </div>
 
-            {/* ACTIVITY & HEALTH SECTION */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                {/* Activity Feed */}
-                <Card className="lg:col-span-2 border-none shadow-sm rounded-[40px] bg-white overflow-hidden group">
-                    <CardHeader className="border-b border-muted/30 p-10 bg-muted/10">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-white rounded-2xl shadow-sm text-primary group-hover:rotate-12 transition-transform">
-                                <Activity size={24} />
-                            </div>
-                            <CardTitle className="font-serif text-2xl">Recent Activity</CardTitle>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <Card className="lg:col-span-2 border-none shadow-sm rounded-[32px] overflow-hidden">
+                    <CardHeader className="bg-gray-50/50 border-b border-gray-100/50 p-8">
+                        <div className="flex justify-between items-center">
+                            <CardTitle className="font-serif text-xl flex items-center gap-3">
+                                <Clock className="text-[var(--primary)]" size={24} />
+                                Recent Activity
+                            </CardTitle>
+                            <button className="text-xs font-bold text-[var(--primary)] hover:underline">View All</button>
                         </div>
                     </CardHeader>
                     <CardContent className="p-4">
                         <div className="space-y-2">
-                            {activities.length > 0 ? activities.map((activity) => (
+                            {mockActivities.map((activity) => (
                                 <div
                                     key={activity.id}
-                                    className="flex items-center gap-6 p-6 rounded-[28px] hover:bg-muted/30 transition-all duration-300 group/item border border-transparent hover:border-muted-foreground/5"
-                                    style={{ animationDelay: `${i * 50}ms` }}
+                                    className="flex items-center gap-6 p-6 rounded-[24px] hover:bg-gray-50/50 transition-all group"
                                 >
                                     <div className={cn(
-                                        "w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm border border-white shrink-0 group-hover/item:scale-110 duration-500",
-                                        activity.type === 'user' ? "bg-blue-50 text-blue-600" :
-                                            activity.type === 'provider' ? "bg-primary/10 text-primary" :
-                                                "bg-accent/10 text-accent"
+                                        "p-3 rounded-2xl shadow-sm border border-white shrink-0 group-hover:scale-110 transition-transform",
+                                        activity.type === 'user_joined' ? "bg-blue-50 text-blue-600" :
+                                            activity.type === 'provider_registered' ? "bg-[var(--primary)]/10 text-[var(--primary)]" :
+                                                "bg-[var(--accent)]/10 text-[var(--accent)]"
                                     )}>
-                                        {activity.type === 'user' && <Users size={18} />}
-                                        {activity.type === 'provider' && <Store size={18} />}
-                                        {activity.type === 'order' && <Calendar size={18} />}
+                                        {activity.type === 'user_joined' && <Users size={18} />}
+                                        {activity.type === 'provider_registered' && <Store size={18} />}
+                                        {activity.type === 'subscription_created' && <Calendar size={18} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <Typography className="text-sm font-bold text-foreground group-hover/item:text-primary transition-colors">{activity.message}</Typography>
-                                        <Typography variant="small" className="text-[10px] text-muted-foreground font-black uppercase tracking-[0.15em] mt-1">{activity.timestamp}</Typography>
+                                        <Typography className="text-sm font-bold text-gray-800">{activity.message}</Typography>
+                                        <Typography variant="small" className="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-1">{activity.timestamp}</Typography>
                                     </div>
-                                    <ArrowUpRight className="text-muted-foreground/30 group-hover/item:text-primary opacity-0 group-hover/item:opacity-100 transition-all" size={20} />
-                                </div>
-                            )) : (
-                                <div className="p-20 text-center space-y-4 bg-muted/5 rounded-[32px] m-4 border-2 border-dashed border-muted">
-                                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto text-muted-foreground opacity-50">
-                                        <Clock size={32} />
-                                    </div>
-                                    <Typography className="text-muted-foreground font-medium uppercase tracking-widest text-xs">No recent activity</Typography>
-                                </div>
-                            )}
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* System Pulsar (Status) */}
-                <Card className="border-none shadow-xl rounded-[40px] bg-foreground text-background overflow-hidden relative group">
-                    <CardContent className="p-10 flex flex-col h-full relative z-10">
-                        <div className="p-4 bg-white/10 backdrop-blur-xl rounded-2xl w-fit mb-8 border border-white/20 group-hover:animate-pulse">
-                            <TrendingUp size={24} className="text-primary" />
-                        </div>
-                        <Typography variant="h3" className="!text-white font-serif mb-4 leading-tight">System Status</Typography>
-                        <Typography className="text-white/50 text-sm mb-12 leading-relaxed font-medium">All platform systems are running smoothly.</Typography>
-
-                        <div className="mt-auto space-y-8">
-                            {[
-                                { label: 'Server Load', value: 88, color: 'bg-primary' },
-                                { label: 'Database Speed', value: 34, color: 'bg-accent' },
-                                { label: 'System Uptime', value: 99, color: 'bg-blue-400' }
-                            ].map((service) => (
-                                <div key={service.label} className="space-y-3">
-                                    <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-white/40">
-                                        <span>{service.label}</span>
-                                        <span className="text-white/80">{service.value}%</span>
-                                    </div>
-                                    <div className="h-1 bg-white/5 rounded-full overflow-hidden">
-                                        <div 
-                                            className={cn("h-full rounded-full transition-all duration-1000 ease-out", service.color)} 
-                                            style={{ width: `${service.value}%` }} 
-                                        />
-                                    </div>
+                                    <ArrowUpRight className="text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" size={18} />
                                 </div>
                             ))}
                         </div>
                     </CardContent>
-                    {/* Abstract Decorative Graphics */}
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32" />
-                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl -ml-24 -mb-24" />
+                </Card>
+
+                <Card className="border-none shadow-sm rounded-[32px] overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+                    <CardContent className="p-10 flex flex-col h-full">
+                        <div className="p-4 bg-white/10 backdrop-blur-md rounded-2xl w-fit mb-8 outline outline-1 outline-white/20">
+                            <TrendingUp size={24} className="text-green-400" />
+                        </div>
+                        <Typography variant="h3" className="!text-white font-serif mb-4 leading-tight">System Status & Statistics</Typography>
+                        <Typography className="text-gray-400 text-sm mb-10 leading-relaxed font-medium">All platform services are currently operational. Traffic has increased by 22% in the last hour.</Typography>
+
+                        <div className="mt-auto space-y-6">
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
+                                    <span className="text-gray-500">Processing Load</span>
+                                    <span className="text-green-400">Stable</span>
+                                </div>
+                                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-green-400 rounded-full" style={{ width: '45%' }} />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
+                                    <span className="text-gray-500">Database Stress</span>
+                                    <span className="text-amber-400">Optimal</span>
+                                </div>
+                                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-amber-400 rounded-full" style={{ width: '32%' }} />
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
                 </Card>
             </div>
         </div>
     );
 };
-

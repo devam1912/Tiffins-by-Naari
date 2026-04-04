@@ -1,104 +1,177 @@
-import React from "react";
-import { 
-  Utensils, 
-  Trash2, 
-  ExternalLink,
-  ChevronRight,
-  Info
-} from "lucide-react";
-import { Card, CardContent } from "./ui/Card";
-import { Button } from "./ui/Button";
-import { Typography } from "./ui/Typography";
-import { cn } from "../lib/utils";
+import React, { useState, useEffect } from "react";
+import API from "../api/auth";
 
-export const AdminMenu = ({ menus = [], loading }) => {
-  if (loading) return (
-    <div className="py-20 flex flex-col items-center justify-center gap-4">
-      <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      <Typography variant="small" className="font-black uppercase tracking-widest text-muted-foreground">Loading menus...</Typography>
-    </div>
-  );
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-  return (
-    <div className="space-y-10 animate-in fade-in duration-700">
-      <header className="space-y-1">
-        <Typography variant="h2" className="font-serif tracking-tight">Menus</Typography>
-        <Typography className="text-muted-foreground">View all kitchen menus.</Typography>
-      </header>
+export const AdminMenu = ({ menus: initialMenus = [] }) => {
+    const [menus, setMenus] = useState(initialMenus);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [actionLoading, setActionLoading] = useState({});
+    const [selected, setSelected] = useState(null); // expanded menu
 
-      <Card className="rounded-[40px] border-none shadow-xl overflow-hidden bg-white">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-muted/30 border-b border-muted">
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">Kitchen</th>
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">Cuisine Type</th>
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground">Menu Items</th>
-                  <th className="p-8 text-[11px] font-black uppercase tracking-widest text-muted-foreground text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-muted/30">
-                {menus.length > 0 ? menus.map((menu, i) => (
-                  <tr key={menu._id} className="hover:bg-muted/10 transition-colors group">
-                    <td className="p-8">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:rotate-12 transition-transform">
-                          <Utensils size={20} />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
-                            {menu.provider?.businessName || "Unknown Kitchen"}
-                          </span>
-                          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">
-                            Owner: {menu.provider?.ownerName || "Staff"}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-8">
-                      <div className="inline-flex px-3 py-1 bg-accent/10 text-accent rounded-full text-[10px] font-black uppercase tracking-widest border border-accent/5">
-                        {menu.cuisineType || "Mixed"}
-                      </div>
-                    </td>
-                    <td className="p-8">
-                      <div className="flex items-center gap-2">
-                        <Typography className="font-black text-lg text-foreground">
-                          {menu.menuItems?.length || 0}
-                        </Typography>
-                        <Typography variant="small" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Dishes</Typography>
-                      </div>
-                    </td>
-                    <td className="p-8 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:text-primary">
-                          <Info size={18} />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:text-destructive">
-                          <Trash2 size={18} />
-                        </Button>
-                        <Button variant="outline" size="sm" className="rounded-xl h-10 px-4 group/btn">
-                          <span className="text-[10px] font-black uppercase tracking-widest mr-2 group-hover/btn:text-primary">View</span>
-                          <ExternalLink size={14} className="text-muted-foreground group-hover/btn:text-primary" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                )) : (
-                  <tr>
-                    <td colSpan={4} className="p-24 text-center">
-                      <div className="space-y-4 opacity-40">
-                        <Utensils size={40} className="mx-auto text-muted-foreground" />
-                        <Typography className="font-black uppercase tracking-widest text-xs">No menus found.</Typography>
-                      </div>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+    useEffect(() => { setMenus(initialMenus); }, [initialMenus]);
+
+    const filtered = menus.filter(m =>
+        m.provider?.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.provider?.ownerName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleApprove = async (menuId) => {
+        setActionLoading(p => ({ ...p, [menuId]: true }));
+        try {
+            await API.patch(`/tiffins/menu/${menuId}/approve`);
+            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: true, submittedForApproval: false, isPublished: true } : m));
+        } catch (e) { alert(e.response?.data?.message || "Approve failed"); }
+        finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
+    };
+
+    const handleReject = async (menuId) => {
+        setActionLoading(p => ({ ...p, [menuId]: true }));
+        try {
+            await API.patch(`/tiffins/menu/${menuId}/reject`);
+            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: false, isPublished: false } : m));
+        } catch (e) { alert(e.response?.data?.message || "Reject failed"); }
+        finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
+    };
+
+    const statusBadge = (menu) => {
+        if (menu.isApproved) return { label: "Live", bg: "#e8f5e9", color: "#2e7d32", dot: "#4caf50" };
+        if (menu.submittedForApproval) return { label: "Pending", bg: "#fff8e1", color: "#e65100", dot: "#ff9800" };
+        return { label: "Draft", bg: "#f5f5f5", color: "#757575", dot: "#9e9e9e" };
+    };
+
+    return (
+        <div style={{ fontFamily: "'Nunito', sans-serif" }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
+                <div>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Menu Moderation</h2>
+                    <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{menus.length} menus from registered kitchen partners</p>
+                </div>
+                <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: "#aaa" }}>🔍</span>
+                    <input
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        placeholder="Search by kitchen or chef..."
+                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: "1px solid #eee", borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240 }}
+                    />
+                </div>
+            </div>
+
+            {/* Table */}
+            {filtered.length === 0 ? (
+                <div style={{ padding: "80px 0", textAlign: "center" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🍱</div>
+                    <p style={{ color: "#ccc", fontSize: 16, fontStyle: "italic" }}>No menus found.</p>
+                </div>
+            ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                    {filtered.map(menu => {
+                        const badge = statusBadge(menu);
+                        const isExpanded = selected === menu._id;
+                        const loading = actionLoading[menu._id];
+
+                        return (
+                            <div key={menu._id} style={{ border: "1px solid #f0f0f0", borderRadius: 20, overflow: "hidden", background: "#fcfdfc" }}>
+                                {/* Row */}
+                                <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, cursor: "pointer" }}
+                                    onClick={() => setSelected(isExpanded ? null : menu._id)}>
+                                    <div style={{ width: 42, height: 42, borderRadius: 12, background: "#fff8f0", border: "1px solid #ffe0b2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🍱</div>
+
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: 800, fontSize: 15, color: "#2d3b2d" }}>{menu.provider?.businessName || "Unknown Kitchen"}</div>
+                                        <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Chef: {menu.provider?.ownerName || "—"} &bull; {menu.weekMenu?.length || 0} days scheduled</div>
+                                    </div>
+
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 100, fontSize: 10, fontWeight: 800, textTransform: "uppercase", background: badge.bg, color: badge.color }}>
+                                            <span style={{ width: 6, height: 6, borderRadius: "50%", background: badge.dot, display: "inline-block" }} />
+                                            {badge.label}
+                                        </span>
+
+                                        {!loading ? (
+                                            <div style={{ display: "flex", gap: 8 }}>
+                                                {menu.submittedForApproval && !menu.isApproved && (
+                                                    <button onClick={e => { e.stopPropagation(); handleApprove(menu._id); }}
+                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
+                                                        ✅ Approve
+                                                    </button>
+                                                )}
+                                                {menu.isApproved && (
+                                                    <button onClick={e => { e.stopPropagation(); handleReject(menu._id); }}
+                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
+                                                        ✕ Revoke
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <span style={{ fontSize: 12, color: "#aaa" }}>Processing...</span>
+                                        )}
+
+                                        <span style={{ color: "#ccc", fontSize: 18 }}>{isExpanded ? "▲" : "▼"}</span>
+                                    </div>
+                                </div>
+
+                                {/* Expanded: weekly menu detail */}
+                                {isExpanded && (
+                                    <div style={{ borderTop: "1px solid #f5f5f5", padding: "20px 24px", background: "#fff" }}>
+                                        <p style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 }}>Weekly Schedule</p>
+                                        <div style={{ display: "flex", overflowX: "auto", gap: 12, paddingBottom: 8 }}>
+                                            {DAYS.map(day => {
+                                                const dayData = menu.weekMenu?.find(d => d.day === day);
+                                                const lunchItems = dayData?.lunch?.items || [];
+                                                const dinnerItems = dayData?.dinner?.items || [];
+                                                const hasItems = lunchItems.length > 0 || dinnerItems.length > 0;
+                                                return (
+                                                    <div key={day} style={{ minWidth: 140, borderRadius: 14, background: "#f9fafb", border: "1px solid #f0f0f0", padding: 14, flexShrink: 0 }}>
+                                                        <p style={{ fontWeight: 800, fontSize: 11, color: "#8FAE8E", textTransform: "uppercase", marginBottom: 10 }}>{day.slice(0, 3)}</p>
+                                                        {!hasItems && <p style={{ fontSize: 11, color: "#ddd", fontStyle: "italic" }}>No items</p>}
+                                                        {lunchItems.length > 0 && (
+                                                            <div style={{ marginBottom: 8 }}>
+                                                                <p style={{ fontSize: 10, fontWeight: 800, color: "#f59e0b", marginBottom: 4 }}>LUNCH</p>
+                                                                {lunchItems.map((item, i) => (
+                                                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                                                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#8FAE8E", flexShrink: 0, display: "inline-block" }} />
+                                                                        <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        {dinnerItems.length > 0 && (
+                                                            <div>
+                                                                <p style={{ fontSize: 10, fontWeight: 800, color: "#6366f1", marginBottom: 4 }}>DINNER</p>
+                                                                {dinnerItems.map((item, i) => (
+                                                                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
+                                                                        <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6366f1", flexShrink: 0, display: "inline-block" }} />
+                                                                        <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
+                                                            {dayData?.lunch?.price > 0 && (
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", background: "#fff8e1", padding: "2px 8px", borderRadius: 8 }}>🌞 ₹{dayData.lunch.price}</span>
+                                                            )}
+                                                            {dayData?.dinner?.price > 0 && (
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#6366f1", background: "#eef2ff", padding: "2px 8px", borderRadius: 8 }}>🌙 ₹{dayData.dinner.price}</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        <p style={{ fontSize: 11, color: "#ccc", marginTop: 12 }}>
+                                            Last updated: {menu.updatedAt ? new Date(menu.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    );
 };

@@ -1,110 +1,83 @@
 import React from "react";
-import { 
-  MessageSquare, 
-  Star, 
-  Quote, 
-  User, 
-  Calendar,
-  CheckCircle2,
-  Trash2
-} from "lucide-react";
-import { Card, CardContent } from "./ui/Card";
-import { Typography } from "./ui/Typography";
-import { Button } from "./ui/Button";
-import { cn } from "../lib/utils";
 
-export const AdminFeedback = ({ feedbacks = [], loading }) => {
-  if (loading) return (
-    <div className="py-24 flex flex-col items-center justify-center gap-4">
-      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      <Typography variant="small" className="font-black uppercase tracking-widest text-muted-foreground">Loading feedback...</Typography>
-    </div>
-  );
-
-  return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div className="space-y-1">
-          <Typography variant="h2" className="font-serif tracking-tight">Feedback</Typography>
-          <Typography className="text-muted-foreground">View feedback and ratings from users.</Typography>
-        </div>
-        <div className="flex gap-4">
-          <div className="px-6 py-4 bg-white rounded-2xl shadow-sm border border-muted flex items-center gap-4">
-            <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center text-accent">
-              <Star size={20} fill="currentColor" />
+export const AdminFeedback = ({ feedbacks, loading }) => {
+    if (loading) {
+        return (
+            <div style={{ padding: "40px", textAlign: "center" }}>
+                <div style={{ width: 40, height: 40, border: "3px solid rgba(143,174,142,0.1)", borderTopColor: "#8FAE8E", borderRadius: "50%", animation: "spinSlow 0.8s linear infinite", margin: "0 auto 16px" }} />
+                <p style={{ color: "#8fa873", fontWeight: 700, fontSize: 14 }}>Fetching community voices...</p>
             </div>
-            <div>
-              <Typography variant="h3" className="leading-none mb-1">4.8</Typography>
-              <Typography variant="small" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Average</Typography>
+        );
+    }
+
+    return (
+        <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
+            <div style={{ marginBottom: 28 }}>
+                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Customer Satisfaction</p>
+                <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Feedbacks</h1>
+                <p style={{ color: "#999", fontSize: 14 }}>{feedbacks?.length || 0} reviews shared by our community</p>
             </div>
-          </div>
-        </div>
-      </header>
 
-      {feedbacks.length === 0 ? (
-        <Card className="rounded-[40px] border-none shadow-sm bg-white/50 border-2 border-dashed border-muted py-24 text-center">
-          <MessageSquare size={48} className="mx-auto text-muted-foreground opacity-20 mb-4" />
-          <Typography className="text-muted-foreground font-black uppercase tracking-widest text-xs">No feedback found.</Typography>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {feedbacks.map((f, i) => (
-            <Card 
-              key={f._id} 
-              className="group relative border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[36px] bg-white overflow-hidden flex flex-col"
-              style={{ animationDelay: `${i * 100}ms` }}
-            >
-              <div className="absolute top-6 right-8 text-primary/10 group-hover:text-primary/20 transition-colors">
-                <Quote size={40} />
-              </div>
-              
-              <CardContent className="p-8 flex flex-col h-full relative z-10">
-                <div className="flex items-center gap-2 mb-6">
-                  {[...Array(5)].map((_, i) => (
-                    <Star 
-                      key={i} 
-                      size={14} 
-                      className={cn(
-                        "transition-transform group-hover:scale-110",
-                        i < (f.rating || 5) ? "text-accent fill-accent" : "text-muted fill-muted"
-                      )} 
-                      style={{ transitionDelay: `${i * 50}ms` }}
-                    />
-                  ))}
+            {(!feedbacks || feedbacks.length === 0) ? (
+                <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 22, padding: "60px 40px", textAlign: "center", border: "1px solid rgba(143,174,142,0.2)" }}>
+                    <div style={{ fontSize: 52, marginBottom: 16 }}>💬</div>
+                    <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>No feedback yet</h3>
+                    <p style={{ color: "#aaa", fontSize: 15, fontWeight: 600 }}>Once customers start sharing their experiences, they'll appear here.</p>
                 </div>
+            ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 20 }}>
+                    {feedbacks.map((f, i) => (
+                        <div key={f._id} style={{
+                            background: "rgba(255,255,255,0.85)",
+                            backdropFilter: "blur(12px)",
+                            borderRadius: 24,
+                            padding: "24px",
+                            border: "1.5px solid rgba(143,174,142,0.15)",
+                            boxShadow: "0 10px 30px rgba(90,120,70,0.06)",
+                            animation: `popIn 0.4s cubic-bezier(.22,.68,0,1.2) ${i * 40}ms both`,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 16
+                        }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, color: "#fff", fontWeight: 800 }}>
+                                        {f.user?.name?.[0] || "?"}
+                                    </div>
+                                    <div>
+                                        <h4 style={{ fontWeight: 800, fontSize: 15, color: "#2d3b2d", marginBottom: 2 }}>{f.user?.name || "Unknown User"}</h4>
+                                        <span style={{ fontSize: 11, color: "#bbb", fontWeight: 700 }}>
+                                            {new Date(f.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div style={{ background: "rgba(217,217,168,0.15)", color: "#a5a56d", padding: "6px 12px", borderRadius: 12, display: "flex", alignItems: "center", gap: 4, fontWeight: 800, fontSize: 13 }}>
+                                    <span>⭐</span> {f.rating}
+                                </div>
+                            </div>
 
-                <Typography className="text-foreground font-medium leading-relaxed mb-8 flex-1 italic group-hover:text-primary transition-colors">
-                  "{f.comment || "No written feedback provided."}"
-                </Typography>
+                            <div style={{ padding: "16px", background: "rgba(143,174,142,0.05)", borderRadius: 16, border: "1px solid rgba(143,174,142,0.08)" }}>
+                                <p style={{ color: "#555", fontSize: 14, lineHeight: 1.6, fontStyle: "italic" }}>"{f.comment}"</p>
+                            </div>
 
-                <div className="pt-6 border-t border-muted flex items-center justify-between mt-auto">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground font-serif text-lg font-bold group-hover:bg-primary/10 group-hover:text-primary transition-all">
-                      {f.user?.name?.[0] || <User size={18} />}
-                    </div>
-                    <div>
-                      <Typography className="text-sm font-black tracking-tight">{f.user?.name || "Guest User"}</Typography>
-                      <Typography variant="small" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Verified User</Typography>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:text-destructive transition-colors">
-                      <Trash2 size={16} />
-                    </Button>
-                    <Button variant="ghost" size="sm" className="rounded-xl h-10 w-10 p-0 text-muted-foreground hover:text-primary transition-colors">
-                      <CheckCircle2 size={16} />
-                    </Button>
-                  </div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: "auto" }}>
+                                <span style={{ fontSize: 12, color: "#aaa", fontWeight: 600 }}>Review for:</span>
+                                <span style={{
+                                    background: "rgba(143,174,142,0.1)",
+                                    color: "#5a7a50",
+                                    padding: "4px 10px",
+                                    borderRadius: 8,
+                                    fontSize: 12,
+                                    fontWeight: 800,
+                                    border: "1px solid rgba(143,174,142,0.2)"
+                                }}>
+                                    {f.provider?.businessName || "General Feedback"}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-              </CardContent>
-              
-              {/* Subtle hover indicator */}
-              <div className="h-1 w-0 group-hover:w-full bg-gradient-to-r from-primary to-accent transition-all duration-700" />
-            </Card>
-          ))}
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };

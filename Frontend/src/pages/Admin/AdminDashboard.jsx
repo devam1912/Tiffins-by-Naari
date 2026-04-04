@@ -1,152 +1,145 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { 
-  LogOut, 
-  LayoutDashboard, 
-  Clock, 
-  Users, 
-  ChefHat, 
-  Utensils, 
-  Package, 
-  MessageSquare,
-  AlertCircle,
-  Eye,
-  CheckCircle,
-  XCircle,
-  X
-} from "lucide-react";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../../store/authSlice";
+import API from "../../api/auth";
 
 // Internal Components
 import { AdminUsers } from "../../components/AdminUsers";
 import { AdminMenu } from "../../components/AdminMenu";
 import { AdminFeedback } from "../../components/AdminFeedback";
-import { AdminOverview } from "../../components/AdminOverview";
-import { Button } from "../../components/ui/Button";
-import { Card, CardContent } from "../../components/ui/Card";
-import { Typography } from "../../components/ui/Typography";
-import { cn } from "../../lib/utils";
 
 // ══════════════════════════════════════════
-// 1. MODAL COMPONENTS
+// 1. APPROVE MODAL
 // ══════════════════════════════════════════
-
 function ApproveModal({ provider, onClose, onApprove, loading }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[32px] overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="h-2 bg-gradient-to-r from-primary to-accent" />
-        <CardContent className="p-8 text-center">
-          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-            <ChefHat size={40} className="text-primary" />
-          </div>
-          <Typography variant="h3" className="mb-2">Approve Kitchen?</Typography>
-          <Typography className="text-muted-foreground mb-8">
-            Authorize <strong>{provider?.businessName}</strong>? This will enable their menu and notify <strong>{provider?.ownerName}</strong>.
-          </Typography>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={onClose} className="flex-1 rounded-2xl">Cancel</Button>
-            <Button onClick={onApprove} disabled={loading} className="flex-[2] rounded-2xl shadow-lg shadow-primary/20">
-              {loading ? "Processing..." : "Confirm Approval"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.6)", backdropFilter: "blur(12px)", padding: 20 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 32, padding: "48px", maxWidth: 440, width: "100%", textAlign: "center", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(90deg,#8FAE8E,#D9D9A8)" }} />
+        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 36, color: "#fff" }}>👩‍🍳</div>
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 12 }}>Approve Kitchen?</h2>
+        <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
+          Authorize <strong>{provider?.businessName}</strong>. This will enable their menu and notify <strong>{provider?.ownerName}</strong>.
+        </p>
+        <div style={{ display: "flex", gap: 14 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 700, cursor: "pointer", color: "#888" }}>Cancel</button>
+          <button onClick={onApprove} disabled={loading} style={{ flex: 2, padding: "14px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}>
+            {loading ? "Approving..." : "Confirm"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
+// ══════════════════════════════════════════
+// 2. REJECT MODAL
+// ══════════════════════════════════════════
 function RejectModal({ provider, onClose, onReject, loading }) {
   const [reason, setReason] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <Card className="w-full max-w-md border-none shadow-2xl rounded-[32px] overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="h-2 bg-destructive" />
-        <CardContent className="p-8">
-          <Typography variant="h3" className="mb-1">Decline Application</Typography>
-          <Typography variant="small" className="text-destructive font-bold mb-6">Kitchen: {provider?.businessName}</Typography>
-          <div className="space-y-4">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Reason for Rejection</label>
-            <textarea
-              value={reason}
-              onChange={e => setReason(e.target.value)}
-              placeholder="e.g., FSSAI document blurry..."
-              className="w-full min-h-[120px] p-4 rounded-2xl border-2 border-muted bg-muted/30 focus:border-destructive focus:ring-0 transition-all outline-none text-sm"
-            />
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={onClose} className="flex-1 rounded-2xl">Back</Button>
-              <Button onClick={() => onReject(reason)} disabled={!reason.trim() || loading} variant="secondary" className="flex-[2] bg-destructive text-white hover:bg-destructive/90 rounded-2xl">
-                {loading ? "Sending..." : "Confirm Rejection"}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(30,10,10,0.6)", backdropFilter: "blur(12px)", padding: 20 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 32, padding: "44px", maxWidth: 480, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.25)", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "#ef5350" }} />
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Decline Kitchen</h2>
+        <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: "#ef5350", fontWeight: 700 }}>{provider?.businessName}</span></p>
+
+        <textarea
+          value={reason}
+          onChange={e => setReason(e.target.value)}
+          placeholder="Reason for rejection (sent to provider)..."
+          style={{ width: "100%", padding: 18, borderRadius: 16, border: "2px solid #f0f0f0", fontSize: 14, minHeight: 120, marginBottom: 24, resize: "none", outline: "none", fontFamily: "'Nunito', sans-serif" }}
+        />
+
+        <div style={{ display: "flex", gap: 14 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "transparent", border: "2px solid #eee", borderRadius: 16, fontWeight: 700, color: "#999", cursor: "pointer" }}>Back</button>
+          <button
+            onClick={() => onReject(reason)}
+            disabled={!reason.trim() || loading}
+            style={{ flex: 2, padding: "14px", background: "#ef5350", color: "#fff", border: "none", borderRadius: 16, fontWeight: 700, cursor: (!reason.trim() || loading) ? "not-allowed" : "pointer" }}
+          >
+            {loading ? "Processing..." : "Confirm Rejection"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
+// ══════════════════════════════════════════
+// 3. VIEW APPLICATION MODAL
+// ══════════════════════════════════════════
 function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
   const isPdf = provider?.fssaiCertificate?.toLowerCase().includes(".pdf");
-  const DataField = ({ label, value }) => (
-    <div className="py-3 border-b border-muted last:border-0">
-      <Typography variant="small" className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">{label}</Typography>
-      <Typography className="font-semibold text-foreground text-sm">{value || "Not Provided"}</Typography>
+  const DataField = ({ label, value, fullWidth = false }) => (
+    <div style={{ padding: "14px 0", borderBottom: "1px solid #f4f7f4", width: fullWidth ? "100%" : "50%" }}>
+      <p style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 14, color: "#2d3b2d", fontWeight: 600 }}>{value || "N/A"}</p>
     </div>
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
-      <Card className="w-full max-w-2xl max-h-[90vh] border-none shadow-2xl rounded-[40px] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-        <div className="p-8 border-b bg-muted/30 flex justify-between items-center">
-          <div>
-            <Typography variant="h3">Kitchen Dossier</Typography>
-            <Typography variant="small" className="text-muted-foreground">ID: {provider?._id?.slice(-8).toUpperCase()}</Typography>
-          </div>
-          <Button variant="ghost" size="sm" onClick={onClose} className="rounded-full h-10 w-10 p-0"><X size={20} /></Button>
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.6)", backdropFilter: "blur(18px)", padding: 20 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.2)" }}>
+        <div style={{ padding: "28px 36px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfdfc" }}>
+          <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d" }}>Kitchen Application</h2>
+          <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", color: "#aaa" }}>✕</button>
         </div>
-        <div className="flex-1 overflow-y-auto p-8 space-y-8">
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-            <DataField label="Business Entity" value={provider?.businessName} />
-            <DataField label="Owner/Chef" value={provider?.ownerName} />
-            <DataField label="FSSAI Registration" value={provider?.fssaiNumber} />
-            <DataField label="Contact Email" value={provider?.email} />
+
+        <div style={{ padding: "36px", overflowY: "auto", flex: 1 }}>
+          <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 32 }}>
+            <DataField label="Name" value={provider?.businessName} />
+            <DataField label="Chef" value={provider?.ownerName} />
+            <DataField label="FSSAI" value={provider?.fssaiNumber} />
+            <DataField label="Email" value={provider?.email} />
             <DataField label="Phone" value={provider?.phone} />
+            <DataField label="Location" value={provider?.address} fullWidth />
           </div>
-          <div className="space-y-4">
-            <Typography variant="small" className="uppercase tracking-widest text-primary font-bold">Verification Document</Typography>
-            <div className="aspect-video relative rounded-3xl border-2 border-dashed border-muted bg-muted/20 flex items-center justify-center overflow-hidden">
+
+          <div style={{ marginBottom: 32 }}>
+            <p style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 16 }}>Documentation</p>
+            <div style={{ borderRadius: 16, border: "2px dashed #eee", background: "#f9faf9", padding: 16, textAlign: "center" }}>
               {provider?.fssaiCertificate ? (
-                isPdf ? (
-                  <div className="text-center">
-                    <Typography className="mb-4">📜 Certificate PDF</Typography>
-                    <Button as="a" href={provider.fssaiCertificate} target="_blank" size="sm" className="rounded-xl">View Full PDF</Button>
-                  </div>
-                ) : <img src={provider.fssaiCertificate} className="w-full h-full object-contain" alt="FSSAI" />
-              ) : <Typography className="text-destructive">Document missing</Typography>}
+                isPdf ? <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer" style={{ color: "#8FAE8E", fontWeight: 700 }}>📄 Open Certificate</a> :
+                  <img src={provider.fssaiCertificate} alt="FSSAI" style={{ maxWidth: "100%", borderRadius: 8 }} />
+              ) : <p style={{ color: "#ef5350", fontSize: 13 }}>Certificate missing.</p>}
             </div>
           </div>
-          {(!provider?.isApproved && !provider?.isActive) && (
-            <div className="flex gap-4 pt-4">
-              <Button variant="outline" onClick={() => { onClose(); onReject(provider); }} className="flex-1 border-destructive text-destructive hover:bg-destructive/10 rounded-2xl">Decline</Button>
-              <Button onClick={() => { onClose(); onApprove(provider); }} className="flex-1 rounded-2xl shadow-lg shadow-primary/20">Approve Credentials</Button>
+
+          {!provider?.isApproved && (
+            <div style={{ display: "flex", gap: 16 }}>
+              <button onClick={() => { onClose(); onReject(provider); }} style={{ flex: 1, padding: 14, borderRadius: 14, border: "2px solid #ef5350", color: "#ef5350", fontWeight: 700, background: "none", cursor: "pointer" }}>Decline</button>
+              <button onClick={() => { onClose(); onApprove(provider); }} style={{ flex: 1, padding: 14, borderRadius: 14, background: "#8FAE8E", border: "none", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Approve</button>
             </div>
           )}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }
 
 // ══════════════════════════════════════════
-// 2. MAIN DASHBOARD
+// 4. MAIN DASHBOARD CONTROLLER
 // ══════════════════════════════════════════
-
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-  const headers = useMemo(() => ({ Authorization: `Bearer ${token}` }), [token]);
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.auth.token);
+  const user = useSelector((state) => state.auth.user);
 
+  // UI & Data State
+  const [loaded, setLoaded] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [stats, setStats] = useState({ totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 });
   const [allProviders, setAllProviders] = useState([]);
@@ -155,284 +148,299 @@ export default function AdminDashboard() {
   const [allOrders, setAllOrders] = useState([]);
   const [allFeedbacks, setAllFeedbacks] = useState([]);
   const [allMenus, setAllMenus] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
 
+  // Selection Targets
   const [approveTarget, setApproveTarget] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [viewTarget, setViewTarget] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
 
+  // Action Loading States
+  const [approving, setApproving] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
+
+  // Data Fetching Logic
   const fetchAllData = useCallback(async () => {
     if (!token) { navigate("/login"); return; }
+    setDataLoading(true);
     try {
-      const [sRes, pRes, penRes, uRes, oRes, fRes, mRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/admin/stats", { headers }),
-        axios.get("http://localhost:5000/api/admin/providers", { headers }),
-        axios.get("http://localhost:5000/api/admin/providers/pending", { headers }),
-        axios.get("http://localhost:5000/api/admin/users", { headers }),
-        axios.get("http://localhost:5000/api/admin/orders", { headers }),
-        axios.get("http://localhost:5000/api/feedback", { headers }),
-        axios.get("http://localhost:5000/api/tiffins/menu", { headers })
+      const [pRes, penRes, uRes, oRes, fRes, mRes] = await Promise.allSettled([
+        API.get("/admin/providers"),
+        API.get("/admin/providers/pending"),
+        API.get("/admin/users"),
+        API.get("/admin/orders"),
+        API.get("/feedback"),
+        API.get("/tiffins/menu")
       ]);
-      setStats(sRes.data);
-      setAllProviders(pRes.data || []);
-      setPending(penRes.data.providers || penRes.data || []);
-      setAllUsers(uRes.data || []);
-      setAllOrders(oRes.data || []);
-      setAllFeedbacks(fRes.data.feedbacks || []);
-      setAllMenus(mRes.data.menus || []);
-    } catch (err) {
-      console.error(err);
-    } finally { setLoading(false); }
-  }, [token, navigate, headers]);
 
-  useEffect(() => { fetchAllData(); }, [fetchAllData]);
+      const providers = pRes.status === 'fulfilled' ? (pRes.value.data || []) : [];
+      const pendingData = penRes.status === 'fulfilled' ? (penRes.value.data.providers || penRes.value.data || []) : [];
+      const users = uRes.status === 'fulfilled' ? (uRes.value.data || []) : [];
+      const orders = oRes.status === 'fulfilled' ? (oRes.value.data || []) : [];
+      const feedbacks = fRes.status === 'fulfilled' ? (fRes.value.data.feedbacks || []) : [];
+      const menus = mRes.status === 'fulfilled' ? (mRes.value.data.menus || []) : [];
+
+      setAllProviders(providers);
+      setPending(pendingData);
+      setAllUsers(users);
+      setAllOrders(orders);
+      setAllFeedbacks(feedbacks);
+      setAllMenus(menus);
+
+      const calculatedStats = {
+        totalUsers: users.length,
+        totalProviders: providers.filter(p => p.isApproved).length,
+        totalOrders: orders.length,
+        totalRevenue: orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0)
+      };
+      setStats(calculatedStats);
+
+    } catch (err) {
+      console.error("Admin Load Failure:", err);
+    } finally {
+      setDataLoading(false);
+      setLoaded(true);
+    }
+  }, [token, navigate]);
+
+  useEffect(() => {
+    fetchAllData();
+    const link = document.createElement("link");
+    link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
+  }, [fetchAllData]);
 
   const confirmApprove = async () => {
     if (!approveTarget) return;
-    setActionLoading(true);
+    setApproving(true);
     try {
-      await axios.patch(`http://localhost:5000/api/tiffins/approve/${approveTarget._id}`, {}, { headers });
-      setPending(p => p.filter(x => x._id !== approveTarget._id));
+      await API.patch(`/tiffins/approve/${approveTarget._id}`);
+      setAllProviders(current => current.map(p => p._id === approveTarget._id ? { ...p, isApproved: true } : p));
+      setPending(current => current.filter(p => p._id !== approveTarget._id));
+      setStats(s => ({ ...s, totalProviders: s.totalProviders + 1 }));
       setApproveTarget(null);
-      fetchAllData();
-    } catch { alert("Error approving provider"); }
-    finally { setActionLoading(false); }
+    } catch (err) {
+      alert("Approval failed.");
+    } finally {
+      setApproving(false);
+    }
   };
 
   const confirmReject = async (reason) => {
     if (!rejectTarget) return;
-    setActionLoading(true);
+    setRejecting(true);
     try {
-      await axios.patch(`http://localhost:5000/api/tiffins/reject/${rejectTarget._id}`, { reason }, { headers });
-      setPending(p => p.filter(x => x._id !== rejectTarget._id));
+      await API.patch(`/tiffins/reject/${rejectTarget._id}`, { reason });
+      setPending(current => current.filter(p => p._id !== rejectTarget._id));
       setRejectTarget(null);
-      fetchAllData();
-    } catch { alert("Error rejecting provider"); }
-    finally { setActionLoading(false); }
+    } catch (err) {
+      alert("Rejection failed.");
+    } finally {
+      setRejecting(false);
+    }
   };
 
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "pending", label: "Approvals", icon: Clock, badge: pending.length },
-    { id: "providers", label: "Kitchens", icon:ChefHat },
-    { id: "users", label: "Users", icon: Users },
-    { id: "menus", label: "Menus", icon: Utensils },
-    { id: "orders", label: "Orders", icon: Package },
-    { id: "feedbacks", label: "Feedback", icon: MessageSquare }
+  const anim = (d = 0) => ({
+    opacity: loaded ? 1 : 0,
+    transform: loaded ? "translateY(0)" : "translateY(18px)",
+    transition: `opacity 0.6s ease ${d}ms, transform 0.6s cubic-bezier(.22,.68,0,1.2) ${d}ms`,
+  });
+
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
+  if (dataLoading && !loaded) {
+    return (
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#E7E6B6", color: "#5a7a50", fontWeight: 700 }}>
+        SYNCING COMMAND CENTER...
+      </div>
+    );
+  }
+
+  const statCards = [
+    { label: "Platform Users", val: stats.totalUsers + allProviders.length, icon: "👥" },
+    { label: "Active Kitchens", val: stats.totalProviders, icon: "👩‍🍳" },
+    { label: "Menus", val: allMenus.length, icon: "🍱" },
+    { label: "Orders", val: stats.totalOrders, icon: "🛍️" },
+    { label: "Total Revenue", val: `₹${stats.totalRevenue.toLocaleString()}`, icon: "💰" }
   ];
 
-  if (loading) return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-lightbg gap-4">
-      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-      <Typography className="font-bold text-primary animate-pulse uppercase tracking-[0.2em] text-xs">Synchronizing Portal...</Typography>
-    </div>
-  );
+  const adminName = user?.name?.split(" ")[0] || "Admin";
 
   return (
-    <div className="flex min-h-screen bg-lightbg font-sans selection:bg-primary/20">
-      {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={actionLoading} />}
-      {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={actionLoading} />}
+    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+      <style>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #E7E6B6; }
+        ::-webkit-scrollbar-thumb { background: #8FAE8E; border-radius: 10px; }
+        .nav-btn {
+          display:flex; align-items:center; gap:12px;
+          width:100%; padding:14px 18px; border-radius:16px;
+          border:none; background:none; cursor:pointer;
+          font-family:'Nunito',sans-serif; font-size:15px; font-weight:700;
+          color:rgba(255,255,255,0.7); transition:all 0.25s cubic-bezier(.22,.68,0,1.2);
+          text-align:left;
+        }
+        .nav-btn:hover { background:rgba(255,255,255,0.15); color:#fff; transform:translateX(4px); }
+        .nav-btn.active { background:rgba(255,255,255,0.25); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.12); }
+      `}</style>
+
+      {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={approving} />}
+      {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={rejecting} />}
       {viewTarget && <ViewApplicationModal provider={viewTarget} onClose={() => setViewTarget(null)} onApprove={setApproveTarget} onReject={setRejectTarget} />}
 
-      {/* SIDEBAR */}
-      <aside className="w-72 bg-primary text-white flex flex-col h-screen sticky top-0 shadow-2xl">
-        <div className="p-8 pb-12">
-          <Typography variant="h3" className="font-serif !text-white leading-none">Naari</Typography>
-          <Typography variant="small" className="!text-white/60 font-bold uppercase tracking-widest mt-1">Admin Panel</Typography>
+      <aside style={{
+        width: collapsed ? 80 : 280, minHeight: "100vh",
+        background: "linear-gradient(165deg, #5a7a50 0%, #2d3b2d 100%)",
+        display: "flex", flexDirection: "column", padding: "36px 24px",
+        position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
+        transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
+        boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🛡️</div>
+          {!collapsed && <div>
+            <div style={{ fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.1 }}>Naari Admin</div>
+            <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 4 }}>Command Center</div>
+          </div>}
         </div>
 
-        <nav className="flex-1 px-4 space-y-1">
-          {navItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => setActiveNav(item.id)}
-              className={cn(
-                "w-full flex items-center justify-between px-6 py-4 rounded-2xl transition-all duration-300 group",
-                activeNav === item.id ? "bg-white text-primary shadow-lg shadow-black/10 scale-[1.02]" : "text-white/80 hover:bg-white/10 hover:text-white"
-              )}
-            >
-              <div className="flex items-center gap-4">
-                <item.icon size={20} className={cn("transition-transform group-hover:scale-110", activeNav === item.id ? "text-primary" : "text-white/60")} />
-                <span className="font-bold text-sm tracking-tight">{item.label}</span>
-              </div>
-              {item.badge > 0 && (
-                <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-black", activeNav === item.id ? "bg-primary text-white" : "bg-accent text-white")}>
-                  {item.badge}
-                </span>
-              )}
+        <nav style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+          {[
+            { id: "dashboard", icon: "⊞", label: "Overview" },
+            { id: "users", icon: "👥", label: "Users" },
+            { id: "providers", icon: "👩‍🍳", label: "Tiffin Providers" },
+            { id: "menu", icon: "🍱", label: "Menus" },
+            { id: "orders", icon: "🛍️", label: "Orders" },
+            { id: "feedback", icon: "💬", label: "Feedbacks" }
+
+          ].map(item => (
+            <button key={item.id} className={`nav-btn ${activeNav === item.id ? "active" : ""}`} onClick={() => setActiveNav(item.id)}>
+              <span style={{ fontSize: 22 }}>{item.icon}</span>
+              {!collapsed && <span>{item.label}</span>}
             </button>
           ))}
         </nav>
 
-        <div className="p-6">
-          <Button 
-            variant="ghost" 
-            className="w-full justify-start gap-4 text-white/60 hover:text-white hover:bg-destructive/20 rounded-2xl px-6 py-6"
-            onClick={() => { localStorage.clear(); navigate("/login"); }}
-          >
-            <LogOut size={20} />
-            <span className="font-bold">Sign Out</span>
-          </Button>
-        </div>
+        <button onClick={handleLogout} style={{ marginTop: "auto", width: "100%", padding: "14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "rgba(255,255,255,0.6)", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
+          <span>🚪</span> {!collapsed && <span>Logout</span>}
+        </button>
       </aside>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 p-10 max-h-screen overflow-y-auto scrollbar-hide">
-        <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700">
-          
-          {activeNav === "dashboard" && (
-            <div className="space-y-10">
-              <AdminOverview stats={stats} activities={[]} />
-              {pending.length > 0 && (
-                <Card className="bg-primary border-none shadow-xl shadow-primary/20 rounded-[40px] overflow-hidden group">
-                  <CardContent className="p-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div className="flex items-center gap-8">
-                      <div className="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center animate-pulse">
-                        <AlertCircle size={32} className="text-white" />
+      <main style={{ marginLeft: collapsed ? 80 : 280, flex: 1, padding: "44px", transition: "margin-left 0.35s ease" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
+          <div>
+            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Admin Dashboard</p>
+            <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>Namaste, <em style={{ color: "#8FA873" }}>{adminName}!</em></h1>
+          </div>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff" }}>{adminName[0]}</div>
+        </div>
+
+        {activeNav === "dashboard" ? (
+          <div style={{ ...anim(100) }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 24, marginBottom: 40 }}>
+              {statCards.map((card, i) => (
+                <div key={i} style={{ background: "#fff", padding: "32px", borderRadius: 28, boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                  <div style={{ fontSize: 32, marginBottom: 16 }}>{card.icon}</div>
+                  <p style={{ fontSize: 12, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 4 }}>{card.label}</p>
+                  <h3 style={{ fontSize: 32, color: "#2d3b2d", fontWeight: 800, fontFamily: "'Lora',serif" }}>{card.val}</h3>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: "#fff", padding: "36px", borderRadius: 32, boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
+                <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Kitchen Applications</h3>
+                {pending.length > 0 && <span style={{ padding: "4px 12px", background: "#fef3c7", color: "#92400e", borderRadius: 100, fontSize: 11, fontWeight: 800 }}>{pending.length} PENDING</span>}
+              </div>
+              {pending.length === 0 ? <p style={{ color: "#aaa", textAlign: "center", padding: "40px" }}>No new applications.</p> : (
+                <div style={{ display: "grid", gap: 16 }}>
+                  {pending.map(p => (
+                    <div key={p._id} style={{ display: "flex", alignItems: "center", padding: "20px 24px", background: "#fcfdfc", border: "1px solid #f0f4f0", borderRadius: 20 }}>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: 16, fontWeight: 700, color: "#2d3b2d" }}>{p.businessName}</h4>
+                        <p style={{ fontSize: 13, color: "#888" }}>{p.ownerName} • {p.email}</p>
                       </div>
-                      <div>
-                        <Typography variant="h3" className="!text-white mb-2 leading-none">Reviews Pending</Typography>
-                        <Typography className="!text-white/70">You have <strong>{pending.length}</strong> applications waiting for verification.</Typography>
+                      <div style={{ display: "flex", gap: 12 }}>
+                        <button onClick={() => setViewTarget(p)} style={{ padding: "10px 20px", borderRadius: 12, border: "1px solid #ddd", background: "#fff", fontWeight: 700, cursor: "pointer" }}>View</button>
+                        <button onClick={() => setApproveTarget(p)} style={{ padding: "10px 20px", borderRadius: 12, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Approve</button>
                       </div>
                     </div>
-                    <Button onClick={() => setActiveNav("pending")} className="bg-white text-primary hover:bg-white/90 rounded-2xl px-10 h-14 font-black shadow-xl shadow-black/10">
-                      Open Queue
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-
-          {activeNav === "pending" && (
-            <div className="space-y-8">
-              <header>
-                <Typography variant="h2" className="mb-2">Incoming Applications</Typography>
-                <Typography className="text-muted-foreground">Verification queue for new kitchen partners.</Typography>
-              </header>
-              {pending.length === 0 ? (
-                <div className="py-24 text-center bg-white/50 rounded-[40px] border-2 border-dashed border-muted">
-                  <Typography className="text-muted-foreground font-medium">All caught up! The queue is empty.</Typography>
-                </div>
-              ) : (
-                <div className="grid gap-4">
-                  {pending.map(p => (
-                    <Card key={p._id} className="border-none shadow-sm hover:shadow-md transition-all rounded-[28px] group">
-                      <CardContent className="p-6 flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                          <div className="w-14 h-14 bg-muted rounded-2xl flex items-center justify-center font-serif text-xl font-bold text-primary">
-                            {p.businessName[0]}
-                          </div>
-                          <div>
-                            <Typography className="font-black text-lg leading-none mb-1">{p.businessName}</Typography>
-                            <Typography variant="small" className="text-muted-foreground uppercase tracking-widest leading-none">{p.ownerName} • {p.email}</Typography>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" onClick={() => setViewTarget(p)} className="rounded-xl px-6 h-12">Inspect</Button>
-                          <Button onClick={() => setApproveTarget(p)} className="rounded-xl px-6 h-12">Quick Approve</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
                   ))}
                 </div>
               )}
             </div>
-          )}
-
-          <div className="section-container">
+          </div>
+        ) : (
+          <div style={{ ...anim(100), background: "#fff", padding: "36px", borderRadius: 32, boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
             {activeNav === "users" && <AdminUsers users={allUsers} />}
-            {activeNav === "feedbacks" && <AdminFeedback feedbacks={allFeedbacks} loading={loading} />}
-            {activeNav === "menus" && <AdminMenu menus={allMenus} loading={loading} />}
-            
+            {activeNav === "feedback" && <AdminFeedback feedbacks={allFeedbacks} />}
+            {activeNav === "menu" && <AdminMenu menus={allMenus} />}
             {activeNav === "orders" && (
-              <div className="space-y-8">
-                <Typography variant="h2">Order Management</Typography>
-                <Card className="rounded-[32px] border-none shadow-sm overflow-hidden">
-                  <CardContent className="p-0">
-                    <table className="w-full text-left">
-                      <thead className="bg-muted/50">
-                        <tr>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Order</th>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Customer</th>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Amount</th>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-muted/30">
-                        {allOrders.map(o => (
-                          <tr key={o._id} className="hover:bg-muted/20 transition-colors">
-                            <td className="p-6 font-bold text-sm">#{o._id.slice(-6).toUpperCase()}</td>
-                            <td className="p-6 text-sm">{o.user?.name || "Guest"}</td>
-                            <td className="p-6 font-black text-primary text-sm">₹{o.totalPrice}</td>
-                            <td className="p-6">
-                              <span className={cn(
-                                "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm",
-                                o.status === 'delivered' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'
-                              )}>
-                                {o.status}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </CardContent>
-                </Card>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Order ID</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Customer</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Amount</th>
+                      <th style={{ textAlign: "right", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allOrders.map(o => (
+                      <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>#{o._id?.slice(-6).toUpperCase() || "N/A"}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
+                        <td style={{ padding: "16px 12px", textAlign: "right" }}>
+                          <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>{o.status?.toUpperCase() || "PENDING"}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
-
             {activeNav === "providers" && (
-              <div className="space-y-8">
-                <Typography variant="h2">Tiffin Providers</Typography>
-                <Card className="rounded-[32px] border-none shadow-sm overflow-hidden">
-                  <CardContent className="p-0">
-                    <table className="w-full text-left">
-                      <thead className="bg-muted/50">
-                        <tr>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Business</th>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Owner</th>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Phone</th>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</th>
-                          <th className="p-6 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-right w-[140px]">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-muted/30">
-                        {allProviders.map(p => (
-                          <tr key={p._id} className="hover:bg-muted/20 transition-colors">
-                            <td className="p-6 font-bold text-sm">{p.businessName}</td>
-                            <td className="p-6 text-sm">{p.ownerName}</td>
-                            <td className="p-6 text-sm">{p.phone}</td>
-                            <td className="p-6">
-                              <span className={cn(
-                                "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm",
-                                p.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                              )}>
-                                {p.isActive ? "ACTIVE" : "INACTIVE"}
-                              </span>
-                            </td>
-                            <td className="p-6 text-right">
-                              <Button 
-                                onClick={() => setViewTarget(p)}
-                                className="rounded-xl h-10 px-4 group/btn flex items-center justify-end w-full" 
-                                variant="ghost"
-                              >
-                                <span className="text-[10px] font-black uppercase tracking-widest mr-2 group-hover/btn:text-primary transition-colors">Details</span>
-                                <Eye size={14} className="text-muted-foreground group-hover/btn:text-primary transition-colors" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </CardContent>
-                </Card>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Business</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Chef</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Phone</th>
+                      <th style={{ textAlign: "right", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {allProviders.map(p => (
+                      <tr key={p._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>{p.businessName}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 14 }}>{p.ownerName}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 14 }}>{p.phone}</td>
+                        <td style={{ padding: "16px 12px", textAlign: "right" }}>
+                          <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: p.isActive ? '#e8f5e9' : '#ffebee', color: p.isActive ? '#2e7d32' : '#c62828' }}>{p.isActive ? "ACTIVE" : "INACTIVE"}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
-        </div>
+        )}
       </main>
+
+      <style>{`
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
     </div>
   );
 }

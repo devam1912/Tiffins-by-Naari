@@ -613,6 +613,46 @@ const handleVacationResume = async (subscription) => {
   }
 };
 
+const getMySubscriptions = async (req, res) => {
+  try {
+    const subscriptions = await Subscription.find({ user: req.user._id })
+      .populate("provider", "businessName ownerName email phone address cuisineType")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: subscriptions.length,
+      data: subscriptions,
+    });
+  } catch (error) {
+    console.error("Get My Subscriptions Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getProviderSubscriptions = async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    const subscriptions = await Subscription.find({ provider: provider._id })
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: subscriptions.length,
+      data: subscriptions,
+    });
+  } catch (error) {
+    console.error("Get Provider Subscriptions Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const getProviderDashboard = async (req, res) => {
   try {
     const providerDoc = await Provider.findOne({ user: req.user._id });
@@ -704,4 +744,6 @@ module.exports = {
   markMealReady,
   setVacationMode,
   getProviderDashboard,
+  getMySubscriptions,
+  getProviderSubscriptions,
 };

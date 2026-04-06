@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send } from "lucide-react";
+import { useSelector } from "react-redux";
 import API from "../api/auth";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -13,6 +14,7 @@ const buildWeekMenu = (serverWeekMenu = []) => {
 };
 
 export const ProviderMenu = () => {
+    const user = useSelector((state) => state.auth.user);
     const [selectedDay, setSelectedDay] = useState("Monday");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
@@ -31,15 +33,20 @@ export const ProviderMenu = () => {
     };
 
     // ── Fetch provider's own menu on mount ──
+    // GET /tiffins/menu is now public; filter client-side by matching provider.user._id
     useEffect(() => {
         const fetchMenu = async () => {
             try {
-                const res = await API.get("/tiffins/menu/my");
-                if (res.data?.menu?.weekMenu) {
-                    setWeekMenu(buildWeekMenu(res.data.menu.weekMenu));
+                const res = await API.get("/tiffins/menu");
+                const allMenus = res.data?.menus || [];
+                const myMenu = allMenus.find(m =>
+                    m.provider?.user?._id === user?.id || m.provider?.user === user?.id
+                );
+                if (myMenu?.weekMenu) {
+                    setWeekMenu(buildWeekMenu(myMenu.weekMenu));
                     setMenuStatus({
-                        isApproved: res.data.menu.isApproved,
-                        submittedForApproval: res.data.menu.submittedForApproval,
+                        isApproved: myMenu.isApproved,
+                        submittedForApproval: myMenu.submittedForApproval,
                     });
                 }
             } catch (err) {
@@ -49,7 +56,7 @@ export const ProviderMenu = () => {
             }
         };
         fetchMenu();
-    }, []);
+    }, [user?.id]);
 
     const currentDayData = weekMenu.find(d => d.day === selectedDay) || { ...EMPTY_DAY() };
 

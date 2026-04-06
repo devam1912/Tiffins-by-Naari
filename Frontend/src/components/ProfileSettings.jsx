@@ -1,40 +1,15 @@
-import React, { useState } from "react";
-import {
-    Store,
-    User,
-    Mail,
-    Phone,
-    MapPin,
-    ShieldCheck,
-    Upload,
-    Save,
-    CheckCircle2,
-    Loader2
-} from "lucide-react";
-import { Typography } from "./ui/Typography";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/Card";
-import { Button } from "./ui/Button";
-import { Input } from "./ui/Input";
-import { toast } from "sonner";
-import { cn } from "../lib/utils";
+import React, { useState, useEffect } from "react";
+import API from "../api/auth";
 
 export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatusLoading, profileData }) => {
     const [isSaved, setIsSaved] = useState(false);
+    const [saving, setSaving] = useState(false);
 
-    // Use dynamic data from backend with fallback to empty strings (NO MOCK DATA)
     const [formData, setFormData] = useState({
-        kitchenName: profileData?.businessName || profileData?.name || "",
-        chefName: profileData?.ownerName || "",
-        email: profileData?.email || "",
-        phone: profileData?.phone || "",
-        location: profileData?.address || "",
-        specialty: profileData?.cuisineType || "",
-        fssai: profileData?.fssaiNumber || "",
-        description: profileData?.description || ""
+        kitchenName: "", chefName: "", email: "", phone: "", location: "", specialty: "", fssai: "", description: ""
     });
 
-    // Update form if props change
-    React.useEffect(() => {
+    useEffect(() => {
         if (profileData) {
             setFormData({
                 kitchenName: profileData.businessName || profileData.name || "",
@@ -49,190 +24,143 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
         }
     }, [profileData]);
 
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        setIsSaved(true);
-        setTimeout(() => setIsSaved(false), 3000);
-        toast.success("Profile Updated", { description: "Your kitchen settings have been saved." });
+        setSaving(true);
+        try {
+            await API.patch("/providers/profile", {
+                businessName: formData.kitchenName,
+                ownerName: formData.chefName,
+                phone: formData.phone,
+                address: formData.location,
+                cuisineType: formData.specialty,
+                description: formData.description,
+            });
+            setIsSaved(true);
+            setTimeout(() => setIsSaved(false), 3000);
+        } catch (err) {
+            alert(err.response?.data?.message || "Profile update failed");
+        } finally {
+            setSaving(false);
+        }
     };
 
+    const field = (label, key, opts = {}) => (
+        <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>{label}</label>
+            <input
+                value={formData[key]}
+                onChange={e => setFormData({ ...formData, [key]: e.target.value })}
+                disabled={opts.disabled}
+                placeholder={opts.placeholder || ""}
+                style={{
+                    width: "100%", padding: "12px 16px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14,
+                    fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box",
+                    background: opts.disabled ? "#f9fafb" : "#fff",
+                    color: opts.disabled ? "#aaa" : "#2d3b2d",
+                    cursor: opts.disabled ? "not-allowed" : "text",
+                }}
+            />
+            {opts.hint && <p style={{ fontSize: 10, color: "#ccc", fontStyle: "italic", marginTop: 4 }}>{opts.hint}</p>}
+        </div>
+    );
+
     return (
-        <div className="space-y-8 max-w-5xl">
-            <div className="flex items-center justify-between">
+        <div style={{ fontFamily: "'Nunito', sans-serif", maxWidth: 900 }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
                 <div>
-                    <Typography variant="h2" className="font-serif">Profile Settings</Typography>
-                    <Typography className="text-gray-500">Manage your kitchen identity, contact info, and certifications.</Typography>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Profile Settings</h2>
+                    <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>Manage your kitchen identity and contact information.</p>
                 </div>
-                <Button
-                    onClick={handleSave}
-                    className="bg-[var(--primary)] text-white hover:bg-[var(--primary)]/90 flex items-center gap-2"
-                >
-                    {isSaved ? <CheckCircle2 size={18} /> : <Save size={18} />}
-                    {isSaved ? "Saved Successfully" : "Save Profile"}
-                </Button>
+                <button onClick={handleSave} disabled={saving}
+                    style={{ padding: "12px 24px", borderRadius: 14, border: "none", background: isSaved ? "#4caf50" : "#2d3b2d", color: "#fff", fontWeight: 800, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", transition: "background 0.3s" }}>
+                    {saving ? "Saving..." : isSaved ? "✅ Saved!" : "💾 Save Profile"}
+                </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Identity Section */}
-                    <Card className="border-none shadow-sm rounded-2xl">
-                        <CardHeader className="border-b border-gray-50 pb-5">
-                            <CardTitle className="text-xl flex items-center gap-2 font-serif">
-                                <Store className="text-[var(--primary)]" size={24} />
-                                Kitchen Identity
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-8 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700">Kitchen Name</label>
-                                    <Input
-                                        value={formData.kitchenName}
-                                        onChange={(e) => setFormData({ ...formData, kitchenName: e.target.value })}
-                                        placeholder="Enter kitchen name"
-                                        className="h-11"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700">Chef Name</label>
-                                    <Input
-                                        value={formData.chefName}
-                                        onChange={(e) => setFormData({ ...formData, chefName: e.target.value })}
-                                        placeholder="Enter chef name"
-                                        className="h-11"
-                                    />
-                                </div>
-                            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 28 }}>
+                {/* Left: Form */}
+                <div>
+                    {/* Kitchen Identity */}
+                    <div style={{ background: "#fff", borderRadius: 22, padding: "28px", border: "1px solid #f0f0f0", marginBottom: 24 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+                            <span style={{ fontSize: 22 }}>🏪</span>
+                            <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Kitchen Identity</span>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                            <div>{field("Kitchen Name", "kitchenName", { placeholder: "Enter kitchen name" })}</div>
+                            <div>{field("Chef Name", "chefName", { placeholder: "Enter chef name" })}</div>
+                        </div>
+                        {field("Specialty / Cuisine", "specialty", { placeholder: "e.g. South Indian, Desserts, Healthy Keto" })}
+                        <div style={{ marginBottom: 20 }}>
+                            <label style={{ display: "block", fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>Kitchen Bio</label>
+                            <textarea
+                                value={formData.description}
+                                onChange={e => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Tell customers about your cooking style..."
+                                style={{ width: "100%", padding: "12px 16px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", resize: "none", height: 100, boxSizing: "border-box" }}
+                            />
+                        </div>
+                    </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">Kitchen Specialty</label>
-                                <Input
-                                    value={formData.specialty}
-                                    onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                                    placeholder="e.g. South Indian, Desserts, Healthy Keto"
-                                    className="h-11"
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">Kitchen Bio / Philosophy</label>
-                                <textarea
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    placeholder="Tell your customers about your cooking style and ingredients..."
-                                    className="w-full p-4 bg-gray-50 border-none rounded-xl text-sm focus:ring-4 focus:ring-[var(--primary)]/10 outline-none transition-all resize-none h-32"
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Contact Section */}
-                    <Card className="border-none shadow-sm rounded-2xl">
-                        <CardHeader className="border-b border-gray-50 pb-5">
-                            <CardTitle className="text-xl flex items-center gap-2 font-serif">
-                                <Phone className="text-blue-500" size={24} />
-                                Contact & Location
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-8 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700">Email Address</label>
-                                    <Input
-                                        disabled
-                                        value={formData.email}
-                                        className="h-11 bg-gray-50 text-gray-500 cursor-not-allowed"
-                                    />
-                                    <p className="text-[10px] text-gray-400 italic font-bold">Contact support to change primary email</p>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-bold text-gray-700">Phone Number</label>
-                                    <Input
-                                        value={formData.phone}
-                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                        className="h-11"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-gray-700">Operating Location</label>
-                                <Input
-                                    value={formData.location}
-                                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                                    className="h-11"
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
+                    {/* Contact */}
+                    <div style={{ background: "#fff", borderRadius: 22, padding: "28px", border: "1px solid #f0f0f0" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
+                            <span style={{ fontSize: 22 }}>📞</span>
+                            <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Contact & Location</span>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                            <div>{field("Email", "email", { disabled: true, hint: "Contact support to change email" })}</div>
+                            <div>{field("Phone", "phone", { placeholder: "Enter phone number" })}</div>
+                        </div>
+                        {field("Operating Location", "location", { placeholder: "Enter address" })}
+                    </div>
                 </div>
 
-                <div className="space-y-8">
-                    {/* Profile Photo */}
-                    <Card className="border-none shadow-sm overflow-hidden text-center rounded-2xl">
-                        <div className="h-28 bg-gradient-to-tr from-[var(--primary)] to-[var(--accent)] opacity-80" />
-                        <div className="px-6 pb-8 -mt-14 text-center">
-                            <div className="relative inline-block">
-                                <div className="w-28 h-28 rounded-full border-4 border-white bg-white shadow-lg overflow-hidden mx-auto flex items-center justify-center font-bold text-4xl text-[var(--primary)]">
-                                    {formData.kitchenName.charAt(0)}
-                                </div>
-                                <button className="absolute bottom-1 right-1 p-2 bg-white rounded-full shadow-md text-gray-600 hover:text-[var(--primary)] border border-gray-100 transition-colors">
-                                    <Upload size={16} />
-                                </button>
+                {/* Right: Profile Card + Status */}
+                <div>
+                    {/* Profile Avatar Card */}
+                    <div style={{ background: "#fff", borderRadius: 22, overflow: "hidden", border: "1px solid #f0f0f0", marginBottom: 20 }}>
+                        <div style={{ height: 80, background: "linear-gradient(135deg, #8FAE8E, #5a7a50)" }} />
+                        <div style={{ padding: "0 24px 28px", textAlign: "center", marginTop: -40 }}>
+                            <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#fff", border: "4px solid #fff", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 32, color: "#8FAE8E", margin: "0 auto" }}>
+                                {formData.kitchenName.charAt(0) || "?"}
                             </div>
-                            <Typography variant="h3" className="mt-4 font-serif">{formData.kitchenName}</Typography>
-                            <Typography className="text-gray-500 font-medium">{formData.chefName}</Typography>
-                            <div className="mt-6 flex flex-wrap justify-center gap-2">
-                                <span className="text-[10px] font-bold px-3 py-1 bg-green-50 text-green-700 rounded-full border border-green-100 uppercase tracking-widest">Verified</span>
-                                <span className="text-[10px] font-bold px-3 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-100 uppercase tracking-widest">Top Rated</span>
+                            <h3 style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d", marginTop: 12, marginBottom: 2 }}>{formData.kitchenName || "My Kitchen"}</h3>
+                            <p style={{ fontSize: 13, color: "#aaa" }}>{formData.chefName || "Chef"}</p>
+                            <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12 }}>
+                                <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 100, background: "#e8f5e9", color: "#2e7d32", textTransform: "uppercase" }}>Verified</span>
+                                <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 100, background: "#e3f2fd", color: "#1565c0", textTransform: "uppercase" }}>Top Rated</span>
                             </div>
                         </div>
-                    </Card>
+                    </div>
 
-                    {/* Certification Card */}
-                    <Card className="bg-amber-50/50 border-amber-200 border shadow-sm rounded-2xl">
-                        <CardContent className="p-8">
-                            <div className="flex items-center gap-3 text-amber-900 mb-6">
-                                <ShieldCheck className="text-amber-600" size={28} />
-                                <Typography variant="h3" className="!text-amber-900 font-serif">FSSAI Status</Typography>
+                    {/* FSSAI Card */}
+                    <div style={{ background: "#fffde7", borderRadius: 22, padding: "24px", border: "1px solid #ffe082", marginBottom: 20 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+                            <span style={{ fontSize: 22 }}>🛡️</span>
+                            <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 16, color: "#e65100" }}>FSSAI Status</span>
+                        </div>
+                        {field("License Number", "fssai")}
+                        <div style={{ padding: "10px 14px", background: "#fff", borderRadius: 12, border: "1px solid #ffe082" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 800, color: "#2e7d32" }}>
+                                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block" }} />
+                                Active & Valid
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-amber-900">License Number</label>
-                                <Input
-                                    className="bg-white border-amber-200 h-11 focus-visible:ring-amber-500"
-                                    value={formData.fssai}
-                                    onChange={(e) => setFormData({ ...formData, fssai: e.target.value })}
-                                />
-                            </div>
-                            <div className="mt-6 p-4 bg-white rounded-xl border border-amber-100 shadow-sm">
-                                <div className="flex items-center gap-2 text-sm font-bold text-green-700">
-                                    <div className="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse" />
-                                    Currently Active & Valid
-                                </div>
-                                <p className="text-xs text-amber-600 mt-1 font-medium ml-4.5">Expiry: Jan 15, 2027</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                        </div>
+                    </div>
 
-                    <Button
-                        variant="outline"
-                        onClick={toggleServiceStatus}
-                        disabled={isStatusLoading}
-                        className={cn(
-                            "w-full h-12 transition-all duration-300 font-bold overflow-hidden relative group disabled:opacity-50",
-                            !isServiceActive
-                                ? "text-green-700 border-green-200 bg-green-50 hover:bg-green-100"
-                                : "text-red-600 border-red-200 bg-red-50 hover:bg-red-100"
-                        )}
-                    >
-                        {isStatusLoading ? (
-                            <Loader2 size={18} className="animate-spin" />
-                        ) : !isServiceActive ? (
-                            "Resume My Service"
-                        ) : (
-                            "Pause My Service"
-                        )}
-                    </Button>
+                    {/* Service Toggle */}
+                    <button onClick={toggleServiceStatus} disabled={isStatusLoading}
+                        style={{
+                            width: "100%", padding: "14px", borderRadius: 14, fontWeight: 800, fontSize: 14, cursor: isStatusLoading ? "not-allowed" : "pointer",
+                            border: `2px solid ${isServiceActive ? "#ffcdd2" : "#c8e6c9"}`,
+                            background: isServiceActive ? "#ffebee" : "#e8f5e9",
+                            color: isServiceActive ? "#c62828" : "#2e7d32",
+                        }}>
+                        {isStatusLoading ? "⏳ Processing..." : isServiceActive ? "⏸️ Pause My Service" : "▶️ Resume My Service"}
+                    </button>
                 </div>
             </div>
         </div>

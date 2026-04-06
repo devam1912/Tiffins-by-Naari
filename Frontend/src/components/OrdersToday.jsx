@@ -1,321 +1,167 @@
 import React, { useState, useEffect } from "react";
-import {
-    ShoppingBag,
-    MapPin,
-    Clock,
-    User,
-    CheckCircle2,
-    Clock3,
-    AlertCircle,
-    Loader2,
-    RefreshCw,
-    Phone,
-    XCircle
-} from "lucide-react";
-import { Typography } from "./ui/Typography";
-import { Card, CardContent } from "./ui/Card";
-import { Button } from "./ui/Button";
-import { cn } from "../lib/utils";
-import api from "../services/api";
-
-// Demo data removed - syncing purely with backend
-const DEMO_ORDERS = [];
+import API from "../api/auth";
 
 export const OrdersToday = () => {
-    const [orders, setOrders] = useState([]);
+    const [subscriptions, setSubscriptions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [actionLoading, setActionLoading] = useState(null);
 
-    const token = localStorage.getItem("token");
-
-    const fetchOrders = async () => {
+    const fetchTodaySubscriptions = async () => {
         setLoading(true);
         setError(null);
         try {
-            const res = await api.get("/api/orders/tsp", {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await API.get("/subscriptions/provider-subscriptions");
+            if (res.data?.success) {
+                // Filter to active subscriptions that need serving today
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
 
-            // Filter to today's orders only
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+                const todaySubs = (res.data.data || []).filter(sub => {
+                    if (sub.status !== "active") return false;
+                    // Include if not yet served today
+                    if (sub.lastServedDate) {
+                        const lastServed = new Date(sub.lastServedDate);
+                        lastServed.setHours(0, 0, 0, 0);
+                        return lastServed.getTime() !== today.getTime();
+                    }
+                    return true;
+                });
 
-            const todayOrders = (res.data || []).filter(order => {
-                const orderDate = new Date(order.date);
-                return orderDate >= today && orderDate < tomorrow;
-            });
-
-            setOrders(todayOrders);
+                setSubscriptions(todaySubs);
+            }
         } catch (err) {
-            console.error("Orders sync failed:", err.message);
-            setError("Unable to sync live orders. Please check your connection.");
-            setOrders([]);
+            console.error("Orders sync failed:", err);
+            setError("Unable to load today's orders.");
+            setSubscriptions([]);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchOrders();
-    }, []);
+    useEffect(() => { fetchTodaySubscriptions(); }, []);
 
-    const handleStatusUpdate = async (orderId, newStatus) => {
-        setActionLoading(orderId);
+    const handleMarkReady = async (subId) => {
+        setActionLoading(subId);
         try {
-            await api.patch(`/api/orders/tsp/${orderId}/status`, { status: newStatus }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            await fetchOrders();
+            await API.patch(`/subscriptions/${subId}/mark-meal-ready`);
+            await fetchTodaySubscriptions();
         } catch (err) {
-            console.error("Status update failed:", err.message);
+            alert(err.response?.data?.message || "Failed to mark meal ready");
         } finally {
             setActionLoading(null);
         }
     };
 
-    // Helpers
-    const getStatusColor = (status) => {
-        switch (status) {
-            case "completed": return "bg-green-50 text-green-700 border-green-100";
-            case "ready": return "bg-blue-50 text-blue-700 border-blue-100";
-            case "preparing": return "bg-amber-50 text-amber-700 border-amber-100";
-            case "confirmed": return "bg-purple-50 text-purple-700 border-purple-100";
-            case "cancelled": return "bg-red-50 text-red-700 border-red-100";
-            case "pending": return "bg-gray-50 text-gray-700 border-gray-100";
-            default: return "bg-gray-50 text-gray-700 border-gray-100";
-        }
-    };
+    const formatDate = () => new Date().toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
 
-    const getStatusIcon = (status) => {
-        switch (status) {
-            case "completed": return <CheckCircle2 size={14} />;
-            case "ready": return <ShoppingBag size={14} />;
-            case "preparing": return <Clock3 size={14} />;
-            case "cancelled": return <XCircle size={14} />;
-            default: return <AlertCircle size={14} />;
-        }
-    };
+    if (loading) return (
+        <div style={{ padding: 80, textAlign: "center", color: "#8FAE8E", fontWeight: 700 }}>Loading today's orders...</div>
+    );
 
-    const getStatusLabel = (status) => {
-        const labels = {
-            pending: "Pending",
-            confirmed: "Confirmed",
-            preparing: "Preparing",
-            ready: "Ready for Pickup",
-            completed: "Picked Up",
-            cancelled: "Cancelled",
-        };
-        return labels[status] || status;
-    };
-
-    const formatOrderId = (id) => `ORD-${(id || "").slice(-6).toUpperCase()}`;
-
-    const getSlotLabel = (slot) => slot ? slot.charAt(0).toUpperCase() + slot.slice(1) : "—";
-
-    const formatDate = () => {
-        return new Date().toLocaleDateString("en-IN", {
-            month: "short", day: "numeric", year: "numeric"
-        });
-    };
-
-    const completedCount = orders.filter(o => o.status === "completed").length;
-    const readyCount = orders.filter(o => o.status === "ready").length;
-    const preparingCount = orders.filter(o => o.status === "preparing").length;
-
-    if (loading) {
-        return (
-            <div className="flex items-center justify-center py-32">
-                <Loader2 className="animate-spin text-[var(--primary)]" size={32} />
-                <Typography className="ml-4 text-gray-500">Loading today's orders...</Typography>
-            </div>
-        );
-    }
+    const lunchSubs = subscriptions.filter(s => s.timeSlot === "lunch");
+    const dinnerSubs = subscriptions.filter(s => s.timeSlot === "dinner");
 
     return (
-        <div className="space-y-8">
-            {/* Header + Stats */}
-            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+        <div style={{ fontFamily: "'Nunito', sans-serif" }}>
+            {/* Header */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
-                    <Typography
-                        variant="h2"
-                        className="font-serif !text-[32px] !font-bold"
-                    >
-                        Orders Today
-                    </Typography>
-                    <Typography variant="small" className="text-gray-500">
-                        Managing {orders.length} deliveries for {formatDate()}
-                    </Typography>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Orders Today</h2>
+                    <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{formatDate()} — {subscriptions.length} meals to prepare</p>
                 </div>
-                <div className="flex gap-4 flex-wrap">
-                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600">
-                            <ShoppingBag size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total</p>
-                            <p className="text-xl font-bold">{orders.length}</p>
-                        </div>
-                    </div>
-                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-50 rounded-full flex items-center justify-center text-amber-600">
-                            <Clock3 size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Preparing</p>
-                            <p className="text-xl font-bold">{preparingCount}</p>
-                        </div>
-                    </div>
-                    <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center text-green-600">
-                            <CheckCircle2 size={20} />
-                        </div>
-                        <div>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Completed</p>
-                            <p className="text-xl font-bold">{completedCount}</p>
-                        </div>
-                    </div>
-                    <Button variant="outline" className="h-auto py-3" onClick={fetchOrders}>
-                        <RefreshCw size={18} className="mr-2" />
-                        Refresh
-                    </Button>
-                </div>
+                <button onClick={fetchTodaySubscriptions}
+                    style={{ padding: "10px 18px", borderRadius: 12, border: "1px solid #eee", background: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                    🔄 Refresh
+                </button>
             </div>
 
-            {/* Error Banner */}
+            {/* Stats */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 28 }}>
+                {[
+                    { label: "Total Orders", val: subscriptions.length, icon: "🛍️", bg: "#e3f2fd", color: "#1565c0" },
+                    { label: "Lunch", val: lunchSubs.length, icon: "🌞", bg: "#fff8e1", color: "#e65100" },
+                    { label: "Dinner", val: dinnerSubs.length, icon: "🌙", bg: "#ede7f6", color: "#4527a0" },
+                ].map((s, i) => (
+                    <div key={i} style={{ background: s.bg, borderRadius: 18, padding: "20px 18px" }}>
+                        <div style={{ fontSize: 24, marginBottom: 6 }}>{s.icon}</div>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: s.color, textTransform: "uppercase", letterSpacing: 1.5 }}>{s.label}</div>
+                        <div style={{ fontSize: 28, fontWeight: 800, color: s.color, fontFamily: "'Lora', serif" }}>{s.val}</div>
+                    </div>
+                ))}
+            </div>
+
+            {/* Error */}
             {error && (
-                <div className="bg-amber-50 text-amber-800 px-6 py-3 rounded-xl border border-amber-200 text-sm font-medium flex items-center gap-2">
-                    <AlertCircle size={16} />
-                    {error}
+                <div style={{ background: "#fff8e1", color: "#e65100", padding: "12px 18px", borderRadius: 12, marginBottom: 20, fontSize: 13, fontWeight: 700, border: "1px solid #ffe0b2" }}>
+                    ⚠️ {error}
                 </div>
             )}
 
             {/* Orders List */}
-            {orders.length === 0 ? (
-                <div className="py-20 text-center bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-100">
-                    <ShoppingBag size={40} className="mx-auto text-gray-300 mb-4" />
-                    <Typography className="text-gray-400 text-sm italic">No orders for today yet.</Typography>
+            {subscriptions.length === 0 ? (
+                <div style={{ padding: "80px 0", textAlign: "center" }}>
+                    <div style={{ fontSize: 48, marginBottom: 12 }}>🍱</div>
+                    <p style={{ color: "#ccc", fontSize: 16, fontStyle: "italic" }}>No pending meals for today.</p>
+                    <p style={{ color: "#ddd", fontSize: 12, marginTop: 6 }}>All meals have been served, or no active subscriptions.</p>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4">
-                    {orders.map((order) => (
-                        <Card key={order._id} className="border-none shadow-sm hover:shadow-md transition-all overflow-hidden group">
-                            <CardContent className="p-0">
-                                <div className="flex flex-col md:flex-row">
-                                    {/* Colored accent bar */}
-                                    <div className={cn(
-                                        "md:w-2 w-full h-2 md:h-auto shrink-0",
-                                        order.timeSlot === "lunch" ? "bg-[var(--primary)]" : "bg-[var(--accent)]"
-                                    )} />
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {subscriptions.map(sub => {
+                        const isLoading = actionLoading === sub._id;
+                        const subId = `SUB-${(sub._id || "").slice(-6).toUpperCase()}`;
+                        const isLunch = sub.timeSlot === "lunch";
 
-                                    <div className="flex-1 p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                        {/* Order info */}
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3 flex-wrap">
-                                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
-                                                    {formatOrderId(order._id)}
-                                                </span>
-                                                <div className={cn(
-                                                    "flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border capitalize",
-                                                    getStatusColor(order.status)
-                                                )}>
-                                                    {getStatusIcon(order.status)}
-                                                    {getStatusLabel(order.status)}
-                                                </div>
-                                                <span className={cn(
-                                                    "text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-tighter",
-                                                    order.paymentStatus === "paid" ? "bg-green-100 text-green-700"
-                                                        : order.paymentStatus === "partial" ? "bg-amber-100 text-amber-700"
-                                                            : "bg-gray-100 text-gray-500"
-                                                )}>
-                                                    {order.paymentStatus || "pending"}
-                                                </span>
-                                            </div>
+                        return (
+                            <div key={sub._id} style={{
+                                border: "1px solid #f0f0f0", borderRadius: 20, background: "#fcfdfc", overflow: "hidden",
+                                borderLeft: `4px solid ${isLunch ? "#8FAE8E" : "#6366f1"}`
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, flexWrap: "wrap" }}>
+                                    {/* Avatar */}
+                                    <div style={{ width: 42, height: 42, borderRadius: "50%", background: "#f0f4f0", border: "2px solid #e0e0e0", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, color: "#8FAE8E", fontSize: 16, flexShrink: 0 }}>
+                                        {(sub.user?.name || "?").charAt(0).toUpperCase()}
+                                    </div>
 
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-400">
-                                                    <User size={20} />
-                                                </div>
-                                                <div>
-                                                    <Typography className="font-bold">{order.user?.name || "Unknown"}</Typography>
-                                                    <div className="flex items-center gap-2 text-xs text-gray-500">
-                                                        <span className="w-2 h-2 rounded-full bg-green-500" />
-                                                        Veg • {(order.items || []).map(i => i.name).join(", ") || "—"}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Slot & contact info */}
-                                        <div className="flex flex-col md:items-end gap-2">
-                                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                <Clock size={16} className="text-gray-400" />
-                                                <span className="font-medium">{getSlotLabel(order.timeSlot)} Slot</span>
-                                                <span className="text-gray-300">|</span>
-                                                <span className="font-bold text-[var(--primary)]">₹{order.totalPrice || 0}</span>
-                                            </div>
-                                            {order.user?.phone && (
-                                                <div className="flex items-center gap-2 text-sm text-gray-600">
-                                                    <Phone size={16} className="text-gray-400" />
-                                                    <span>{order.user.phone}</span>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Action buttons */}
-                                        <div className="flex gap-2 shrink-0">
-                                            {(order.status === "confirmed" || order.status === "pending") && (
-                                                <Button
-                                                    size="sm"
-                                                    className="h-9"
-                                                    onClick={() => handleStatusUpdate(order._id, "preparing")}
-                                                    disabled={actionLoading === order._id}
-                                                >
-                                                    {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                                                    Start Preparing
-                                                </Button>
-                                            )}
-                                            {order.status === "preparing" && (
-                                                <Button
-                                                    size="sm"
-                                                    className="h-9"
-                                                    onClick={() => handleStatusUpdate(order._id, "ready")}
-                                                    disabled={actionLoading === order._id}
-                                                >
-                                                    {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                                                    Mark Ready
-                                                </Button>
-                                            )}
-                                            {order.status === "ready" && (
-                                                <Button
-                                                    size="sm"
-                                                    className="h-9"
-                                                    onClick={() => handleStatusUpdate(order._id, "completed")}
-                                                    disabled={actionLoading === order._id}
-                                                >
-                                                    {actionLoading === order._id ? <Loader2 size={14} className="animate-spin mr-1" /> : null}
-                                                    Mark Picked Up
-                                                </Button>
-                                            )}
-                                            {order.status !== "completed" && order.status !== "cancelled" && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-9 text-red-500 hover:bg-red-50"
-                                                    onClick={() => handleStatusUpdate(order._id, "cancelled")}
-                                                    disabled={actionLoading === order._id}
-                                                >
-                                                    Cancel
-                                                </Button>
-                                            )}
+                                    {/* Customer Info */}
+                                    <div style={{ flex: 1, minWidth: 120 }}>
+                                        <div style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{sub.user?.name || "Unknown"}</div>
+                                        <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>
+                                            {subId} &bull; {sub.user?.email || sub.user?.phone || ""}
                                         </div>
                                     </div>
+
+                                    {/* Slot */}
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: isLunch ? "#f59e0b" : "#6366f1", background: isLunch ? "#fff8e1" : "#eef2ff", padding: "4px 12px", borderRadius: 100 }}>
+                                        {isLunch ? "🌞 Lunch" : "🌙 Dinner"}
+                                    </span>
+
+                                    {/* Plan */}
+                                    <span style={{ padding: "4px 12px", borderRadius: 100, fontSize: 10, fontWeight: 800, textTransform: "uppercase", background: "#f3e5f5", color: "#7b1fa2" }}>
+                                        {sub.planType}
+                                    </span>
+
+                                    {/* Meals remaining */}
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: "#2d3b2d" }}>
+                                        {sub.remainingMeals ?? 0} meals left
+                                    </span>
+
+                                    {/* Mark Ready button */}
+                                    <button
+                                        onClick={() => handleMarkReady(sub._id)}
+                                        disabled={isLoading}
+                                        style={{
+                                            padding: "10px 20px", borderRadius: 12, border: "none",
+                                            background: "linear-gradient(135deg, #8FAE8E, #5a7a50)", color: "#fff",
+                                            fontWeight: 800, fontSize: 12, cursor: isLoading ? "not-allowed" : "pointer",
+                                            boxShadow: "0 4px 14px rgba(90,122,80,0.3)", whiteSpace: "nowrap",
+                                        }}>
+                                        {isLoading ? "⏳ Processing..." : "✅ Mark Meal Ready"}
+                                    </button>
                                 </div>
-                            </CardContent>
-                        </Card>
-                    ))}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>

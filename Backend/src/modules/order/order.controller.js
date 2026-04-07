@@ -167,10 +167,6 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Invalid date" });
     }
 
-    if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
-      return res.status(400).json({ message: "No items selected" });
-    }
-
     // ===== CHECK PROVIDER =====
     const provider = await Provider.findById(providerId);
     if (!provider || !provider.isApproved || !provider.isActive) {
@@ -187,43 +183,70 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ message: "Menu not available" });
     }
 
-    const firstDay = menu.weekMenu[0];
-    const slot = firstDay[timeSlot];
+    // Get day name from date (e.g., "Monday")
+    const orderDateObj = new Date(date);
+    const dayName = orderDateObj.toLocaleDateString("en-US", { weekday: "long" });
+
+    // Find the menu for that specific day
+    const dailyMenu = menu.weekMenu.find((m) => m.day === dayName);
+
+    if (!dailyMenu) {
+      return res.status(400).json({ message: `Menu for ${dayName} not found` });
+    }
+
+    const slot = dailyMenu[timeSlot];
 
     if (!slot || typeof slot.price !== "number") {
       return res.status(400).json({ message: "Meal price not configured" });
     }
 
     const baseMealPrice = slot.price;
-
-    // ===== VALIDATE ITEMS AGAINST MENU =====
-    const availableItems = slot.items.map(i => i.name);
-
+    const { isWholeTiffin } = req.body;
+    let totalPrice = 0;
     const validatedItems = [];
 
-    // Map item quantities and structure them correctly for the Order schema
-    for (const item of selectedItems) {
-      if (!availableItems.includes(item.name)) {
-        return res.status(400).json({
-          message: `Item ${item.name} not available`,
+    if (isWholeTiffin) {
+      // Logic for Whole Tiffin: Use meal price and include all items from the slot
+      totalPrice = baseMealPrice;
+      for (const menuItem of slot.items) {
+        validatedItems.push({
+          name: menuItem.name,
+          itemType: menuItem.type || "",
+          price: menuItem.price || 0,
+          quantity: 1,
         });
       }
+    } else {
+      // Logic for Selected Items: Sum item prices
+      if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
+        return res.status(400).json({ message: "No items selected" });
+      }
 
-      validatedItems.push({
-        name: item.name,
-        itemType: item.type || "",
-        price: 0,
-        quantity: item.quantity || 1, // Store quantity if needed later
-      });
+      for (const item of selectedItems) {
+        const menuItem = slot.items.find((i) => i.name === item.name);
+        if (!menuItem) {
+          return res.status(400).json({
+            message: `Item ${item.name} not available in ${timeSlot} menu on ${dayName}`,
+          });
+        }
+
+        const itemPrice = menuItem.price || 0;
+        const itemQuantity = item.quantity || 1;
+        totalPrice += itemPrice * itemQuantity;
+
+        validatedItems.push({
+          name: menuItem.name,
+          itemType: item.type || menuItem.type || "",
+          price: itemPrice,
+          quantity: itemQuantity,
+        });
+      }
     }
 
-    let totalPrice = baseMealPrice;
-
-    // ===== INTEGRATE CART IF EXISTS =====
+    // ===== INTEGRATE CART IF EXISTS (Override if cart has items) =====
     const cart = await Cart.findOne({ user: req.user._id, provider: providerId, timeSlot: timeSlot });
 
     if (cart && cart.items.length > 0) {
-      // If standard items are passed but cart has them, use Cart's state
       validatedItems.length = 0; // reset
       for (const cartItem of cart.items) {
         validatedItems.push({
@@ -233,7 +256,7 @@ const createOrder = async (req, res) => {
           quantity: cartItem.quantity || 1
         });
       }
-      totalPrice = cart.totalPrice > 0 ? cart.totalPrice : baseMealPrice;
+      totalPrice = cart.totalPrice;
     }
 
     // ===== WALLET =====

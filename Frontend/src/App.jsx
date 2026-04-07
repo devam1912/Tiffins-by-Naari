@@ -9,6 +9,7 @@ import { ProviderDashboard } from "./pages/provider/ProviderDashboard";
 import RegisterProvider from "./pages/provider/RegisterProvider";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import BrowseTiffins from "./pages/Customer/BrowseTiffins";
+import ProviderDetailPage from "./pages/Customer/ProviderDetailPage";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/RegisterProvider" element={<RegisterProvider />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/tiffins" element={<BrowseTiffins />} />
+        <Route path="/provider/:id" element={<ProviderDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

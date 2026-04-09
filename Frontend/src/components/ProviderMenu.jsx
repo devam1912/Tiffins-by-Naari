@@ -26,6 +26,7 @@ export const ProviderMenu = () => {
     const [toast, setToast] = useState(null);
     const nameRef = useRef();
     const typeRef = useRef();
+    const priceRef = useRef();
 
     const showToast = (msg, type = "success") => {
         setToast({ msg, type });
@@ -95,15 +96,30 @@ export const ProviderMenu = () => {
     const handleDelete = (dayName, mealType, itemId) => {
         setWeekMenu(prev => prev.map(d => {
             if (d.day !== dayName) return d;
-            return { ...d, [mealType]: { ...d[mealType], items: d[mealType].items.filter(i => i.id !== itemId) } };
+            return {
+                ...d,
+                [mealType]: {
+                    ...d[mealType],
+                    items: d[mealType].items.filter(i => (i.id || i._id) !== itemId)
+                }
+            };
         }));
         showToast("Item removed", "info");
+    };
+
+    const handleMealPriceChange = (dayName, mealType, newPrice) => {
+        const val = parseFloat(newPrice) || 0;
+        setWeekMenu(prev => prev.map(d => {
+            if (d.day !== dayName) return d;
+            return { ...d, [mealType]: { ...d[mealType], price: val } };
+        }));
     };
 
     // ── Add / Edit item ──
     const handleSaveItem = () => {
         const name = nameRef.current?.value?.trim();
         const type = typeRef.current?.value || "Sabzi";
+        const price = parseFloat(priceRef.current?.value) || 0;
         if (!name) return;
 
         const { day, mealType, item } = editingItem;
@@ -113,10 +129,11 @@ export const ProviderMenu = () => {
             let newItems;
             if (item) {
                 // editing
-                newItems = meal.items.map(i => i.id === item.id ? { ...i, name, type } : i);
+                const itemId = item.id || item._id;
+                newItems = meal.items.map(i => (i.id || i._id) === itemId ? { ...i, name, type, price } : i);
             } else {
                 // adding
-                newItems = [...meal.items, { id: Date.now().toString(), name, type, status: "pending" }];
+                newItems = [...meal.items, { id: Date.now().toString(), name, type, price, status: "pending" }];
             }
             return { ...d, [mealType]: { ...meal, items: newItems } };
         }));
@@ -151,6 +168,7 @@ export const ProviderMenu = () => {
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                             <span style={{ fontWeight: 700, fontSize: 14, color: "#2d3b2d" }}>{item.name}</span>
                             <span style={{ background: "#f3f4f6", color: "#6b7280", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6, textTransform: "uppercase" }}>{item.type}</span>
+                            <span style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E" }}>₹{item.price || 0}</span>
                             <StatusBadge status={item.status} />
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
@@ -246,10 +264,22 @@ export const ProviderMenu = () => {
                                     <div style={{ width: 32, height: 32, borderRadius: 10, background: "#fffbeb", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#f59e0b" /></div>
                                     <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Lunch</span>
                                 </div>
-                                <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "lunch" }); setIsModalOpen(true); }}
-                                    style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
-                                    <Plus size={15} /> Add
-                                </button>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                                        <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: "#9ca3af" }}>₹</span>
+                                        <input
+                                            type="number"
+                                            value={currentDayData.lunch.price || ""}
+                                            onChange={(e) => handleMealPriceChange(selectedDay, "lunch", e.target.value)}
+                                            placeholder="Tiffin Price"
+                                            style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
+                                        />
+                                    </div>
+                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "lunch" }); setIsModalOpen(true); }}
+                                        style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
+                                        <Plus size={15} /> Add
+                                    </button>
+                                </div>
                             </div>
                             {currentDayData.lunch.items.map(item => renderMenuItemCard(item, "lunch"))}
                             {currentDayData.lunch.items.length === 0 && (
@@ -266,10 +296,22 @@ export const ProviderMenu = () => {
                                     <div style={{ width: 32, height: 32, borderRadius: 10, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#6366f1" /></div>
                                     <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Dinner</span>
                                 </div>
-                                <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "dinner" }); setIsModalOpen(true); }}
-                                    style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
-                                    <Plus size={15} /> Add
-                                </button>
+                                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                                        <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: "#9ca3af" }}>₹</span>
+                                        <input
+                                            type="number"
+                                            value={currentDayData.dinner.price || ""}
+                                            onChange={(e) => handleMealPriceChange(selectedDay, "dinner", e.target.value)}
+                                            placeholder="Tiffin Price"
+                                            style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
+                                        />
+                                    </div>
+                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "dinner" }); setIsModalOpen(true); }}
+                                        style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
+                                        <Plus size={15} /> Add
+                                    </button>
+                                </div>
                             </div>
                             {currentDayData.dinner.items.map(item => renderMenuItemCard(item, "dinner"))}
                             {currentDayData.dinner.items.length === 0 && (
@@ -356,24 +398,33 @@ export const ProviderMenu = () => {
                                     </select>
                                 </div>
                                 <div>
-                                    <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
-                                    <div style={{ padding: "12px 16px", border: "2px solid #d1fae5", borderRadius: 14, background: "#ecfdf5", display: "flex", alignItems: "center", gap: 8 }}>
-                                        <Leaf size={14} color="#16a34a" />
-                                        <span style={{ fontSize: 13, fontWeight: 800, color: "#065f46" }}>Veg Only</span>
+                                    <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Price (Individual)</label>
+                                    <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                                        <span style={{ position: "absolute", left: 12, fontSize: 14, fontWeight: 800, color: "#9ca3af" }}>₹</span>
+                                        <input ref={priceRef} type="number" defaultValue={editingItem?.item?.price || 0}
+                                            placeholder="0"
+                                            style={{ width: "100%", padding: "12px 16px 12px 28px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box" }} />
                                     </div>
                                 </div>
                             </div>
-
-                            <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-                                <button onClick={() => setIsModalOpen(false)}
-                                    style={{ flex: 1, padding: 14, border: "2px solid #e5e7eb", borderRadius: 14, background: "none", fontWeight: 800, cursor: "pointer", color: "#6b7280" }}>
-                                    Cancel
-                                </button>
-                                <button onClick={handleSaveItem}
-                                    style={{ flex: 2, padding: 14, border: "none", borderRadius: 14, background: "#5a7a50", color: "#fff", fontWeight: 800, cursor: "pointer" }}>
-                                    Save Item
-                                </button>
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
+                                <div style={{ padding: "12px 16px", border: "2px solid #d1fae5", borderRadius: 14, background: "#ecfdf5", display: "flex", alignItems: "center", gap: 8 }}>
+                                    <Leaf size={14} color="#16a34a" />
+                                    <span style={{ fontSize: 13, fontWeight: 800, color: "#065f46" }}>Veg Only</span>
+                                </div>
                             </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                            <button onClick={() => setIsModalOpen(false)}
+                                style={{ flex: 1, padding: 14, border: "2px solid #e5e7eb", borderRadius: 14, background: "none", fontWeight: 800, cursor: "pointer", color: "#6b7280" }}>
+                                Cancel
+                            </button>
+                            <button onClick={handleSaveItem}
+                                style={{ flex: 2, padding: 14, border: "none", borderRadius: 14, background: "#5a7a50", color: "#fff", fontWeight: 800, cursor: "pointer" }}>
+                                Save Item
+                            </button>
                         </div>
                     </div>
                 </div>

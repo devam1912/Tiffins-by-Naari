@@ -49,7 +49,7 @@ export const ProviderDashboard = () => {
 
             // 2. Fetch Profile via No-Op PATCH (Workaround for GET profile missing)
             try {
-                const profileRes = await API.patch("/tiffins/profile", {});
+                const profileRes = await API.patch("/providers/profile", {});
                 if (profileRes.data?.provider) {
                     setProfile(profileRes.data.provider);
                     setIsServiceActive(profileRes.data.provider.isActive);

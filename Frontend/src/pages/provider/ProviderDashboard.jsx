@@ -37,61 +37,19 @@ export const ProviderDashboard = () => {
         setTimeout(() => setLoaded(true), 80);
     }, [token, navigate]);
 
-    const fetchAllData = useCallback(async () => {
-        if (!token) return;
-        setLoadingStats(true);
-        try {
-            // 1. Fetch Stats & Activity
-            const statsRes = await API.get("/subscriptions/provider/dashboard");
-            if (statsRes.data?.success) {
-                setStats(statsRes.data.data);
-            }
-
-            // 2. Fetch Profile via No-Op PATCH (Workaround for GET profile missing)
-            try {
-                const profileRes = await API.patch("/providers/profile", {});
-                if (profileRes.data?.provider) {
-                    setProfile(profileRes.data.provider);
-                    setIsServiceActive(profileRes.data.provider.isActive);
-                }
-            } catch (pErr) {
-                console.warn("Profile fetch workaround failed, checking public list...");
-                const nearbyRes = await API.get("/tiffins/nearby?lat=0&lng=0&distance=100000");
-                if (Array.isArray(nearbyRes.data)) {
-                    const myProfile = nearbyRes.data.find(p => p.user === user.id || p.user?._id === user.id);
-                    if (myProfile) {
-                        setProfile(myProfile);
-                        setIsServiceActive(myProfile.isActive);
-                    }
-                }
-            }
-        } catch (err) {
-            console.error("Dashboard Sync Failure:", err);
-        } finally {
-            setLoadingStats(false);
-        }
-    }, [token, user?.id]);
-
     useEffect(() => {
-        fetchAllData();
-    }, [fetchAllData]);
+        dispatch(fetchProviderDashboard());
+        dispatch(fetchProviderProfile());
+    }, [dispatch]);
 
     const handleLogout = () => {
         dispatch(logout());
         navigate("/login");
     };
 
-    const toggleServiceStatus = async () => {
-        setIsStatusLoading(true);
-        try {
-            const endpoint = isServiceActive ? "/providers/deactivate" : "/providers/reactivate";
-            await API.patch(endpoint);
-            setIsServiceActive(!isServiceActive);
-        } catch (err) {
-            console.error("Service toggle failed:", err);
-        } finally {
-            setIsStatusLoading(false);
-        }
+    const handleServiceToggle = () => {
+        if (!profile) return;
+        dispatch(toggleServiceStatus(profile.isActive));
     };
 
     const anim = (delay = 0) => ({

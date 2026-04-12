@@ -134,21 +134,23 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.auth.token);
-  const user = useSelector((state) => state.auth.user);
-
+  
   // UI & Data State
   const [loaded, setLoaded] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
-  const [stats, setStats] = useState({ totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 });
-  const [allProviders, setAllProviders] = useState([]);
-  const [pending, setPending] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [allOrders, setAllOrders] = useState([]);
-  const [allFeedbacks, setAllFeedbacks] = useState([]);
-  const [allMenus, setAllMenus] = useState([]);
-  const [dataLoading, setDataLoading] = useState(true);
+
+  const { 
+      providers, 
+      pending, 
+      users, 
+      orders, 
+      feedbacks, 
+      menus, 
+      stats, 
+      loading: dataLoading 
+  } = useSelector((state) => state.admin);
+  const { user } = useSelector((state) => state.auth);
 
   // Selection Targets
   const [approveTarget, setApproveTarget] = useState(null);
@@ -159,69 +161,23 @@ export default function AdminDashboard() {
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
 
-  // Data Fetching Logic
-  const fetchAllData = useCallback(async () => {
-    if (!token) { navigate("/login"); return; }
-    setDataLoading(true);
-    try {
-      const [pRes, penRes, uRes, oRes, fRes, mRes] = await Promise.allSettled([
-        API.get("/admin/providers"),
-        API.get("/admin/providers/pending"),
-        API.get("/admin/users"),
-        API.get("/admin/orders"),
-        API.get("/feedback"),
-        API.get("/tiffins/menu")
-      ]);
-
-      const providers = pRes.status === 'fulfilled' ? (pRes.value.data || []) : [];
-      const pendingData = penRes.status === 'fulfilled' ? (penRes.value.data.providers || penRes.value.data || []) : [];
-      const users = uRes.status === 'fulfilled' ? (uRes.value.data || []) : [];
-      const orders = oRes.status === 'fulfilled' ? (oRes.value.data || []) : [];
-      const feedbacks = fRes.status === 'fulfilled' ? (fRes.value.data.feedbacks || []) : [];
-      const menus = mRes.status === 'fulfilled' ? (mRes.value.data.menus || []) : [];
-
-      setAllProviders(providers);
-      setPending(pendingData);
-      setAllUsers(users);
-      setAllOrders(orders);
-      setAllFeedbacks(feedbacks);
-      setAllMenus(menus);
-
-      const calculatedStats = {
-        totalUsers: users.length,
-        totalProviders: providers.filter(p => p.isApproved).length,
-        totalOrders: orders.length,
-        totalRevenue: orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0)
-      };
-      setStats(calculatedStats);
-
-    } catch (err) {
-      console.error("Admin Load Failure:", err);
-    } finally {
-      setDataLoading(false);
-      setLoaded(true);
-    }
-  }, [token, navigate]);
-
   useEffect(() => {
-    fetchAllData();
+    dispatch(fetchAdminData());
+    setLoaded(true);
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
-  }, [fetchAllData]);
+  }, [dispatch]);
 
   const confirmApprove = async () => {
     if (!approveTarget) return;
     setApproving(true);
     try {
-      await API.patch(`/tiffins/approve/${approveTarget._id}`);
-      setAllProviders(current => current.map(p => p._id === approveTarget._id ? { ...p, isApproved: true } : p));
-      setPending(current => current.filter(p => p._id !== approveTarget._id));
-      setStats(s => ({ ...s, totalProviders: s.totalProviders + 1 }));
+      await dispatch(approveProvider(approveTarget._id)).unwrap();
       setApproveTarget(null);
     } catch (err) {
-      alert("Approval failed.");
+      alert(err || "Approval failed.");
     } finally {
       setApproving(false);
     }
@@ -231,11 +187,10 @@ export default function AdminDashboard() {
     if (!rejectTarget) return;
     setRejecting(true);
     try {
-      await API.patch(`/tiffins/reject/${rejectTarget._id}`, { reason });
-      setPending(current => current.filter(p => p._id !== rejectTarget._id));
+      await dispatch(rejectProvider({ providerId: rejectTarget._id, reason })).unwrap();
       setRejectTarget(null);
     } catch (err) {
-      alert("Rejection failed.");
+      alert(err || "Rejection failed.");
     } finally {
       setRejecting(false);
     }
@@ -261,9 +216,9 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: "Platform Users", val: stats.totalUsers + allProviders.length, icon: "👥" },
+    { label: "Platform Users", val: stats.totalUsers + providers.length, icon: "👥" },
     { label: "Active Kitchens", val: stats.totalProviders, icon: "👩‍🍳" },
-    { label: "Menus", val: allMenus.length, icon: "🍱" },
+    { label: "Menus", val: menus.length, icon: "🍱" },
     { label: "Orders", val: stats.totalOrders, icon: "🛍️" },
     { label: "Total Revenue", val: `₹${stats.totalRevenue.toLocaleString()}`, icon: "💰" }
   ];
@@ -301,7 +256,7 @@ export default function AdminDashboard() {
         transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
         boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>
           <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🛡️</div>
           {!collapsed && <div>
             <div style={{ fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.1 }}>Naari Admin</div>
@@ -377,9 +332,9 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div style={{ ...anim(100), background: "#fff", padding: "36px", borderRadius: 32, boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
-            {activeNav === "users" && <AdminUsers users={allUsers} />}
-            {activeNav === "feedback" && <AdminFeedback feedbacks={allFeedbacks} />}
-            {activeNav === "menu" && <AdminMenu menus={allMenus} />}
+            {activeNav === "users" && <AdminUsers users={users} />}
+            {activeNav === "feedback" && <AdminFeedback feedbacks={feedbacks} />}
+            {activeNav === "menu" && <AdminMenu menus={menus} />}
             {activeNav === "orders" && (
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -392,13 +347,13 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allOrders.map(o => (
+                    {orders.map(o => (
                       <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>#{o._id?.slice(-6).toUpperCase() || "N/A"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
                         <td style={{ padding: "16px 12px", textAlign: "right" }}>
-                          <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>{o.status?.toUpperCase() || "PENDING"}</span>
+                           <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>{o.status?.toUpperCase() || "PENDING"}</span>
                         </td>
                       </tr>
                     ))}
@@ -418,7 +373,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allProviders.map(p => (
+                    {providers.map(p => (
                       <tr key={p._id} style={{ borderBottom: "1px solid #fafafa" }}>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>{p.businessName}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{p.ownerName}</td>

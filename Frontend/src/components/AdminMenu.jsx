@@ -37,14 +37,12 @@ function RejectionModal({ menu, onClose, onReject, loading }) {
     );
 }
 
-export const AdminMenu = ({ menus: initialMenus = [] }) => {
-    const [menus, setMenus] = useState(initialMenus);
+export const AdminMenu = ({ menus = [] }) => {
+    const dispatch = useDispatch();
     const [searchTerm, setSearchTerm] = useState("");
     const [actionLoading, setActionLoading] = useState({});
     const [selected, setSelected] = useState(null); // expanded menu
     const [rejectTarget, setRejectTarget] = useState(null);
-
-    useEffect(() => { setMenus(initialMenus); }, [initialMenus]);
 
     const filtered = menus.filter(m =>
         m.provider?.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -54,9 +52,8 @@ export const AdminMenu = ({ menus: initialMenus = [] }) => {
     const handleApprove = async (menuId) => {
         setActionLoading(p => ({ ...p, [menuId]: true }));
         try {
-            await API.patch(`/tiffins/menu/${menuId}/approve`);
-            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: true, submittedForApproval: false, isPublished: true } : m));
-        } catch (e) { alert(e.response?.data?.message || "Approve failed"); }
+            await dispatch(approveMenu(menuId)).unwrap();
+        } catch (e) { alert(e || "Approve failed"); }
         finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
     };
 
@@ -65,10 +62,9 @@ export const AdminMenu = ({ menus: initialMenus = [] }) => {
         const menuId = rejectTarget._id;
         setActionLoading(p => ({ ...p, [menuId]: true }));
         try {
-            await API.patch(`/tiffins/menu/${menuId}/reject`, { remark });
-            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: false, isPublished: false, submittedForApproval: false } : m));
+            await dispatch(rejectMenu({ menuId, remark })).unwrap();
             setRejectTarget(null);
-        } catch (e) { alert(e.response?.data?.message || "Reject failed"); }
+        } catch (e) { alert(e || "Reject failed"); }
         finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
     };
 

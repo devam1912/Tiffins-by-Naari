@@ -1,53 +1,22 @@
-import React, { useState, useEffect } from "react";
-import API from "../api/auth";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchProviderSubscriptions, markMealReady } from "../store/providerSlice";
 
 export const OrdersToday = () => {
-    const [subscriptions, setSubscriptions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const dispatch = useDispatch();
+    const { subscriptions: allSubs, loading, error } = useSelector((state) => state.provider);
     const [actionLoading, setActionLoading] = useState(null);
 
-    const fetchTodaySubscriptions = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await API.get("/subscriptions/provider-subscriptions");
-            if (res.data?.success) {
-                // Filter to active subscriptions that need serving today
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                const todaySubs = (res.data.data || []).filter(sub => {
-                    if (sub.status !== "active") return false;
-                    // Include if not yet served today
-                    if (sub.lastServedDate) {
-                        const lastServed = new Date(sub.lastServedDate);
-                        lastServed.setHours(0, 0, 0, 0);
-                        return lastServed.getTime() !== today.getTime();
-                    }
-                    return true;
-                });
-
-                setSubscriptions(todaySubs);
-            }
-        } catch (err) {
-            console.error("Orders sync failed:", err);
-            setError("Unable to load today's orders.");
-            setSubscriptions([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { fetchTodaySubscriptions(); }, []);
+    useEffect(() => {
+        dispatch(fetchProviderSubscriptions());
+    }, [dispatch]);
 
     const handleMarkReady = async (subId) => {
         setActionLoading(subId);
         try {
-            await API.patch(`/subscriptions/${subId}/mark-meal-ready`);
-            await fetchTodaySubscriptions();
+            await dispatch(markMealReady(subId)).unwrap();
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to mark meal ready");
+            alert(err || "Failed to mark meal ready");
         } finally {
             setActionLoading(null);
         }
@@ -58,6 +27,20 @@ export const OrdersToday = () => {
     if (loading) return (
         <div style={{ padding: 80, textAlign: "center", color: "#8FAE8E", fontWeight: 700 }}>Loading today's orders...</div>
     );
+
+    // Filter to active subscriptions that need serving today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const subscriptions = allSubs.filter(sub => {
+        if (sub.status !== "active") return false;
+        if (sub.lastServedDate) {
+            const lastServed = new Date(sub.lastServedDate);
+            lastServed.setHours(0, 0, 0, 0);
+            return lastServed.getTime() !== today.getTime();
+        }
+        return true;
+    });
 
     const lunchSubs = subscriptions.filter(s => s.timeSlot === "lunch");
     const dinnerSubs = subscriptions.filter(s => s.timeSlot === "dinner");
@@ -70,7 +53,7 @@ export const OrdersToday = () => {
                     <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Orders Today</h2>
                     <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{formatDate()} — {subscriptions.length} meals to prepare</p>
                 </div>
-                <button onClick={fetchTodaySubscriptions}
+                <button onClick={() => dispatch(fetchProviderSubscriptions())}
                     style={{ padding: "10px 18px", borderRadius: 12, border: "1px solid #eee", background: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                     🔄 Refresh
                 </button>
@@ -103,7 +86,6 @@ export const OrdersToday = () => {
                 <div style={{ padding: "80px 0", textAlign: "center" }}>
                     <div style={{ fontSize: 48, marginBottom: 12 }}>🍱</div>
                     <p style={{ color: "#ccc", fontSize: 16, fontStyle: "italic" }}>No pending meals for today.</p>
-                    <p style={{ color: "#ddd", fontSize: 12, marginTop: 6 }}>All meals have been served, or no active subscriptions.</p>
                 </div>
             ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

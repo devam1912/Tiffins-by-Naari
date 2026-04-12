@@ -1,41 +1,28 @@
 import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchProviderSubscriptions, markMealReady } from "../store/providerSlice";
 import API from "../api/auth";
 
 export const ActiveSubscriptions = () => {
-    const [subscriptions, setSubscriptions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const dispatch = useDispatch();
+    const { subscriptions, loading, error } = useSelector((state) => state.provider);
     const [searchQuery, setSearchQuery] = useState("");
     const [actionLoading, setActionLoading] = useState(null);
     const [selectedSub, setSelectedSub] = useState(null);
 
-    const fetchSubscriptions = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await API.get("/subscriptions/provider-subscriptions");
-            if (res.data?.success) {
-                setSubscriptions(res.data.data || []);
-            }
-        } catch (err) {
-            console.error("Provider subscriptions fetch failed:", err);
-            setError("Unable to load subscriptions.");
-            setSubscriptions([]);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => { fetchSubscriptions(); }, []);
+    useEffect(() => {
+        dispatch(fetchProviderSubscriptions());
+    }, [dispatch]);
 
     const handleMarkMealReady = async (subId) => {
         setActionLoading(subId);
         try {
-            await API.patch(`/subscriptions/${subId}/mark-meal-ready`);
-            await fetchSubscriptions();
+            await dispatch(markMealReady(subId)).unwrap();
         } catch (err) {
-            alert(err.response?.data?.message || "Failed to mark meal ready");
-        } finally { setActionLoading(null); }
+            alert(err || "Failed to mark meal ready");
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     // Helpers
@@ -95,7 +82,7 @@ export const ActiveSubscriptions = () => {
                             style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: "1px solid #eee", borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 220 }}
                         />
                     </div>
-                    <button onClick={fetchSubscriptions}
+                    <button onClick={() => dispatch(fetchProviderSubscriptions())}
                         style={{ padding: "10px 18px", borderRadius: 12, border: "1px solid #eee", background: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                         🔄 Refresh
                     </button>

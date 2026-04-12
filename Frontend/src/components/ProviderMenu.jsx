@@ -14,80 +14,60 @@ const buildWeekMenu = (serverWeekMenu = []) => {
 };
 
 export const ProviderMenu = () => {
-    const user = useSelector((state) => state.auth.user);
+    const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
+    const { menu, loading } = useSelector((state) => state.provider);
+
     const [selectedDay, setSelectedDay] = useState("Monday");
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [weekMenu, setWeekMenu] = useState(DAYS.map(day => ({ day, ...EMPTY_DAY() })));
-    const [menuStatus, setMenuStatus] = useState({ isApproved: false, submittedForApproval: false });
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState(null);
     const nameRef = useRef();
     const typeRef = useRef();
     const priceRef = useRef();
+
+    useEffect(() => {
+        if (user) {
+            dispatch(fetchProviderMenu(user.id || user._id));
+        }
+    }, [dispatch, user]);
+
+    useEffect(() => {
+        if (menu?.weekMenu) {
+            setWeekMenu(buildWeekMenu(menu.weekMenu));
+        }
+    }, [menu]);
 
     const showToast = (msg, type = "success") => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
     };
 
-    // ── Fetch provider's own menu on mount ──
-    // GET /tiffins/menu is now public; filter client-side by matching provider.user._id
-    useEffect(() => {
-        const fetchMenu = async () => {
-            try {
-                const res = await API.get("/tiffins/menu");
-                const allMenus = res.data?.menus || [];
-                const myMenu = allMenus.find(m =>
-                    m.provider?.user?._id === user?.id || m.provider?.user === user?.id
-                );
-                if (myMenu?.weekMenu) {
-                    setWeekMenu(buildWeekMenu(myMenu.weekMenu));
-                    setMenuStatus({
-                        isApproved: myMenu.isApproved,
-                        submittedForApproval: myMenu.submittedForApproval,
-                    });
-                }
-            } catch (err) {
-                console.error("Menu fetch failed:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchMenu();
-    }, [user?.id]);
-
     const currentDayData = weekMenu.find(d => d.day === selectedDay) || { ...EMPTY_DAY() };
 
-    // ── Save menu to backend ──
     const handleSaveMenu = async () => {
         setIsSaving(true);
         try {
-            const payload = weekMenu.map(d => ({
-                day: d.day,
-                lunch: d.lunch,
-                dinner: d.dinner,
-            }));
-            await API.post("/tiffins/menu", { weekMenu: payload });
+            await dispatch(saveMenu(weekMenu)).unwrap();
             showToast("Menu saved successfully!");
         } catch (err) {
-            showToast(err.response?.data?.message || "Save failed. Are you an approved provider?", "error");
+            showToast(err || "Save failed.", "error");
         } finally {
             setIsSaving(false);
         }
     };
 
-    // ── Submit for admin approval ──
     const handleSubmitForApproval = async () => {
+        if (!window.confirm("Submit this menu for admin approval?")) return;
         setIsSubmitting(true);
         try {
-            await API.patch("/tiffins/menu/submit");
-            setMenuStatus(s => ({ ...s, submittedForApproval: true, isApproved: false }));
+            await dispatch(submitMenuForApproval()).unwrap();
             showToast("Submitted for admin approval!");
         } catch (err) {
-            showToast(err.response?.data?.message || "Submission failed.", "error");
+            showToast(err || "Submission failed.", "error");
         } finally {
             setIsSubmitting(false);
         }
@@ -104,7 +84,7 @@ export const ProviderMenu = () => {
                 }
             };
         }));
-        showToast("Item removed", "info");
+        showToast("Item removed locally — save to sync", "info");
     };
 
     const handleMealPriceChange = (dayName, mealType, newPrice) => {
@@ -115,7 +95,6 @@ export const ProviderMenu = () => {
         }));
     };
 
-    // ── Add / Edit item ──
     const handleSaveItem = () => {
         const name = nameRef.current?.value?.trim();
         const type = typeRef.current?.value || "Sabzi";
@@ -128,18 +107,21 @@ export const ProviderMenu = () => {
             const meal = d[mealType];
             let newItems;
             if (item) {
-                // editing
                 const itemId = item.id || item._id;
                 newItems = meal.items.map(i => (i.id || i._id) === itemId ? { ...i, name, type, price } : i);
             } else {
-                // adding
                 newItems = [...meal.items, { id: Date.now().toString(), name, type, price, status: "pending" }];
             }
             return { ...d, [mealType]: { ...meal, items: newItems } };
         }));
-        showToast(item ? "Item updated" : "Item added — save to sync with server");
+        showToast(item ? "Item updated locally" : "Item added locally — save to sync");
         setIsModalOpen(false);
         setEditingItem(null);
+    };
+
+    const menuStatus = {
+        isApproved: menu?.isApproved || false,
+        submittedForApproval: menu?.submittedForApproval || false
     };
 
     const StatusBadge = ({ status }) => {
@@ -159,7 +141,7 @@ export const ProviderMenu = () => {
     const renderMenuItemCard = (item, mealType) => {
         const isApproved = item.status === "approved";
         return (
-            <div key={item.id} style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div key={item.id || item._id} style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 40, height: 40, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "#f9fafb", border: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <UtensilsCrossed size={16} color={item.status === "pending" ? "#f59e0b" : "#d1d5db"} />

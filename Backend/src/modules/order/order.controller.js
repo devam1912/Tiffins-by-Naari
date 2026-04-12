@@ -122,34 +122,43 @@ const updateOrderStatus = async (req, res) => {
 };
 
 
-// create order plus razorpay id if wallet bal not enough to fullfil the order amt
+// create order from cart — cart must be populated before calling this
 const createOrder = async (req, res) => {
   try {
-    const { providerId, date, timeSlot, selectedItems } = req.body;
-
-    const p1 = await Provider.findById(providerId);
-
+    const { providerId, date, timeSlot } = req.body;
 
     // ===== BASIC VALIDATION =====
     if (!providerId) {
       return res.status(400).json({ message: "Provider ID required" });
     }
 
-    //TSP cannot accept orders when inactive
-    if (!p1.isActive) {
-      throw new Error("Provider currently unavailable");
+    if (!date) {
+      return res.status(400).json({ message: "Date is required" });
     }
 
     if (!["lunch", "dinner"].includes(timeSlot)) {
       return res.status(400).json({ message: "Invalid time slot" });
     }
 
+    const orderDate = new Date(date);
+    if (isNaN(orderDate)) {
+      return res.status(400).json({ message: "Invalid date" });
+    }
+
+    // ===== CHECK PROVIDER =====
+    const provider = await Provider.findById(providerId);
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    if (!provider.isApproved || !provider.isActive) {
+      return res.status(400).json({ message: "Provider currently unavailable" });
+    }
+
     // ===== TIME VALIDATION FOR ORDERING =====
     const now = new Date();
     const currentHours = now.getHours() + now.getMinutes() / 60;
-
-    // Convert orderDate into today check
-    const isToday = new Date().toDateString() === new Date(date).toDateString();
+    const isToday = new Date().toDateString() === orderDate.toDateString();
 
     if (isToday) {
       if (timeSlot === "lunch" && currentHours >= 15) {
@@ -161,102 +170,22 @@ const createOrder = async (req, res) => {
       }
     }
 
-    const orderDate = new Date(date);
-    if (isNaN(orderDate)) {
-      return res.status(400).json({ message: "Invalid date" });
+    // ===== FETCH CART — PRIMARY SOURCE OF ITEMS =====
+    const cart = await Cart.findOne({ user: req.user._id, provider: providerId, timeSlot });
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Your cart is empty. Please add items before placing an order." });
     }
 
-    // ===== CHECK PROVIDER =====
-    const provider = await Provider.findById(providerId);
-    if (!provider || !provider.isApproved || !provider.isActive) {
-      return res.status(400).json({ message: "Provider not available" });
-    }
+    // Build order items directly from cart
+    const orderItems = cart.items.map((cartItem) => ({
+      name: cartItem.name,
+      itemType: cartItem.type || "",
+      price: cartItem.price || 0,
+      quantity: cartItem.quantity || 1,
+    }));
 
-    // ===== GET MENU =====
-    const menu = await Menu.findOne({
-      provider: providerId,
-      isPublished: true,
-    });
-
-    if (!menu || menu.weekMenu.length === 0) {
-      return res.status(400).json({ message: "Menu not available" });
-    }
-
-    // Get day name from date (e.g., "Monday")
-    const orderDateObj = new Date(date);
-    const dayName = orderDateObj.toLocaleDateString("en-US", { weekday: "long" });
-
-    // Find the menu for that specific day
-    const dailyMenu = menu.weekMenu.find((m) => m.day === dayName);
-
-    if (!dailyMenu) {
-      return res.status(400).json({ message: `Menu for ${dayName} not found` });
-    }
-
-    const slot = dailyMenu[timeSlot];
-
-    if (!slot || typeof slot.price !== "number") {
-      return res.status(400).json({ message: "Meal price not configured" });
-    }
-
-    const baseMealPrice = slot.price;
-    const { isWholeTiffin } = req.body;
-    let totalPrice = 0;
-    const validatedItems = [];
-
-    if (isWholeTiffin) {
-      // Logic for Whole Tiffin: Use meal price and include all items from the slot
-      totalPrice = baseMealPrice;
-      for (const menuItem of slot.items) {
-        validatedItems.push({
-          name: menuItem.name,
-          itemType: menuItem.type || "",
-          price: menuItem.price || 0,
-          quantity: 1,
-        });
-      }
-    } else {
-      // Logic for Selected Items: Sum item prices
-      if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
-        return res.status(400).json({ message: "No items selected" });
-      }
-
-      for (const item of selectedItems) {
-        const menuItem = slot.items.find((i) => i.name === item.name);
-        if (!menuItem) {
-          return res.status(400).json({
-            message: `Item ${item.name} not available in ${timeSlot} menu on ${dayName}`,
-          });
-        }
-
-        const itemPrice = menuItem.price || 0;
-        const itemQuantity = item.quantity || 1;
-        totalPrice += itemPrice * itemQuantity;
-
-        validatedItems.push({
-          name: menuItem.name,
-          itemType: item.type || menuItem.type || "",
-          price: itemPrice,
-          quantity: itemQuantity,
-        });
-      }
-    }
-
-    // ===== INTEGRATE CART IF EXISTS (Override if cart has items) =====
-    const cart = await Cart.findOne({ user: req.user._id, provider: providerId, timeSlot: timeSlot });
-
-    if (cart && cart.items.length > 0) {
-      validatedItems.length = 0; // reset
-      for (const cartItem of cart.items) {
-        validatedItems.push({
-          name: cartItem.name,
-          itemType: cartItem.type || "",
-          price: cartItem.price || 0,
-          quantity: cartItem.quantity || 1
-        });
-      }
-      totalPrice = cart.totalPrice;
-    }
+    const totalPrice = cart.totalPrice;
 
     // ===== WALLET =====
     const walletResult = await deductCredit(req.user._id, totalPrice);
@@ -270,19 +199,17 @@ const createOrder = async (req, res) => {
         provider: providerId,
         date: orderDate,
         timeSlot,
-        items: validatedItems,
+        items: orderItems,
         totalPrice,
         amountPaid: totalPrice,
         paymentStatus: "paid",
         status: "confirmed",
       });
 
-      // Clear cart
-      if (cart) {
-        cart.items = [];
-        cart.totalPrice = 0;
-        await cart.save();
-      }
+      // Clear cart after successful order
+      cart.items = [];
+      cart.totalPrice = 0;
+      await cart.save();
 
       return res.status(201).json({
         message: "Order placed using wallet",
@@ -291,7 +218,6 @@ const createOrder = async (req, res) => {
     }
 
     // 🟡 CASE 2 — PARTIAL / FULL RAZORPAY NEEDED
-
     const razorpayOrder = await razorpay.orders.create({
       amount: remainingToPay * 100, // ₹ → paise
       currency: "INR",
@@ -303,7 +229,7 @@ const createOrder = async (req, res) => {
       provider: providerId,
       date: orderDate,
       timeSlot,
-      items: validatedItems,
+      items: orderItems,
       totalPrice,
       amountPaid: walletUsed,
       paymentStatus: walletUsed > 0 ? "partial" : "pending",
@@ -311,12 +237,10 @@ const createOrder = async (req, res) => {
       status: "pending",
     });
 
-    // Clear cart (Order is pending but items are moved to checkout flow)
-    if (cart) {
-      cart.items = [];
-      cart.totalPrice = 0;
-      await cart.save();
-    }
+    // Clear cart — items are now captured in the pending order
+    cart.items = [];
+    cart.totalPrice = 0;
+    await cart.save();
 
     return res.status(201).json({
       message: "Razorpay payment required",

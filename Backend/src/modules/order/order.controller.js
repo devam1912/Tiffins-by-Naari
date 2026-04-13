@@ -3,6 +3,7 @@ const User = require("../user/user.model");
 const Provider = require("../tiffin/provider.model");
 const Cart = require("../cart/cart.model");
 const { deductCredit } = require("../user/wallet.service");
+const { creditProviderAfterPayment } = require("../payout/payout.service");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const { sendEmail } = require("../../utils/notification.service");
@@ -194,6 +195,13 @@ const createOrder = async (req, res) => {
 
     // 🟢 CASE 1 — FULL WALLET PAYMENT
     if (remainingToPay === 0) {
+      // 5% platform fee, 95% to provider
+      const { platformFee, providerEarning } = await creditProviderAfterPayment(
+        providerId,
+        totalPrice,
+        `Order (wallet) for ${timeSlot} on ${orderDate.toDateString()}`
+      );
+
       const order = await Order.create({
         user: req.user._id,
         provider: providerId,
@@ -202,6 +210,8 @@ const createOrder = async (req, res) => {
         items: orderItems,
         totalPrice,
         amountPaid: totalPrice,
+        platformFee,
+        providerEarning,
         paymentStatus: "paid",
         status: "confirmed",
       });
@@ -276,6 +286,15 @@ const verifyOrderPayment = async (req, res) => {
       order.amountPaid = order.totalPrice;
       order.status = "confirmed";
 
+      // 5% platform fee, 95% to provider
+      const { platformFee, providerEarning } = await creditProviderAfterPayment(
+        order.provider._id || order.provider,
+        order.totalPrice,
+        `Order (test mode) for ${order.timeSlot}`
+      );
+      order.platformFee = platformFee;
+      order.providerEarning = providerEarning;
+
       await order.save();
 
       await sendReceiptEmail(order);
@@ -302,6 +321,15 @@ const verifyOrderPayment = async (req, res) => {
     order.paymentStatus = "paid";
     order.amountPaid = order.totalPrice;
     order.status = "confirmed";
+
+    // 5% platform fee, 95% to provider
+    const { platformFee, providerEarning } = await creditProviderAfterPayment(
+      order.provider._id || order.provider,
+      order.totalPrice,
+      `Order (Razorpay) for ${order.timeSlot} on ${order.date.toDateString()}`
+    );
+    order.platformFee = platformFee;
+    order.providerEarning = providerEarning;
 
     await order.save();
 

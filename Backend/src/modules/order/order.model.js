@@ -46,6 +46,16 @@ const orderSchema = new mongoose.Schema(
       default: 0,
     },
 
+    platformFee: {
+      type: Number,
+      default: 0,
+    },
+
+    providerEarning: {
+      type: Number,
+      default: 0,
+    },
+
     status: {
       type: String,
       enum: ["pending", "confirmed", "preparing", "ready", "completed", "cancelled"],

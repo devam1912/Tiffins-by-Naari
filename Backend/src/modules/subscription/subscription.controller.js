@@ -2,6 +2,7 @@ const Subscription = require("./subscription.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
 const { deductCredit, addCredit } = require("../user/wallet.service");
+const { creditProviderAfterPayment } = require("../payout/payout.service");
 const crypto = require("crypto");
 const razorpay = require("../../utils/razorpay");
 const { sendEmail } = require("../../utils/notification.service");
@@ -105,6 +106,13 @@ const remainingToPay = walletResult.remainingToPay;
 
 // 🟢 FULL WALLET PAYMENT
 if (remainingToPay === 0) {
+  // 5% platform fee, 95% to provider
+  const { platformFee, providerEarning } = await creditProviderAfterPayment(
+    providerId,
+    totalPrice,
+    `Subscription (wallet) ${planType} plan - ${timeSlot}`
+  );
+
   const subscription = await Subscription.create({
     user: req.user._id,
     provider: providerId,
@@ -115,6 +123,8 @@ if (remainingToPay === 0) {
     totalPrice,
     remainingMeals: totalDays,
     amountPaid: totalPrice,
+    platformFee,
+    providerEarning,
     paymentStatus: "paid",
     status: "active",
   });
@@ -177,6 +187,15 @@ const verifySubscriptionPayment = async (req, res) => {
       subscription.amountPaid = subscription.totalPrice;
       subscription.status = "active";
 
+      // 5% platform fee, 95% to provider
+      const { platformFee, providerEarning } = await creditProviderAfterPayment(
+        subscription.provider._id || subscription.provider,
+        subscription.totalPrice,
+        `Subscription (test mode) ${subscription.planType} - ${subscription.timeSlot}`
+      );
+      subscription.platformFee = platformFee;
+      subscription.providerEarning = providerEarning;
+
       await subscription.save();
 
       await sendSubscriptionEmail(subscription);
@@ -204,6 +223,15 @@ const verifySubscriptionPayment = async (req, res) => {
     subscription.paymentStatus = "paid";
     subscription.amountPaid = subscription.totalPrice;
     subscription.status = "active";
+
+    // 5% platform fee, 95% to provider
+    const { platformFee, providerEarning } = await creditProviderAfterPayment(
+      subscription.provider._id || subscription.provider,
+      subscription.totalPrice,
+      `Subscription (Razorpay) ${subscription.planType} plan - ${subscription.timeSlot}`
+    );
+    subscription.platformFee = platformFee;
+    subscription.providerEarning = providerEarning;
 
     await subscription.save();
 

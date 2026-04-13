@@ -15,6 +15,8 @@ try {
     require("./src/modules/order/order.routes");
     console.log("Loading recommendation...");
     require("./src/modules/recommendation/recommendation.routes");
+    console.log("Loading payout...");
+    require("./src/modules/payout/payout.routes");
     console.log("All routes loaded!");
 } catch (err) {
     console.error("LOAD ERROR:", err.message);

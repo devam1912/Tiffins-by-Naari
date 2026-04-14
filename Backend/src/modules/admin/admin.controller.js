@@ -1,6 +1,7 @@
 const User = require("../user/user.model");
 const Provider = require("../tiffin/provider.model");
 const Order = require("../order/order.model");
+const Subscription = require("../subscription/subscription.model");
 
 // GET all users
 const getAllUsers = async (req, res) => {
@@ -56,10 +57,34 @@ const getPendingProviders = async (req, res) => {
   }
 };
 
+// GET all subscriptions (admin)
+const getAllSubscriptions = async (req, res) => {
+  try {
+    const filter = {};
+    if (req.query.status) filter.status = req.query.status;
+    if (req.query.providerId) filter.provider = req.query.providerId;
+
+    const subscriptions = await Subscription.find(filter)
+      .populate("user", "name email phone")
+      .populate("provider", "businessName ownerName email phone")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: subscriptions.length,
+      data: subscriptions,
+    });
+  } catch (error) {
+    console.error("Get All Subscriptions Error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getAllProviders,
   getAllOrders,
   getAdminStats,
   getPendingProviders,
+  getAllSubscriptions,
 };

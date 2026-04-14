@@ -1,9 +1,9 @@
 const Order = require("./order.model");
 const User = require("../user/user.model");
 const Provider = require("../tiffin/provider.model");
-const Menu = require("../tiffin/menu.model");
 const Cart = require("../cart/cart.model");
 const { deductCredit } = require("../user/wallet.service");
+const { creditProviderAfterPayment } = require("../payout/payout.service");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const { sendEmail } = require("../../utils/notification.service");
@@ -123,34 +123,43 @@ const updateOrderStatus = async (req, res) => {
 };
 
 
-// create order plus razorpay id if wallet bal not enough to fullfil the order amt
+// create order from cart — cart must be populated before calling this
 const createOrder = async (req, res) => {
   try {
-    const { providerId, date, timeSlot, selectedItems } = req.body;
-
-    const p1 = await Provider.findById(providerId);
-
+    const { providerId, date, timeSlot } = req.body;
 
     // ===== BASIC VALIDATION =====
     if (!providerId) {
       return res.status(400).json({ message: "Provider ID required" });
     }
 
-    //TSP cannot accept orders when inactive
-    if (!p1.isActive) {
-      throw new Error("Provider currently unavailable");
+    if (!date) {
+      return res.status(400).json({ message: "Date is required" });
     }
 
     if (!["lunch", "dinner"].includes(timeSlot)) {
       return res.status(400).json({ message: "Invalid time slot" });
     }
 
+    const orderDate = new Date(date);
+    if (isNaN(orderDate)) {
+      return res.status(400).json({ message: "Invalid date" });
+    }
+
+    // ===== CHECK PROVIDER =====
+    const provider = await Provider.findById(providerId);
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    if (!provider.isApproved || !provider.isActive) {
+      return res.status(400).json({ message: "Provider currently unavailable" });
+    }
+
     // ===== TIME VALIDATION FOR ORDERING =====
     const now = new Date();
     const currentHours = now.getHours() + now.getMinutes() / 60;
-
-    // Convert orderDate into today check
-    const isToday = new Date().toDateString() === new Date(date).toDateString();
+    const isToday = new Date().toDateString() === orderDate.toDateString();
 
     if (isToday) {
       if (timeSlot === "lunch" && currentHours >= 15) {
@@ -162,79 +171,22 @@ const createOrder = async (req, res) => {
       }
     }
 
-    const orderDate = new Date(date);
-    if (isNaN(orderDate)) {
-      return res.status(400).json({ message: "Invalid date" });
+    // ===== FETCH CART — PRIMARY SOURCE OF ITEMS =====
+    const cart = await Cart.findOne({ user: req.user._id, provider: providerId, timeSlot });
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({ message: "Your cart is empty. Please add items before placing an order." });
     }
 
-    if (!Array.isArray(selectedItems) || selectedItems.length === 0) {
-      return res.status(400).json({ message: "No items selected" });
-    }
+    // Build order items directly from cart
+    const orderItems = cart.items.map((cartItem) => ({
+      name: cartItem.name,
+      itemType: cartItem.type || "",
+      price: cartItem.price || 0,
+      quantity: cartItem.quantity || 1,
+    }));
 
-    // ===== CHECK PROVIDER =====
-    const provider = await Provider.findById(providerId);
-    if (!provider || !provider.isApproved || !provider.isActive) {
-      return res.status(400).json({ message: "Provider not available" });
-    }
-
-    // ===== GET MENU =====
-    const menu = await Menu.findOne({
-      provider: providerId,
-      isPublished: true,
-    });
-
-    if (!menu || menu.weekMenu.length === 0) {
-      return res.status(400).json({ message: "Menu not available" });
-    }
-
-    const firstDay = menu.weekMenu[0];
-    const slot = firstDay[timeSlot];
-
-    if (!slot || typeof slot.price !== "number") {
-      return res.status(400).json({ message: "Meal price not configured" });
-    }
-
-    const baseMealPrice = slot.price;
-
-    // ===== VALIDATE ITEMS AGAINST MENU =====
-    const availableItems = slot.items.map(i => i.name);
-
-    const validatedItems = [];
-
-    // Map item quantities and structure them correctly for the Order schema
-    for (const item of selectedItems) {
-      if (!availableItems.includes(item.name)) {
-        return res.status(400).json({
-          message: `Item ${item.name} not available`,
-        });
-      }
-
-      validatedItems.push({
-        name: item.name,
-        itemType: item.type || "",
-        price: 0,
-        quantity: item.quantity || 1, // Store quantity if needed later
-      });
-    }
-
-    let totalPrice = baseMealPrice;
-
-    // ===== INTEGRATE CART IF EXISTS =====
-    const cart = await Cart.findOne({ user: req.user._id, provider: providerId, timeSlot: timeSlot });
-
-    if (cart && cart.items.length > 0) {
-      // If standard items are passed but cart has them, use Cart's state
-      validatedItems.length = 0; // reset
-      for (const cartItem of cart.items) {
-        validatedItems.push({
-          name: cartItem.name,
-          itemType: cartItem.type || "",
-          price: cartItem.price || 0,
-          quantity: cartItem.quantity || 1
-        });
-      }
-      totalPrice = cart.totalPrice > 0 ? cart.totalPrice : baseMealPrice;
-    }
+    const totalPrice = cart.totalPrice;
 
     // ===== WALLET =====
     const walletResult = await deductCredit(req.user._id, totalPrice);
@@ -243,24 +195,31 @@ const createOrder = async (req, res) => {
 
     // 🟢 CASE 1 — FULL WALLET PAYMENT
     if (remainingToPay === 0) {
+      // 5% platform fee, 95% to provider
+      const { platformFee, providerEarning } = await creditProviderAfterPayment(
+        providerId,
+        totalPrice,
+        `Order (wallet) for ${timeSlot} on ${orderDate.toDateString()}`
+      );
+
       const order = await Order.create({
         user: req.user._id,
         provider: providerId,
         date: orderDate,
         timeSlot,
-        items: validatedItems,
+        items: orderItems,
         totalPrice,
         amountPaid: totalPrice,
+        platformFee,
+        providerEarning,
         paymentStatus: "paid",
         status: "confirmed",
       });
 
-      // Clear cart
-      if (cart) {
-        cart.items = [];
-        cart.totalPrice = 0;
-        await cart.save();
-      }
+      // Clear cart after successful order
+      cart.items = [];
+      cart.totalPrice = 0;
+      await cart.save();
 
       return res.status(201).json({
         message: "Order placed using wallet",
@@ -269,7 +228,6 @@ const createOrder = async (req, res) => {
     }
 
     // 🟡 CASE 2 — PARTIAL / FULL RAZORPAY NEEDED
-
     const razorpayOrder = await razorpay.orders.create({
       amount: remainingToPay * 100, // ₹ → paise
       currency: "INR",
@@ -281,7 +239,7 @@ const createOrder = async (req, res) => {
       provider: providerId,
       date: orderDate,
       timeSlot,
-      items: validatedItems,
+      items: orderItems,
       totalPrice,
       amountPaid: walletUsed,
       paymentStatus: walletUsed > 0 ? "partial" : "pending",
@@ -289,12 +247,10 @@ const createOrder = async (req, res) => {
       status: "pending",
     });
 
-    // Clear cart (Order is pending but items are moved to checkout flow)
-    if (cart) {
-      cart.items = [];
-      cart.totalPrice = 0;
-      await cart.save();
-    }
+    // Clear cart — items are now captured in the pending order
+    cart.items = [];
+    cart.totalPrice = 0;
+    await cart.save();
 
     return res.status(201).json({
       message: "Razorpay payment required",
@@ -330,6 +286,15 @@ const verifyOrderPayment = async (req, res) => {
       order.amountPaid = order.totalPrice;
       order.status = "confirmed";
 
+      // 5% platform fee, 95% to provider
+      const { platformFee, providerEarning } = await creditProviderAfterPayment(
+        order.provider._id || order.provider,
+        order.totalPrice,
+        `Order (test mode) for ${order.timeSlot}`
+      );
+      order.platformFee = platformFee;
+      order.providerEarning = providerEarning;
+
       await order.save();
 
       await sendReceiptEmail(order);
@@ -356,6 +321,15 @@ const verifyOrderPayment = async (req, res) => {
     order.paymentStatus = "paid";
     order.amountPaid = order.totalPrice;
     order.status = "confirmed";
+
+    // 5% platform fee, 95% to provider
+    const { platformFee, providerEarning } = await creditProviderAfterPayment(
+      order.provider._id || order.provider,
+      order.totalPrice,
+      `Order (Razorpay) for ${order.timeSlot} on ${order.date.toDateString()}`
+    );
+    order.platformFee = platformFee;
+    order.providerEarning = providerEarning;
 
     await order.save();
 

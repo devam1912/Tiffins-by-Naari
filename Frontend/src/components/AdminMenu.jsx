@@ -3,13 +3,46 @@ import API from "../api/auth";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-export const AdminMenu = ({ menus: initialMenus = [] }) => {
-    const [menus, setMenus] = useState(initialMenus);
+function RejectionModal({ menu, onClose, onReject, loading }) {
+    const [reason, setReason] = useState("");
+    return (
+        <div
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+            style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(30,10,10,0.6)", backdropFilter: "blur(12px)", padding: 20 }}
+        >
+            <div style={{ background: "#fff", borderRadius: 32, padding: "44px", maxWidth: 480, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.25)", position: "relative" }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "#ef5350" }} />
+                <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Decline Menu</h2>
+                <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Kitchen: <span style={{ color: "#ef5350", fontWeight: 700 }}>{menu?.provider?.businessName}</span></p>
+
+                <textarea
+                    value={reason}
+                    onChange={e => setReason(e.target.value)}
+                    placeholder="Reason for rejection (sent to provider)..."
+                    style={{ width: "100%", padding: 18, borderRadius: 16, border: "2px solid #f0f0f0", fontSize: 14, minHeight: 120, marginBottom: 24, resize: "none", outline: "none", fontFamily: "'Nunito', sans-serif" }}
+                />
+
+                <div style={{ display: "flex", gap: 14 }}>
+                    <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "transparent", border: "2px solid #eee", borderRadius: 16, fontWeight: 700, color: "#999", cursor: "pointer" }}>Back</button>
+                    <button
+                        onClick={() => onReject(reason)}
+                        disabled={!reason.trim() || loading}
+                        style={{ flex: 2, padding: "14px", background: "#ef5350", color: "#fff", border: "none", borderRadius: 16, fontWeight: 700, cursor: (!reason.trim() || loading) ? "not-allowed" : "pointer" }}
+                    >
+                        {loading ? "Processing..." : "Confirm Rejection"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export const AdminMenu = ({ menus = [] }) => {
+    const dispatch = useDispatch();
     const [searchTerm, setSearchTerm] = useState("");
     const [actionLoading, setActionLoading] = useState({});
     const [selected, setSelected] = useState(null); // expanded menu
-
-    useEffect(() => { setMenus(initialMenus); }, [initialMenus]);
+    const [rejectTarget, setRejectTarget] = useState(null);
 
     const filtered = menus.filter(m =>
         m.provider?.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -19,18 +52,19 @@ export const AdminMenu = ({ menus: initialMenus = [] }) => {
     const handleApprove = async (menuId) => {
         setActionLoading(p => ({ ...p, [menuId]: true }));
         try {
-            await API.patch(`/tiffins/menu/${menuId}/approve`);
-            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: true, submittedForApproval: false, isPublished: true } : m));
-        } catch (e) { alert(e.response?.data?.message || "Approve failed"); }
+            await dispatch(approveMenu(menuId)).unwrap();
+        } catch (e) { alert(e || "Approve failed"); }
         finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
     };
 
-    const handleReject = async (menuId) => {
+    const handleReject = async (remark) => {
+        if (!rejectTarget) return;
+        const menuId = rejectTarget._id;
         setActionLoading(p => ({ ...p, [menuId]: true }));
         try {
-            await API.patch(`/tiffins/menu/${menuId}/reject`);
-            setMenus(p => p.map(m => m._id === menuId ? { ...m, isApproved: false, isPublished: false } : m));
-        } catch (e) { alert(e.response?.data?.message || "Reject failed"); }
+            await dispatch(rejectMenu({ menuId, remark })).unwrap();
+            setRejectTarget(null);
+        } catch (e) { alert(e || "Reject failed"); }
         finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
     };
 
@@ -42,6 +76,14 @@ export const AdminMenu = ({ menus: initialMenus = [] }) => {
 
     return (
         <div style={{ fontFamily: "'Nunito', sans-serif" }}>
+            {rejectTarget && (
+                <RejectionModal
+                    menu={rejectTarget}
+                    onClose={() => setRejectTarget(null)}
+                    onReject={handleReject}
+                    loading={actionLoading[rejectTarget._id]}
+                />
+            )}
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
@@ -99,10 +141,16 @@ export const AdminMenu = ({ menus: initialMenus = [] }) => {
                                                     </button>
                                                 )}
                                                 {menu.isApproved && (
-                                                    <button onClick={e => { e.stopPropagation(); handleReject(menu._id); }}
+                                                    <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
                                                         style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
                                                         ✕ Revoke
                                                     </button>
+                                                )}
+                                                {!menu.isApproved && menu.submittedForApproval && (
+                                                     <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
+                                                     style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
+                                                     ✕ Reject
+                                                 </button>
                                                 )}
                                             </div>
                                         ) : (

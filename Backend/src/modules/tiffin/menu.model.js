@@ -17,6 +17,11 @@ const menuItemSchema = new mongoose.Schema({
   type: {
     type: String, // dal, sabzi, rice, bread, dessert
   },
+
+  price: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const mealSchema = new mongoose.Schema({

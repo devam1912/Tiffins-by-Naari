@@ -64,6 +64,16 @@ const subscriptionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
+    platformFee: {
+      type: Number,
+      default: 0,
+    },
+
+    providerEarning: {
+      type: Number,
+      default: 0,
+    },
     paymentStatus: {
     type: String,
     enum: ["pending", "partial", "paid"],

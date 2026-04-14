@@ -22,6 +22,7 @@ const feedbackRoutes = require("./modules/feedback/feedback.routes");
 const recommendationRoutes = require("./modules/recommendation/recommendation.routes");
 const cartRoutes = require("./modules/cart/cart.routes");
 const providerRoutes = require("./modules/tiffin/provider.routes");
+const payoutRoutes = require("./modules/payout/payout.routes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/feedback", feedbackRoutes);
@@ -33,4 +34,5 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/providers", providerRoutes);
+app.use("/api/payouts", payoutRoutes);
 module.exports = app;

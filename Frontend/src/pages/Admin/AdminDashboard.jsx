@@ -2,6 +2,13 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { 
+  fetchAdminData, 
+  approveProvider, 
+  rejectProvider, 
+  processPayout, 
+  creditProviderWallet 
+} from "../../store/adminSlice";
 import API from "../../api/auth";
 
 // Internal Components
@@ -74,7 +81,65 @@ function RejectModal({ provider, onClose, onReject, loading }) {
 }
 
 // ══════════════════════════════════════════
-// 3. VIEW APPLICATION MODAL
+// 3. PAYOUT MODAL
+// ══════════════════════════════════════════
+function PayoutModal({ provider, type = "debit", onClose, onConfirm, loading }) {
+  const [amount, setAmount] = useState("");
+  const [desc, setDesc] = useState("");
+
+  const isDebit = type === "debit";
+  const title = isDebit ? "Process Payout" : "Manual Adjustment";
+  const color = isDebit ? "#8FAE8E" : "#6366f1";
+
+  return (
+    <div
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      style={{ position: "fixed", inset: 0, zIndex: 10001, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: 20 }}
+    >
+      <div style={{ background: "#fff", borderRadius: 32, padding: "40px", maxWidth: 440, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: color }} />
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>{title}</h2>
+        <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: color, fontWeight: 700 }}>{provider?.businessName}</span></p>
+
+        <div style={{ marginBottom: 20 }}>
+          <label style={{ display: "block", fontSize: 10, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 8 }}>Amount (₹)</label>
+          <input 
+            type="number"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            placeholder="0.00"
+            style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: "2px solid #f0f0f0", outline: "none", fontSize: 16, fontWeight: 700 }}
+          />
+        </div>
+
+        <div style={{ marginBottom: 32 }}>
+          <label style={{ display: "block", fontSize: 10, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 8 }}>Description / Note</label>
+          <input 
+            type="text"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+            placeholder={isDebit ? "Weekly settlement" : "Order adjustment"}
+            style={{ width: "100%", padding: "14px 18px", borderRadius: 14, border: "2px solid #f0f0f0", outline: "none", fontSize: 14 }}
+          />
+        </div>
+
+        <div style={{ display: "flex", gap: 14 }}>
+          <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 700, cursor: "pointer", color: "#888" }}>Cancel</button>
+          <button 
+            disabled={!amount || loading}
+            onClick={() => onConfirm({ amount: Number(amount), description: desc })}
+            style={{ flex: 2, padding: "14px", background: color, color: "#fff", border: "none", borderRadius: 16, fontWeight: 700, cursor: (!amount || loading) ? "not-allowed" : "pointer" }}
+          >
+            {loading ? "Processing..." : "Confirm Action"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
+// 4. VIEW APPLICATION MODAL
 // ══════════════════════════════════════════
 function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
   const isPdf = provider?.fssaiCertificate?.toLowerCase().includes(".pdf");
@@ -129,99 +194,60 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
 }
 
 // ══════════════════════════════════════════
-// 4. MAIN DASHBOARD CONTROLLER
+// 5. MAIN DASHBOARD CONTROLLER
 // ══════════════════════════════════════════
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const token = useSelector((state) => state.auth.token);
-  const user = useSelector((state) => state.auth.user);
-
+  
   // UI & Data State
   const [loaded, setLoaded] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
-  const [stats, setStats] = useState({ totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 });
-  const [allProviders, setAllProviders] = useState([]);
-  const [pending, setPending] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
-  const [allOrders, setAllOrders] = useState([]);
-  const [allFeedbacks, setAllFeedbacks] = useState([]);
-  const [allMenus, setAllMenus] = useState([]);
-  const [dataLoading, setDataLoading] = useState(true);
+
+  const { 
+      providers, 
+      pending, 
+      users, 
+      orders, 
+      feedbacks, 
+      menus, 
+      subscriptions,
+      payoutBalances,
+      stats, 
+      loading: dataLoading 
+  } = useSelector((state) => state.admin);
+  const { user } = useSelector((state) => state.auth);
 
   // Selection Targets
   const [approveTarget, setApproveTarget] = useState(null);
   const [rejectTarget, setRejectTarget] = useState(null);
   const [viewTarget, setViewTarget] = useState(null);
+  const [payoutTarget, setPayoutTarget] = useState(null);
+  const [adjustmentTarget, setAdjustmentTarget] = useState(null);
 
   // Action Loading States
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
-
-  // Data Fetching Logic
-  const fetchAllData = useCallback(async () => {
-    if (!token) { navigate("/login"); return; }
-    setDataLoading(true);
-    try {
-      const [pRes, penRes, uRes, oRes, fRes, mRes] = await Promise.allSettled([
-        API.get("/admin/providers"),
-        API.get("/admin/providers/pending"),
-        API.get("/admin/users"),
-        API.get("/admin/orders"),
-        API.get("/feedback"),
-        API.get("/tiffins/menu")
-      ]);
-
-      const providers = pRes.status === 'fulfilled' ? (pRes.value.data || []) : [];
-      const pendingData = penRes.status === 'fulfilled' ? (penRes.value.data.providers || penRes.value.data || []) : [];
-      const users = uRes.status === 'fulfilled' ? (uRes.value.data || []) : [];
-      const orders = oRes.status === 'fulfilled' ? (oRes.value.data || []) : [];
-      const feedbacks = fRes.status === 'fulfilled' ? (fRes.value.data.feedbacks || []) : [];
-      const menus = mRes.status === 'fulfilled' ? (mRes.value.data.menus || []) : [];
-
-      setAllProviders(providers);
-      setPending(pendingData);
-      setAllUsers(users);
-      setAllOrders(orders);
-      setAllFeedbacks(feedbacks);
-      setAllMenus(menus);
-
-      const calculatedStats = {
-        totalUsers: users.length,
-        totalProviders: providers.filter(p => p.isApproved).length,
-        totalOrders: orders.length,
-        totalRevenue: orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0)
-      };
-      setStats(calculatedStats);
-
-    } catch (err) {
-      console.error("Admin Load Failure:", err);
-    } finally {
-      setDataLoading(false);
-      setLoaded(true);
-    }
-  }, [token, navigate]);
+  const [payoutLoading, setPayoutLoading] = useState(false);
 
   useEffect(() => {
-    fetchAllData();
+    dispatch(fetchAdminData());
+    setLoaded(true);
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
-  }, [fetchAllData]);
+  }, [dispatch]);
 
   const confirmApprove = async () => {
     if (!approveTarget) return;
     setApproving(true);
     try {
-      await API.patch(`/tiffins/approve/${approveTarget._id}`);
-      setAllProviders(current => current.map(p => p._id === approveTarget._id ? { ...p, isApproved: true } : p));
-      setPending(current => current.filter(p => p._id !== approveTarget._id));
-      setStats(s => ({ ...s, totalProviders: s.totalProviders + 1 }));
+      await dispatch(approveProvider(approveTarget._id)).unwrap();
       setApproveTarget(null);
     } catch (err) {
-      alert("Approval failed.");
+      alert(err || "Approval failed.");
     } finally {
       setApproving(false);
     }
@@ -231,13 +257,40 @@ export default function AdminDashboard() {
     if (!rejectTarget) return;
     setRejecting(true);
     try {
-      await API.patch(`/tiffins/reject/${rejectTarget._id}`, { reason });
-      setPending(current => current.filter(p => p._id !== rejectTarget._id));
+      await dispatch(rejectProvider({ providerId: rejectTarget._id, reason })).unwrap();
       setRejectTarget(null);
     } catch (err) {
-      alert("Rejection failed.");
+      alert(err || "Rejection failed.");
     } finally {
       setRejecting(false);
+    }
+  };
+
+  const handlePayout = async ({ amount, description }) => {
+    if (!payoutTarget) return;
+    setPayoutLoading(true);
+    try {
+      await dispatch(processPayout({ providerId: payoutTarget.providerId, amount, description })).unwrap();
+      setPayoutTarget(null);
+      alert("Payout processed successfully!");
+    } catch (err) {
+      alert(err || "Payout failed.");
+    } finally {
+      setPayoutLoading(false);
+    }
+  };
+
+  const handleAdjustment = async ({ amount, description }) => {
+    if (!adjustmentTarget) return;
+    setPayoutLoading(true);
+    try {
+      await dispatch(creditProviderWallet({ providerId: adjustmentTarget.providerId, amount, description })).unwrap();
+      setAdjustmentTarget(null);
+      alert("Credit adjustment successful!");
+    } catch (err) {
+      alert(err || "Adjustment failed.");
+    } finally {
+      setPayoutLoading(false);
     }
   };
 
@@ -261,11 +314,11 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: "Platform Users", val: stats.totalUsers + allProviders.length, icon: "👥" },
+    { label: "Platform Users", val: stats.totalUsers, icon: "👥" },
     { label: "Active Kitchens", val: stats.totalProviders, icon: "👩‍🍳" },
-    { label: "Menus", val: allMenus.length, icon: "🍱" },
+    { label: "Menus", val: menus.length, icon: "🍱" },
     { label: "Orders", val: stats.totalOrders, icon: "🛍️" },
-    { label: "Total Revenue", val: `₹${stats.totalRevenue.toLocaleString()}`, icon: "💰" }
+    { label: "Total Revenue", val: `₹${stats.totalRevenue?.toLocaleString() || 0}`, icon: "💰" }
   ];
 
   const adminName = user?.name?.split(" ")[0] || "Admin";
@@ -292,6 +345,26 @@ export default function AdminDashboard() {
       {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={approving} />}
       {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={rejecting} />}
       {viewTarget && <ViewApplicationModal provider={viewTarget} onClose={() => setViewTarget(null)} onApprove={setApproveTarget} onReject={setRejectTarget} />}
+      
+      {payoutTarget && (
+        <PayoutModal 
+          provider={payoutTarget} 
+          type="debit" 
+          onClose={() => setPayoutTarget(null)} 
+          onConfirm={handlePayout} 
+          loading={payoutLoading} 
+        />
+      )}
+      
+      {adjustmentTarget && (
+        <PayoutModal 
+          provider={adjustmentTarget} 
+          type="credit" 
+          onClose={() => setAdjustmentTarget(null)} 
+          onConfirm={handleAdjustment} 
+          loading={payoutLoading} 
+        />
+      )}
 
       <aside style={{
         width: collapsed ? 80 : 280, minHeight: "100vh",
@@ -301,7 +374,7 @@ export default function AdminDashboard() {
         transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
         boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>
           <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🛡️</div>
           {!collapsed && <div>
             <div style={{ fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.1 }}>Naari Admin</div>
@@ -316,6 +389,8 @@ export default function AdminDashboard() {
             { id: "providers", icon: "👩‍🍳", label: "Tiffin Providers" },
             { id: "menu", icon: "🍱", label: "Menus" },
             { id: "orders", icon: "🛍️", label: "Orders" },
+            { id: "subscriptions", icon: "📅", label: "Subscriptions" },
+            { id: "payouts", icon: "💰", label: "Payouts" },
             { id: "feedback", icon: "💬", label: "Feedbacks" }
 
           ].map(item => (
@@ -377,9 +452,9 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div style={{ ...anim(100), background: "#fff", padding: "36px", borderRadius: 32, boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
-            {activeNav === "users" && <AdminUsers users={allUsers} />}
-            {activeNav === "feedback" && <AdminFeedback feedbacks={allFeedbacks} />}
-            {activeNav === "menu" && <AdminMenu menus={allMenus} />}
+            {activeNav === "users" && <AdminUsers users={users} />}
+            {activeNav === "feedback" && <AdminFeedback feedbacks={feedbacks} />}
+            {activeNav === "menu" && <AdminMenu menus={menus} />}
             {activeNav === "orders" && (
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -392,13 +467,71 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allOrders.map(o => (
+                    {orders.map(o => (
                       <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>#{o._id?.slice(-6).toUpperCase() || "N/A"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
                         <td style={{ padding: "16px 12px", textAlign: "right" }}>
-                          <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>{o.status?.toUpperCase() || "PENDING"}</span>
+                           <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>{o.status?.toUpperCase() || "PENDING"}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {activeNav === "subscriptions" && (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Plan</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Customer</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Kitchen</th>
+                      <th style={{ textAlign: "right", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {subscriptions.map(s => (
+                      <tr key={s._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>{s.planType?.toUpperCase() || "Standard"}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 13 }}>{s.user?.name || "Customer"}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 13 }}>{s.provider?.businessName || "Kitchen"}</td>
+                        <td style={{ padding: "16px 12px", textAlign: "right" }}>
+                          <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: s.status === 'active' ? '#e8f5e9' : '#fff3e0', color: s.status === 'active' ? '#2e7d32' : '#ef6c00' }}>{s.status?.toUpperCase() || "ACTIVE"}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {activeNav === "payouts" && (
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Kitchen</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Balance</th>
+                      <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Total Paid</th>
+                      <th style={{ textAlign: "right", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {payoutBalances.map(p => (
+                      <tr key={p.providerId} style={{ borderBottom: "1px solid #fafafa" }}>
+                        <td style={{ padding: "16px 12px" }}>
+                          <div style={{ fontSize: 14, fontWeight: 700 }}>{p.businessName}</div>
+                          <div style={{ fontSize: 11, color: "#aaa" }}>{p.ownerName}</div>
+                        </td>
+                        <td style={{ padding: "16px 12px", fontSize: 16, fontWeight: 800, color: "#2d3b2d" }}>₹{p.walletBalance?.toLocaleString()}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 14, color: "#888" }}>₹{p.totalPaid?.toLocaleString() || 0}</td>
+                        <td style={{ padding: "16px 12px", textAlign: "right" }}>
+                          <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+                            <button onClick={() => setAdjustmentTarget(p)} style={{ background: "#f0f0f0", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer", color: "#666" }}>Adjust</button>
+                            <button onClick={() => setPayoutTarget(p)} style={{ background: "#8FAE8E", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Payout</button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -418,7 +551,7 @@ export default function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {allProviders.map(p => (
+                    {providers.map(p => (
                       <tr key={p._id} style={{ borderBottom: "1px solid #fafafa" }}>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>{p.businessName}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{p.ownerName}</td>
@@ -444,3 +577,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

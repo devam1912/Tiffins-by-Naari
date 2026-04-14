@@ -2,6 +2,7 @@ const Subscription = require("./subscription.model");
 const Provider = require("../tiffin/provider.model");
 const Menu = require("../tiffin/menu.model");
 const { deductCredit, addCredit } = require("../user/wallet.service");
+const { creditProviderAfterPayment } = require("../payout/payout.service");
 const crypto = require("crypto");
 const razorpay = require("../../utils/razorpay");
 const { sendEmail } = require("../../utils/notification.service");
@@ -105,6 +106,13 @@ const remainingToPay = walletResult.remainingToPay;
 
 // 🟢 FULL WALLET PAYMENT
 if (remainingToPay === 0) {
+  // 5% platform fee, 95% to provider
+  const { platformFee, providerEarning } = await creditProviderAfterPayment(
+    providerId,
+    totalPrice,
+    `Subscription (wallet) ${planType} plan - ${timeSlot}`
+  );
+
   const subscription = await Subscription.create({
     user: req.user._id,
     provider: providerId,
@@ -115,6 +123,8 @@ if (remainingToPay === 0) {
     totalPrice,
     remainingMeals: totalDays,
     amountPaid: totalPrice,
+    platformFee,
+    providerEarning,
     paymentStatus: "paid",
     status: "active",
   });
@@ -177,6 +187,15 @@ const verifySubscriptionPayment = async (req, res) => {
       subscription.amountPaid = subscription.totalPrice;
       subscription.status = "active";
 
+      // 5% platform fee, 95% to provider
+      const { platformFee, providerEarning } = await creditProviderAfterPayment(
+        subscription.provider._id || subscription.provider,
+        subscription.totalPrice,
+        `Subscription (test mode) ${subscription.planType} - ${subscription.timeSlot}`
+      );
+      subscription.platformFee = platformFee;
+      subscription.providerEarning = providerEarning;
+
       await subscription.save();
 
       await sendSubscriptionEmail(subscription);
@@ -204,6 +223,15 @@ const verifySubscriptionPayment = async (req, res) => {
     subscription.paymentStatus = "paid";
     subscription.amountPaid = subscription.totalPrice;
     subscription.status = "active";
+
+    // 5% platform fee, 95% to provider
+    const { platformFee, providerEarning } = await creditProviderAfterPayment(
+      subscription.provider._id || subscription.provider,
+      subscription.totalPrice,
+      `Subscription (Razorpay) ${subscription.planType} plan - ${subscription.timeSlot}`
+    );
+    subscription.platformFee = platformFee;
+    subscription.providerEarning = providerEarning;
 
     await subscription.save();
 
@@ -613,6 +641,46 @@ const handleVacationResume = async (subscription) => {
   }
 };
 
+const getMySubscriptions = async (req, res) => {
+  try {
+    const subscriptions = await Subscription.find({ user: req.user._id })
+      .populate("provider", "businessName ownerName email phone address cuisineType")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: subscriptions.length,
+      data: subscriptions,
+    });
+  } catch (error) {
+    console.error("Get My Subscriptions Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+const getProviderSubscriptions = async (req, res) => {
+  try {
+    const provider = await Provider.findOne({ user: req.user._id });
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    const subscriptions = await Subscription.find({ provider: provider._id })
+      .populate("user", "name email phone")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: subscriptions.length,
+      data: subscriptions,
+    });
+  } catch (error) {
+    console.error("Get Provider Subscriptions Error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const getProviderDashboard = async (req, res) => {
   try {
     const providerDoc = await Provider.findOne({ user: req.user._id });
@@ -704,4 +772,6 @@ module.exports = {
   markMealReady,
   setVacationMode,
   getProviderDashboard,
+  getMySubscriptions,
+  getProviderSubscriptions,
 };

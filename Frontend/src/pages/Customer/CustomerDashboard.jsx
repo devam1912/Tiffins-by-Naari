@@ -175,13 +175,13 @@ export default function CustomerDashboard() {
       `}</style>
 
       {/* ══════════════ SIDEBAR ══════════════ */}
-      <Sidebar 
-        collapsed={collapsed} 
-        setCollapsed={setCollapsed} 
-        activeNav={activeNav} 
-        setActiveNav={setActiveNav} 
-        user={user} 
-        location={location} 
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
+        user={user}
+        location={location}
         logout={handleLogout}
       />
 

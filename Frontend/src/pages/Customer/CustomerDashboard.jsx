@@ -12,6 +12,7 @@ export default function CustomerDashboard() {
   const [activeNav, setActiveNav] = useState("dashboard");
   const [stats, setStats] = useState({ tiffins: 0, subscriptions: 0, orders: 0 });
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
+  const [recommendations, setRecommendations] = useState([]);
 
   // ✅ Redux se user aur token
   const user = useSelector((state) => state.auth.user);
@@ -80,11 +81,22 @@ export default function CustomerDashboard() {
           subscriptions: subsRes.data.length || 0,
           orders: ordersRes.data.length || 0,
         });
+
       })
       .catch(err => console.error("Dashboard fetch error:", err));
 
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);
+
+  // ✅ 3. Fetch Recommendations when location is available
+  useEffect(() => {
+    if (location.lat && location.lng) {
+      const headers = { Authorization: `Bearer ${token}` };
+      axios.get(`http://localhost:5000/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
+        .then(res => setRecommendations(res.data.providers || []))
+        .catch(err => console.error("Recs fetch error:", err));
+    }
+  }, [location.lat, location.lng, token]);
 
   // ✅ Naya logout — Redux dispatch karta hai
   const handleLogout = () => {
@@ -138,14 +150,12 @@ export default function CustomerDashboard() {
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-color)", color: "var(--text-color)", fontFamily: "'Nunito', sans-serif" }}>
-
+    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: var(--bg-color); }
-        ::-webkit-scrollbar-thumb { background: var(--accent-color); border-radius: 10px; }
-
+        ::-webkit-scrollbar-track { background: #E7E6B6; }
+        ::-webkit-scrollbar-thumb { background: #8FAE8E; border-radius: 10px; }
         
         .nav-btn {
           display:flex; align-items:center; gap:12px;
@@ -198,11 +208,10 @@ export default function CustomerDashboard() {
         {/* ── Top bar ── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, flexWrap: "wrap", gap: 16, ...anim(0) }}>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "var(--accent-color)", marginBottom: 6 }}>{greeting} 👋</p>
-            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3.2vw,38px)", fontWeight: 700, color: "var(--text-color)", lineHeight: 1.15 }}>
-              Namaste, <em style={{ color: "var(--accent-color)" }}>{firstName}!</em>
+            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>{greeting} 👋</p>
+            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3.2vw,38px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
+              Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
             </h1>
-
             <p style={{ color: "#888", fontSize: 14, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
               📍 {location.address} · Ready for your next meal?
@@ -211,11 +220,10 @@ export default function CustomerDashboard() {
 
           {/* Notification + Avatar */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 14, background: "var(--card-bg)", backdropFilter: "blur(12px)", border: "1px solid var(--border-color)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", boxShadow: "0 4px 14px rgba(143,174,142,0.12)", position: "relative" }}>
+            <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.72)", backdropFilter: "blur(12px)", border: "1px solid rgba(143,174,142,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", boxShadow: "0 4px 14px rgba(143,174,142,0.12)", position: "relative" }}>
               🔔
-              <span style={{ position: "absolute", top: 9, right: 10, width: 8, height: 8, borderRadius: "50%", background: "#ef5350", border: "2px solid var(--bg-color)" }} />
+              <span style={{ position: "absolute", top: 9, right: 10, width: 8, height: 8, borderRadius: "50%", background: "#ef5350", border: "2px solid #E7E6B6" }} />
             </div>
-
             <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, fontSize: 17, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", cursor: "pointer" }}>
               {firstName[0]?.toUpperCase()}
             </div>
@@ -270,10 +278,9 @@ export default function CustomerDashboard() {
 
         {/* ── Quick actions label ── */}
         <div style={{ marginBottom: 16, ...anim(240) }}>
-          <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "var(--text-color)", marginBottom: 4 }}>Quick Actions</h2>
+          <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>Quick Actions</h2>
           <p style={{ color: "#888", fontSize: 14 }}>Everything you need, one click away</p>
         </div>
-
 
         {/* ── Quick action cards ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 18, marginBottom: 44, ...anim(280) }}>
@@ -288,8 +295,6 @@ export default function CustomerDashboard() {
           ))}
         </div>
 
-<<<<<<< HEAD
-=======
         {/* ── Recommendations ── */}
         <div style={{ marginBottom: 44, ...anim(300) }}>
           <div style={{ marginBottom: 16 }}>
@@ -336,19 +341,16 @@ export default function CustomerDashboard() {
             </div>
           )}
         </div>
-
->>>>>>> 28e463a (bug fix)
         {/* ── Bottom row: activity + today's meal ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start", ...anim(340) }}>
 
           {/* Activity feed */}
-          <div style={{ background: "var(--card-bg)", backdropFilter: "blur(14px)", border: "1px solid var(--border-color)", borderRadius: 24, padding: "28px 26px", boxShadow: "0 4px 24px rgba(143,174,142,0.1)" }}>
+          <div style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(14px)", border: "1px solid rgba(143,174,142,0.2)", borderRadius: 24, padding: "28px 26px", boxShadow: "0 4px 24px rgba(143,174,142,0.1)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 22 }}>
               <div>
-                <h2 style={{ fontFamily: "'Lora',serif", fontSize: 20, fontWeight: 700, color: "var(--text-color)", marginBottom: 2 }}>Recent Activity</h2>
+                <h2 style={{ fontFamily: "'Lora',serif", fontSize: 20, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>Recent Activity</h2>
                 <p style={{ fontSize: 13, color: "#bbb", fontWeight: 600 }}>Your latest updates</p>
               </div>
-
               <button className="outline-btn" onClick={() => navigate("/subscriptions")} style={{ background: "transparent", border: "2px solid #8FAE8E", color: "#5a7a50", borderRadius: 20, padding: "7px 18px", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all 0.25s ease" }}>View All</button>
             </div>
 

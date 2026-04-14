@@ -12,6 +12,7 @@ export default function CustomerDashboard() {
   const [activeNav, setActiveNav] = useState("dashboard");
   const [stats, setStats] = useState({ tiffins: 0, subscriptions: 0, orders: 0 });
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
+  const [recommendations, setRecommendations] = useState([]);
 
   // ✅ Redux se user aur token
   const user = useSelector((state) => state.auth.user);
@@ -80,11 +81,22 @@ export default function CustomerDashboard() {
           subscriptions: subsRes.data.length || 0,
           orders: ordersRes.data.length || 0,
         });
+
       })
       .catch(err => console.error("Dashboard fetch error:", err));
 
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);
+
+  // ✅ 3. Fetch Recommendations when location is available
+  useEffect(() => {
+    if (location.lat && location.lng) {
+      const headers = { Authorization: `Bearer ${token}` };
+      axios.get(`http://localhost:5000/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
+        .then(res => setRecommendations(res.data.providers || []))
+        .catch(err => console.error("Recs fetch error:", err));
+    }
+  }, [location.lat, location.lng, token]);
 
   // ✅ Naya logout — Redux dispatch karta hai
   const handleLogout = () => {
@@ -283,8 +295,6 @@ export default function CustomerDashboard() {
           ))}
         </div>
 
-<<<<<<< HEAD
-=======
         {/* ── Recommendations ── */}
         <div style={{ marginBottom: 44, ...anim(300) }}>
           <div style={{ marginBottom: 16 }}>
@@ -331,8 +341,6 @@ export default function CustomerDashboard() {
             </div>
           )}
         </div>
-
->>>>>>> 28e463a (bug fix)
         {/* ── Bottom row: activity + today's meal ── */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start", ...anim(340) }}>
 

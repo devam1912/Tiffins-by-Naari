@@ -5,30 +5,29 @@ export const fetchAdminData = createAsyncThunk(
   "admin/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const [pRes, penRes, uRes, oRes, fRes, mRes] = await Promise.all([
+      const [pRes, penRes, uRes, oRes, fRes, mRes, sRes, payRes, statsRes] = await Promise.all([
         API.get("/admin/providers"),
         API.get("/admin/providers/pending"),
         API.get("/admin/users"),
         API.get("/admin/orders"),
         API.get("/feedback"),
-        API.get("/tiffins/menu")
+        API.get("/tiffins/menu"),
+        API.get("/admin/subscriptions"),
+        API.get("/payout/balances"),
+        API.get("/admin/stats")
       ]);
 
-      const providers = pRes.data || [];
-      const pending = penRes.data.providers || penRes.data || [];
-      const users = uRes.data || [];
-      const orders = (oRes.data.orders || oRes.data || []);
-      const feedbacks = fRes.data.feedbacks || [];
-      const menus = mRes.data.menus || [];
-
-      const stats = {
-        totalUsers: users.length,
-        totalProviders: providers.filter(p => p.isApproved).length,
-        totalOrders: orders.length,
-        totalRevenue: Array.isArray(orders) ? orders.reduce((acc, o) => acc + (o.totalPrice || 0), 0) : 0
+      return {
+        providers: pRes.data || [],
+        pending: penRes.data.providers || penRes.data || [],
+        users: uRes.data || [],
+        orders: oRes.data.orders || oRes.data || [],
+        feedbacks: fRes.data.feedbacks || [],
+        menus: mRes.data.menus || [],
+        subscriptions: sRes.data.data || sRes.data || [],
+        payoutBalances: payRes.data || [],
+        stats: statsRes.data || { totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 }
       };
-
-      return { providers, pending, users, orders, feedbacks, menus, stats };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch admin data");
     }
@@ -83,6 +82,30 @@ export const rejectMenu = createAsyncThunk(
   }
 );
 
+export const processPayout = createAsyncThunk(
+  "admin/processPayout",
+  async ({ providerId, amount, description }, { rejectWithValue }) => {
+    try {
+      const res = await API.post(`/payout/debit/${providerId}`, { amount, description });
+      return { providerId, amount, data: res.data };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Payout failed");
+    }
+  }
+);
+
+export const creditProviderWallet = createAsyncThunk(
+  "admin/creditWallet",
+  async ({ providerId, amount, description }, { rejectWithValue }) => {
+    try {
+      const res = await API.post(`/payout/credit/${providerId}`, { amount, description });
+      return { providerId, amount, data: res.data };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Credit failed");
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -92,6 +115,8 @@ const adminSlice = createSlice({
     orders: [],
     feedbacks: [],
     menus: [],
+    subscriptions: [],
+    payoutBalances: [],
     stats: { totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 },
     loading: false,
     error: null,
@@ -128,6 +153,18 @@ const adminSlice = createSlice({
       .addCase(rejectMenu.fulfilled, (state, action) => {
         const menuId = action.payload;
         state.menus = state.menus.map(m => m._id === menuId ? { ...m, isApproved: false, submittedForApproval: false, isPublished: false } : m);
+      })
+      .addCase(processPayout.fulfilled, (state, action) => {
+        const { providerId, amount } = action.payload;
+        state.payoutBalances = state.payoutBalances.map(p => 
+          p.providerId === providerId ? { ...p, walletBalance: p.walletBalance - amount, totalPaid: (p.totalPaid || 0) + amount } : p
+        );
+      })
+      .addCase(creditProviderWallet.fulfilled, (state, action) => {
+        const { providerId, amount } = action.payload;
+        state.payoutBalances = state.payoutBalances.map(p => 
+          p.providerId === providerId ? { ...p, walletBalance: (p.walletBalance || 0) + amount } : p
+        );
       });
   },
 });

@@ -13,7 +13,7 @@ export const fetchAdminData = createAsyncThunk(
         API.get("/feedback"),
         API.get("/tiffins/menu"),
         API.get("/admin/subscriptions"),
-        API.get("/payout/balances"),
+        API.get("/payouts/balances"),
         API.get("/admin/stats")
       ]);
 
@@ -86,7 +86,7 @@ export const processPayout = createAsyncThunk(
   "admin/processPayout",
   async ({ providerId, amount, description }, { rejectWithValue }) => {
     try {
-      const res = await API.post(`/payout/debit/${providerId}`, { amount, description });
+      const res = await API.post(`/payouts/debit/${providerId}`, { amount, description });
       return { providerId, amount, data: res.data };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Payout failed");
@@ -98,7 +98,7 @@ export const creditProviderWallet = createAsyncThunk(
   "admin/creditWallet",
   async ({ providerId, amount, description }, { rejectWithValue }) => {
     try {
-      const res = await API.post(`/payout/credit/${providerId}`, { amount, description });
+      const res = await API.post(`/payouts/credit/${providerId}`, { amount, description });
       return { providerId, amount, data: res.data };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Credit failed");

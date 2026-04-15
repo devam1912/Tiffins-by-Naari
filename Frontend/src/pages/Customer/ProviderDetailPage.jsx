@@ -47,7 +47,7 @@ const ProviderDetailPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const tiffin = location.state?.tiffin;
-    const token = useSelector(s => s.auth.token);
+    const { token, user } = useSelector(s => s.auth);
 
     const [planType, setPlanType] = useState("");
     const [timeSlot, setTimeSlot] = useState("");
@@ -55,10 +55,11 @@ const ProviderDetailPage = () => {
 
     const [menuData, setMenuData] = useState(null);
     const [menuLoading, setMenuLoading] = useState(true);
+    const [menuExpanded, setMenuExpanded] = useState(false);
 
     useEffect(() => {
         if (tiffin && tiffin._id) {
-            axios.get(`http://localhost:5000/api/tiffins/${tiffin._id}/menu`)
+            axios.get(`http://localhost:5000/api/tiffins/menu/${tiffin._id}`)
                 .then(res => {
                     setMenuData(res.data);
                     setMenuLoading(false);
@@ -80,23 +81,83 @@ const ProviderDetailPage = () => {
         link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,600;1,700&family=Nunito:wght@400;600;700;800;900&display=swap";
         link.rel = "stylesheet";
         document.head.appendChild(link);
+
+        // Load Razorpay Script
+        const script = document.createElement("script");
+        script.src = "https://checkout.razorpay.com/v1/checkout.js";
+        script.async = true;
+        document.body.appendChild(script);
+
         setTimeout(() => setVis(true), 60);
+        return () => {
+            document.body.removeChild(script);
+        };
     }, []);
 
     /* ── same logic ── */
     const handleSubscribe = async () => {
         if (!planType || !timeSlot) { setSubError("Please select a plan and time slot."); return; }
+        
         try {
             setLoading(true); setSubError("");
-            await axios.post("http://localhost:5000/api/subscriptions",
+            
+            const res = await axios.post("http://localhost:5000/api/subscriptions",
                 { providerId: tiffin._id, planType, timeSlot },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            setSuccess(true);
+
+            const { subscription, razorpayOrderId, amountToPay, key } = res.data;
+
+            // Flow 1: Activated via Wallet
+            if (!razorpayOrderId) {
+                setSuccess(true);
+                return;
+            }
+
+            // Flow 2: Razorpay Payment Required
+            const options = {
+                key,
+                amount: amountToPay * 100,
+                currency: "INR",
+                name: "Tiffins By Naari",
+                description: `${planType.toUpperCase()} Subscription - ${tiffin.businessName}`,
+                order_id: razorpayOrderId,
+                handler: async (response) => {
+                    try {
+                        setLoading(true);
+                        const verifyRes = await axios.post(`http://localhost:5000/api/subscriptions/verify-payment/${subscription._id}`, {
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature
+                        }, { headers: { Authorization: `Bearer ${token}` } });
+                        
+                        if (verifyRes.status === 200) {
+                            setSuccess(true);
+                        }
+                    } catch (err) {
+                        setSubError("Payment verification failed. Please contact support.");
+                    } finally {
+                        setLoading(false);
+                    }
+                },
+                prefill: {
+                    name: user?.name || "",
+                    email: user?.email || ""
+                },
+                theme: { color: "#8FA873" }
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on('payment.failed', function (response){
+                setSubError(response.error.description);
+            });
+            rzp.open();
+
         } catch (err) {
             console.error(err);
             setSubError(err.response?.data?.message || "Something went wrong. Try again.");
-        } finally { setLoading(false); }
+        } finally {
+            setLoading(false);
+        }
     };
 
     const a = (d = 0) => ({ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(22px)", transition: `opacity .52s ease ${d}ms, transform .52s cubic-bezier(.22,.68,0,1.2) ${d}ms` });
@@ -137,10 +198,13 @@ const ProviderDetailPage = () => {
         .back-btn:hover{background:rgba(255,255,255,0.28)!important}
         .meal-row:hover{background:rgba(143,174,142,0.1)!important;border-color:rgba(143,174,142,0.35)!important}
         .sub-btn-active:hover{opacity:.88!important}
+        .info-pill{background:#fff;padding:12px 20px;border-radius:20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 20px rgba(90,120,70,0.04);border:1.5px solid rgba(143,174,142,0.08);flex:1;min-width:200px}
 
         @media(max-width:760px){
           .main-grid{grid-template-columns:1fr!important}
           .panel-wrap{position:static!important}
+          .info-bar{flex-direction:column;align-items:stretch!important}
+          .info-pill{min-width:100%}
         }
       `}</style>
 
@@ -201,9 +265,38 @@ const ProviderDetailPage = () => {
                 <div style={{ height: 40, background: "#E7E6B6", borderRadius: "50% 50% 0 0 / 40px 40px 0 0", marginTop: -1 }} />
             </div>
 
+            {/* ══════════ QUICK INFO BAR ══════════ */}
+            <div style={{ maxWidth: 1060, margin: "-20px auto 24px", padding: "0 40px", position: "relative", zIndex: 10 }}>
+                <div className="info-bar" style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
+                    <div style={{ display: "flex", gap: 12, flexWrap: "wrap", flex: 1 }}>
+                        <div className="info-pill">
+                            <span style={{ fontSize: 18 }}>👩‍🍳</span>
+                            <div>
+                                <p style={{ fontSize: 9, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1 }}>Chef</p>
+                                <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>{tiffin.ownerName}</p>
+                            </div>
+                        </div>
+                        <div className="info-pill">
+                            <span style={{ fontSize: 18 }}>📞</span>
+                            <div>
+                                <p style={{ fontSize: 9, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1 }}>Contact</p>
+                                <a href={`tel:${tiffin.phone || tiffin.contact}`} style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d", textDecoration: "none" }}>{tiffin.phone || tiffin.contact}</a>
+                            </div>
+                        </div>
+                        <div className="info-pill">
+                            <span style={{ fontSize: 18 }}>📋</span>
+                            <div>
+                                <p style={{ fontSize: 9, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1 }}>FSSAI</p>
+                                <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>{tiffin.fssaiNumber}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* ══════════ BODY ══════════ */}
             <div style={{ maxWidth: 1060, margin: "0 auto", padding: "8px 40px 72px" }}>
-                <div className="main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 368px", gap: 22, alignItems: "start" }}>
+                <div className="main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 28, alignItems: "start" }}>
 
                     {/* ══ LEFT ══════════════════════════════════ */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -216,82 +309,108 @@ const ProviderDetailPage = () => {
                             </div>
                         )}
 
-                        {/* Weekly Menu */}
-                        <div style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", borderRadius: 22, border: "1.5px solid rgba(143,174,142,0.18)", boxShadow: "0 2px 20px rgba(90,120,70,0.07)", padding: "26px 28px", ...a(140) }}>
-                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 18 }}>
-                                <h2 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d" }}>Weekly Menu</h2>
+                        {/* Weekly Menu (Expandable) */}
+                        <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(24px)", borderRadius: 32, border: "1.5px solid rgba(143,174,142,0.16)", boxShadow: "0 12px 32px rgba(90,120,70,0.06)", overflow: "hidden", ...a(140) }}>
+                            <div 
+                                onClick={() => setMenuExpanded(!menuExpanded)}
+                                style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "28px 32px", cursor: "pointer", background: menuExpanded ? "rgba(143,174,142,0.04)" : "transparent", transition: "all .3s" }}
+                            >
+                                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(143,174,142,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🍱</div>
+                                    <div>
+                                        <h2 style={{ fontFamily: "'Lora',serif", fontSize: 19, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Discover the Weekly Menu</h2>
+                                        <p style={{ fontSize: 11, color: "#8FAE8E", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, marginTop: 2 }}>{menuExpanded ? "Showing all 7 days" : "Tap to reveal the full menu"}</p>
+                                    </div>
+                                </div>
+                                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#fdfdf6", border: "1px solid #f0f0e0", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform .3s", transform: menuExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>
+                                    ▼
+                                </div>
                             </div>
 
-                            {menuLoading ? (
-                                <p style={{ fontSize: 13, color: "#8FAE8E", fontWeight: 700 }}>Loading menu...</p>
-                            ) : menuData && menuData.weekMenu && menuData.weekMenu.length > 0 ? (
-                                <div style={{ display: "flex", gap: "16px", overflowX: "auto", paddingBottom: "10px" }}>
-                                    {menuData.weekMenu.map((dayMenu, idx) => (
-                                        <div key={idx} style={{
-                                            flex: "0 0 250px",
-                                            border: "1.5px solid rgba(143,174,142,0.18)",
-                                            background: "rgba(255,255,255,0.6)",
-                                            borderRadius: 16,
-                                            padding: "18px",
-                                            boxShadow: "0 4px 12px rgba(90,120,70,0.03)"
-                                        }}>
-                                            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, borderBottom: "1px dashed rgba(143,174,142,0.3)", paddingBottom: 10 }}>
-                                                <span style={{ fontSize: 16 }}>🗓</span>
-                                                <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#2d3b2d" }}>{dayMenu.day}</h3>
-                                            </div>
+                            <div style={{ maxHeight: menuExpanded ? "2000px" : "0px", opacity: menuExpanded ? 1 : 0, transition: "all .5s cubic-bezier(0.4, 0, 0.2, 1)", overflow: "hidden" }}>
+                                <div style={{ padding: "0 32px 32px" }}>
+                                    {menuLoading ? (
+                                        <div style={{ padding: "40px", textAlign: "center", color: "#8FAE8E", fontWeight: 700, fontSize: 14 }}>✨ Preparing the menu...</div>
+                                    ) : menuData && menuData.weekMenu && menuData.weekMenu.length > 0 ? (
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "20px" }}>
+                                            {menuData.weekMenu.map((dayMenu, idx) => (
+                                                <div key={idx} className="meal-row" style={{
+                                                    border: "1.5px solid rgba(143,174,142,0.08)",
+                                                    background: "rgba(255,255,255,0.45)",
+                                                    borderRadius: 20,
+                                                    padding: "20px",
+                                                    display: "flex",
+                                                    flexDirection: "column",
+                                                    gap: 16
+                                                }}>
+                                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px dashed rgba(143,174,142,0.2)", paddingBottom: 12 }}>
+                                                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#2d3b2d" }}>{dayMenu.day}</h3>
+                                                        <span style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E" }}>DAY {idx + 1}</span>
+                                                    </div>
 
-                                            {dayMenu.lunch && dayMenu.lunch.items && dayMenu.lunch.items.length > 0 && (
-                                                <div style={{ marginBottom: "16px" }}>
-                                                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.5, color: "#8FA873", marginBottom: 6 }}>Lunch (₹{dayMenu.lunch.price})</p>
-                                                    <ul style={{ margin: 0, paddingLeft: "20px", fontSize: 13, color: "#5a5a4a", fontWeight: 600, lineHeight: 1.6 }}>
-                                                        {dayMenu.lunch.items.map((item, i) => (
-                                                            <li key={i} style={{ marginBottom: 4 }}>{item.name} {item.type ? <span style={{ fontSize: 10, color: "#9a9a8a" }}>({item.type})</span> : ""}</li>
-                                                        ))}
-                                                    </ul>
+                                                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                                                        {dayMenu.lunch && dayMenu.lunch.items && dayMenu.lunch.items.length > 0 && (
+                                                            <div>
+                                                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                                                                    <span style={{ fontSize: 10 }}>🌞</span>
+                                                                    <span style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#8FA873" }}>Lunch • ₹{dayMenu.lunch.price}</span>
+                                                                </div>
+                                                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                                                    {dayMenu.lunch.items.map((item, i) => (
+                                                                        <div key={i} style={{ 
+                                                                            display: "flex", alignItems: "center", gap: 8, 
+                                                                            padding: "4px 10px 4px 4px", background: "#fff", 
+                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20, 
+                                                                            fontSize: 11, fontWeight: 700, color: "#4a4a3a",
+                                                                            transition: "transform 0.2s", cursor: "default"
+                                                                        }}>
+                                                                            {item.image ? (
+                                                                                <img src={item.image} alt={item.name} style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", background: "#f5f5f0" }} />
+                                                                            ) : (
+                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🍛</div>
+                                                                            )}
+                                                                            {item.name}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {dayMenu.dinner && dayMenu.dinner.items && dayMenu.dinner.items.length > 0 && (
+                                                            <div>
+                                                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                                                                    <span style={{ fontSize: 10 }}>🌙</span>
+                                                                    <span style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#6b8a5e" }}>Dinner • ₹{dayMenu.dinner.price}</span>
+                                                                </div>
+                                                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                                                    {dayMenu.dinner.items.map((item, i) => (
+                                                                        <div key={i} style={{ 
+                                                                            display: "flex", alignItems: "center", gap: 8, 
+                                                                            padding: "4px 10px 4px 4px", background: "#fff", 
+                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20, 
+                                                                            fontSize: 11, fontWeight: 700, color: "#4a4a3a",
+                                                                            transition: "transform 0.2s", cursor: "default"
+                                                                        }}>
+                                                                            {item.image ? (
+                                                                                <img src={item.image} alt={item.name} style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", background: "#f5f5f0" }} />
+                                                                            ) : (
+                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🥘</div>
+                                                                            )}
+                                                                            {item.name}
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            )}
-
-                                            {dayMenu.dinner && dayMenu.dinner.items && dayMenu.dinner.items.length > 0 && (
-                                                <div>
-                                                    <p style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1.5, color: "#8FA873", marginBottom: 6 }}>Dinner (₹{dayMenu.dinner.price})</p>
-                                                    <ul style={{ margin: 0, paddingLeft: "20px", fontSize: 13, color: "#5a5a4a", fontWeight: 600, lineHeight: 1.6 }}>
-                                                        {dayMenu.dinner.items.map((item, i) => (
-                                                            <li key={i} style={{ marginBottom: 4 }}>{item.name} {item.type ? <span style={{ fontSize: 10, color: "#9a9a8a" }}>({item.type})</span> : ""}</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                            )}
-
-                                            {(!dayMenu.lunch || !dayMenu.lunch.items || dayMenu.lunch.items.length === 0) && (!dayMenu.dinner || !dayMenu.dinner.items || dayMenu.dinner.items.length === 0) && (
-                                                <p style={{ fontSize: 12, color: "#aaa", fontStyle: "italic", textAlign: "center", padding: "10px 0" }}>No meals configured</p>
-                                            )}
+                                            ))}
                                         </div>
-                                    ))}
+                                    ) : (
+                                        <div style={{ padding: "32px", textAlign: "center", background: "rgba(143,174,142,0.05)", borderRadius: 18, border: "1px dashed rgba(143,174,142,0.3)" }}>
+                                            <p style={{ fontSize: 14, color: "#888", fontWeight: 600 }}>Tiffin service under process.</p>
+                                        </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <div style={{ padding: "20px", textAlign: "center", background: "rgba(143,174,142,0.05)", borderRadius: 14, border: "1px dashed rgba(143,174,142,0.3)" }}>
-                                    <p style={{ fontSize: 14, color: "#888", fontWeight: 600 }}>This provider has not published a menu yet.</p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Details grid */}
-                        <div style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", borderRadius: 22, border: "1.5px solid rgba(143,174,142,0.18)", boxShadow: "0 2px 20px rgba(90,120,70,0.07)", padding: "26px 28px", ...a(200) }}>
-                            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 18 }}>Provider Info</h2>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 28px" }}>
-                                {[
-                                    { icon: "👩‍🍳", label: "Owner", value: tiffin.ownerName },
-                                    { icon: "📞", label: "Phone", value: tiffin.phone || tiffin.contact },
-                                    { icon: "📍", label: "Location", value: addr },
-                                    { icon: "📋", label: "FSSAI", value: tiffin.fssaiNumber },
-                                    { icon: "💰", label: "Per Meal", value: tiffin.pricePerMeal ? `₹${tiffin.pricePerMeal}` : null },
-                                    { icon: "⭐", label: "Rating", value: tiffin.rating ? `${Number(tiffin.rating).toFixed(1)} / 5` : "New" },
-                                ].filter(d => d.value).map(({ icon, label, value }) => (
-                                    <div key={label}>
-                                        <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#c8c8b4", marginBottom: 5 }}>{icon} {label}</p>
-                                        <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.4 }}>{value}</p>
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     </div>

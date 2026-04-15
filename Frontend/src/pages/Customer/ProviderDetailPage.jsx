@@ -82,13 +82,14 @@ const ProviderDetailPage = () => {
         link.rel = "stylesheet";
         document.head.appendChild(link);
 
-        // Load Razorpay Script
+        // Load Razorpay script
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
         script.async = true;
         document.body.appendChild(script);
 
         setTimeout(() => setVis(true), 60);
+
         return () => {
             document.body.removeChild(script);
         };
@@ -97,10 +98,9 @@ const ProviderDetailPage = () => {
     /* ── same logic ── */
     const handleSubscribe = async () => {
         if (!planType || !timeSlot) { setSubError("Please select a plan and time slot."); return; }
-        
         try {
             setLoading(true); setSubError("");
-            
+
             const res = await axios.post("http://localhost:5000/api/subscriptions",
                 { providerId: tiffin._id, planType, timeSlot },
                 { headers: { Authorization: `Bearer ${token}` } }
@@ -108,31 +108,30 @@ const ProviderDetailPage = () => {
 
             const { subscription, razorpayOrderId, amountToPay, key } = res.data;
 
-            // Flow 1: Activated via Wallet
+            // CASE 1: Activated via Wallet balance (Fully covered)
             if (!razorpayOrderId) {
                 setSuccess(true);
                 return;
             }
 
-            // Flow 2: Razorpay Payment Required
+            // CASE 2: Gateway Payment Required
             const options = {
-                key,
-                amount: amountToPay * 100,
+                key: key,
+                amount: amountToPay * 100, // in paise
                 currency: "INR",
-                name: "Tiffins By Naari",
+                name: "Tiffins-By-Naari",
                 description: `${planType.toUpperCase()} Subscription - ${tiffin.businessName}`,
                 order_id: razorpayOrderId,
                 handler: async (response) => {
                     try {
                         setLoading(true);
-                        const verifyRes = await axios.post(`http://localhost:5000/api/subscriptions/verify-payment/${subscription._id}`, {
+                        // Verify payment on backend
+                        await axios.post(`http://localhost:5000/api/subscriptions/verify-payment/${subscription._id}`, {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature
                         }, { headers: { Authorization: `Bearer ${token}` } });
-                        
-                        if (verifyRes.status === 200) {
-                            setSuccess(true);
-                        }
+
+                        setSuccess(true);
                     } catch (err) {
                         setSubError("Payment verification failed. Please contact support.");
                     } finally {
@@ -141,23 +140,21 @@ const ProviderDetailPage = () => {
                 },
                 prefill: {
                     name: user?.name || "",
-                    email: user?.email || ""
+                    email: user?.email || "",
                 },
                 theme: { color: "#8FA873" }
             };
 
             const rzp = new window.Razorpay(options);
-            rzp.on('payment.failed', function (response){
-                setSubError(response.error.description);
+            rzp.on('payment.failed', (resp) => {
+                setSubError(resp.error.description || "Payment failed. Please try again.");
             });
             rzp.open();
 
         } catch (err) {
             console.error(err);
             setSubError(err.response?.data?.message || "Something went wrong. Try again.");
-        } finally {
-            setLoading(false);
-        }
+        } finally { setLoading(false); }
     };
 
     const a = (d = 0) => ({ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(22px)", transition: `opacity .52s ease ${d}ms, transform .52s cubic-bezier(.22,.68,0,1.2) ${d}ms` });
@@ -311,7 +308,7 @@ const ProviderDetailPage = () => {
 
                         {/* Weekly Menu (Expandable) */}
                         <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(24px)", borderRadius: 32, border: "1.5px solid rgba(143,174,142,0.16)", boxShadow: "0 12px 32px rgba(90,120,70,0.06)", overflow: "hidden", ...a(140) }}>
-                            <div 
+                            <div
                                 onClick={() => setMenuExpanded(!menuExpanded)}
                                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "28px 32px", cursor: "pointer", background: menuExpanded ? "rgba(143,174,142,0.04)" : "transparent", transition: "all .3s" }}
                             >
@@ -357,10 +354,10 @@ const ProviderDetailPage = () => {
                                                                 </div>
                                                                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                                                                     {dayMenu.lunch.items.map((item, i) => (
-                                                                        <div key={i} style={{ 
-                                                                            display: "flex", alignItems: "center", gap: 8, 
-                                                                            padding: "4px 10px 4px 4px", background: "#fff", 
-                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20, 
+                                                                        <div key={i} style={{
+                                                                            display: "flex", alignItems: "center", gap: 8,
+                                                                            padding: "4px 10px 4px 4px", background: "#fff",
+                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20,
                                                                             fontSize: 11, fontWeight: 700, color: "#4a4a3a",
                                                                             transition: "transform 0.2s", cursor: "default"
                                                                         }}>
@@ -383,10 +380,10 @@ const ProviderDetailPage = () => {
                                                                 </div>
                                                                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                                                                     {dayMenu.dinner.items.map((item, i) => (
-                                                                        <div key={i} style={{ 
-                                                                            display: "flex", alignItems: "center", gap: 8, 
-                                                                            padding: "4px 10px 4px 4px", background: "#fff", 
-                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20, 
+                                                                        <div key={i} style={{
+                                                                            display: "flex", alignItems: "center", gap: 8,
+                                                                            padding: "4px 10px 4px 4px", background: "#fff",
+                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20,
                                                                             fontSize: 11, fontWeight: 700, color: "#4a4a3a",
                                                                             transition: "transform 0.2s", cursor: "default"
                                                                         }}>

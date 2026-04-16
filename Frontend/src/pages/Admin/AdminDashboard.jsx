@@ -226,6 +226,9 @@ export default function AdminDashboard() {
   const [payoutTarget, setPayoutTarget] = useState(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState(null);
 
+  // Dark Mode
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('naari-theme') === 'dark');
+
   // Action Loading States
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -305,31 +308,47 @@ export default function AdminDashboard() {
     navigate("/login");
   };
 
+  // Persist dark mode
+  useEffect(() => { localStorage.setItem('naari-theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
+
+  // Theme
+  const T = darkMode ? {
+    bg: '#000000', card: '#141414', text: '#ffffff', textSec: '#cccccc',
+    textMuted: '#888888', border: 'rgba(165,200,158,0.15)', accent: '#8FAE8E',
+    sidebarBg: 'linear-gradient(165deg, #2d4a2d 0%, #1a2a1a 100%)',
+    rowBg: '#1a1a1a', rowBorder: 'rgba(165,200,158,0.1)',
+  } : {
+    bg: '#E7E6B6', card: '#fff', text: '#2d3b2d', textSec: '#888',
+    textMuted: '#aaa', border: '#f0f0f0', accent: '#8FAE8E',
+    sidebarBg: 'linear-gradient(165deg, #5a7a50 0%, #2d3b2d 100%)',
+    rowBg: '#fcfdfc', rowBorder: '#fafafa',
+  };
+
   if (dataLoading && !loaded) {
     return (
-      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#E7E6B6", color: "#5a7a50", fontWeight: 700 }}>
+      <div style={{ height: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: T.bg, color: "#5a7a50", fontWeight: 700 }}>
         SYNCING COMMAND CENTER...
       </div>
     );
   }
 
   const statCards = [
-    { label: "Platform Users", val: stats.totalUsers, icon: "👥" },
-    { label: "Active Kitchens", val: stats.totalProviders, icon: "👩‍🍳" },
+    { label: "Platform Users", val: stats.totalUsers ?? users.length ?? 0, icon: "👥" },
+    { label: "Active Kitchens", val: stats.totalProviders ?? 0, icon: "👩‍🍳" },
     { label: "Menus", val: menus.length, icon: "🍱" },
-    { label: "Orders", val: stats.totalOrders, icon: "🛍️" },
+    { label: "Orders", val: stats.totalOrders ?? 0, icon: "🛍️" },
     { label: "Total Revenue", val: `₹${stats.totalRevenue?.toLocaleString() || 0}`, icon: "💰" }
   ];
 
   const adminName = user?.name?.split(" ")[0] || "Admin";
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Nunito', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
-        ::-webkit-scrollbar-track { background: #E7E6B6; }
-        ::-webkit-scrollbar-thumb { background: #8FAE8E; border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: ${T.bg}; }
+        ::-webkit-scrollbar-thumb { background: ${T.accent}; border-radius: 10px; }
         .nav-btn {
           display:flex; align-items:center; gap:12px;
           width:100%; padding:14px 18px; border-radius:16px;
@@ -368,7 +387,7 @@ export default function AdminDashboard() {
 
       <aside style={{
         width: collapsed ? 80 : 280, minHeight: "100vh",
-        background: "linear-gradient(165deg, #5a7a50 0%, #2d3b2d 100%)",
+        background: T.sidebarBg, transition: "background 0.4s ease",
         display: "flex", flexDirection: "column", padding: "36px 24px",
         position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
         transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
@@ -410,38 +429,41 @@ export default function AdminDashboard() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Admin Dashboard</p>
-            <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>Namaste, <em style={{ color: "#8FA873" }}>{adminName}!</em></h1>
+            <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>Namaste, <em style={{ color: "#8FA873" }}>{adminName}!</em></h1>
           </div>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff" }}>{adminName[0]}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <button id="theme-toggle" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, cursor: "pointer", transition: "all 0.3s ease" }}>{darkMode ? "☀️" : "🌙"}</button>
+            <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff" }}>{adminName[0]}</div>
+          </div>
         </div>
 
         {activeNav === "dashboard" ? (
           <div style={{ ...anim(100) }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 24, marginBottom: 40 }}>
               {statCards.map((card, i) => (
-                <div key={i} style={{ background: "#fff", padding: "32px", borderRadius: 28, boxShadow: "0 10px 30px rgba(0,0,0,0.03)" }}>
+                <div key={i} style={{ background: T.card, padding: "32px", borderRadius: 28, boxShadow: darkMode ? "0 10px 30px rgba(0,0,0,0.2)" : "0 10px 30px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
                   <div style={{ fontSize: 32, marginBottom: 16 }}>{card.icon}</div>
-                  <p style={{ fontSize: 12, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 4 }}>{card.label}</p>
-                  <h3 style={{ fontSize: 32, color: "#2d3b2d", fontWeight: 800, fontFamily: "'Lora',serif" }}>{card.val}</h3>
+                  <p style={{ fontSize: 12, fontWeight: 800, color: T.textMuted, textTransform: "uppercase", marginBottom: 4 }}>{card.label}</p>
+                  <h3 style={{ fontSize: 32, color: T.text, fontWeight: 800, fontFamily: "'Lora',serif" }}>{card.val}</h3>
                 </div>
               ))}
             </div>
 
-            <div style={{ background: "#fff", padding: "36px", borderRadius: 32, boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
+            <div style={{ background: T.card, padding: "36px", borderRadius: 32, boxShadow: darkMode ? "0 20px 50px rgba(0,0,0,0.2)" : "0 20px 50px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24 }}>
-                <h3 style={{ fontSize: 22, color: "#2d3b2d", fontFamily: "'Lora', serif", fontWeight: 700 }}>Kitchen Applications</h3>
+                <h3 style={{ fontSize: 22, color: T.text, fontFamily: "'Lora', serif", fontWeight: 700 }}>Kitchen Applications</h3>
                 {pending.length > 0 && <span style={{ padding: "4px 12px", background: "#fef3c7", color: "#92400e", borderRadius: 100, fontSize: 11, fontWeight: 800 }}>{pending.length} PENDING</span>}
               </div>
               {pending.length === 0 ? <p style={{ color: "#aaa", textAlign: "center", padding: "40px" }}>No new applications.</p> : (
                 <div style={{ display: "grid", gap: 16 }}>
                   {pending.map(p => (
-                    <div key={p._id} style={{ display: "flex", alignItems: "center", padding: "20px 24px", background: "#fcfdfc", border: "1px solid #f0f4f0", borderRadius: 20 }}>
+                    <div key={p._id} style={{ display: "flex", alignItems: "center", padding: "20px 24px", background: T.rowBg, border: `1px solid ${T.border}`, borderRadius: 20, transition: "all 0.4s ease" }}>
                       <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: 16, fontWeight: 700, color: "#2d3b2d" }}>{p.businessName}</h4>
-                        <p style={{ fontSize: 13, color: "#888" }}>{p.ownerName} • {p.email}</p>
+                        <h4 style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{p.businessName}</h4>
+                        <p style={{ fontSize: 13, color: T.textSec }}>{p.ownerName} • {p.email}</p>
                       </div>
                       <div style={{ display: "flex", gap: 12 }}>
-                        <button onClick={() => setViewTarget(p)} style={{ padding: "10px 20px", borderRadius: 12, border: "1px solid #ddd", background: "#fff", fontWeight: 700, cursor: "pointer" }}>View</button>
+                        <button onClick={() => setViewTarget(p)} style={{ padding: "10px 20px", borderRadius: 12, border: `1px solid ${T.border}`, background: T.card, color: T.text, fontWeight: 700, cursor: "pointer" }}>View</button>
                         <button onClick={() => setApproveTarget(p)} style={{ padding: "10px 20px", borderRadius: 12, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 700, cursor: "pointer" }}>Approve</button>
                       </div>
                     </div>
@@ -451,7 +473,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         ) : (
-          <div style={{ ...anim(100), background: "#fff", padding: "36px", borderRadius: 32, boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
+          <div style={{ ...anim(100), background: T.card, color: T.text, padding: "36px", borderRadius: 32, boxShadow: darkMode ? "0 20px 50px rgba(0,0,0,0.2)" : "0 20px 50px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
             {activeNav === "users" && <AdminUsers users={users} />}
             {activeNav === "feedback" && <AdminFeedback feedbacks={feedbacks} />}
             {activeNav === "menu" && <AdminMenu menus={menus} />}
@@ -459,7 +481,7 @@ export default function AdminDashboard() {
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Order ID</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Customer</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Amount</th>
@@ -468,7 +490,7 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {orders.map(o => (
-                      <tr key={o._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                      <tr key={o._id} style={{ borderBottom: `1px solid ${T.border}` }}>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>#{o._id?.slice(-6).toUpperCase() || "N/A"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
@@ -485,7 +507,7 @@ export default function AdminDashboard() {
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Plan</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Customer</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Kitchen</th>
@@ -494,7 +516,7 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {subscriptions.map(s => (
-                      <tr key={s._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                      <tr key={s._id} style={{ borderBottom: `1px solid ${T.border}` }}>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>{s.planType?.toUpperCase() || "Standard"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 13 }}>{s.user?.name || "Customer"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 13 }}>{s.provider?.businessName || "Kitchen"}</td>
@@ -511,7 +533,7 @@ export default function AdminDashboard() {
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Kitchen</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Balance</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Total Paid</th>
@@ -520,16 +542,16 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {payoutBalances.map(p => (
-                      <tr key={p.providerId} style={{ borderBottom: "1px solid #fafafa" }}>
+                      <tr key={p.providerId} style={{ borderBottom: `1px solid ${T.border}` }}>
                         <td style={{ padding: "16px 12px" }}>
                           <div style={{ fontSize: 14, fontWeight: 700 }}>{p.businessName}</div>
-                          <div style={{ fontSize: 11, color: "#aaa" }}>{p.ownerName}</div>
+                          <div style={{ fontSize: 11, color: T.textMuted }}>{p.ownerName}</div>
                         </td>
-                        <td style={{ padding: "16px 12px", fontSize: 16, fontWeight: 800, color: "#2d3b2d" }}>₹{p.walletBalance?.toLocaleString()}</td>
-                        <td style={{ padding: "16px 12px", fontSize: 14, color: "#888" }}>₹{p.totalPaid?.toLocaleString() || 0}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 16, fontWeight: 800, color: T.text }}>₹{p.walletBalance?.toLocaleString()}</td>
+                        <td style={{ padding: "16px 12px", fontSize: 14, color: T.textSec }}>₹{p.totalPaid?.toLocaleString() || 0}</td>
                         <td style={{ padding: "16px 12px", textAlign: "right" }}>
                           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                            <button onClick={() => setAdjustmentTarget(p)} style={{ background: "#f0f0f0", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer", color: "#666" }}>Adjust</button>
+                            <button onClick={() => setAdjustmentTarget(p)} style={{ background: darkMode ? '#2a2a2a' : '#f0f0f0', border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer", color: T.textSec }}>Adjust</button>
                             <button onClick={() => setPayoutTarget(p)} style={{ background: "#8FAE8E", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Payout</button>
                           </div>
                         </td>
@@ -543,7 +565,7 @@ export default function AdminDashboard() {
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead>
-                    <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                    <tr style={{ borderBottom: `1px solid ${T.border}` }}>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Business</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Chef</th>
                       <th style={{ textAlign: "left", padding: "12px", fontSize: 11, color: "#8FAE8E", textTransform: "uppercase" }}>Phone</th>
@@ -552,7 +574,7 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody>
                     {providers.map(p => (
-                      <tr key={p._id} style={{ borderBottom: "1px solid #fafafa" }}>
+                      <tr key={p._id} style={{ borderBottom: `1px solid ${T.border}` }}>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 700 }}>{p.businessName}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{p.ownerName}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{p.phone}</td>

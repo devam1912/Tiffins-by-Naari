@@ -50,7 +50,7 @@ export const OrdersToday = () => {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Orders Today</h2>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "inherit", margin: 0 }}>Orders Today</h2>
                     <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{formatDate()} — {subscriptions.length} meals to prepare</p>
                 </div>
                 <button onClick={() => dispatch(fetchProviderSubscriptions())}
@@ -96,7 +96,7 @@ export const OrdersToday = () => {
 
                         return (
                             <div key={sub._id} style={{
-                                border: "1px solid #f0f0f0", borderRadius: 20, background: "#fcfdfc", overflow: "hidden",
+                                border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, background: "rgba(255,255,255,0.03)", overflow: "hidden",
                                 borderLeft: `4px solid ${isLunch ? "#8FAE8E" : "#6366f1"}`
                             }}>
                                 <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, flexWrap: "wrap" }}>
@@ -107,7 +107,7 @@ export const OrdersToday = () => {
 
                                     {/* Customer Info */}
                                     <div style={{ flex: 1, minWidth: 120 }}>
-                                        <div style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{sub.user?.name || "Unknown"}</div>
+                                        <div style={{ fontWeight: 800, fontSize: 14, color: "inherit" }}>{sub.user?.name || "Unknown"}</div>
                                         <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>
                                             {subId} &bull; {sub.user?.email || sub.user?.phone || ""}
                                         </div>
@@ -124,7 +124,7 @@ export const OrdersToday = () => {
                                     </span>
 
                                     {/* Meals remaining */}
-                                    <span style={{ fontSize: 12, fontWeight: 700, color: "#2d3b2d" }}>
+                                    <span style={{ fontSize: 12, fontWeight: 700, color: "inherit" }}>
                                         {sub.remainingMeals ?? 0} meals left
                                     </span>
 

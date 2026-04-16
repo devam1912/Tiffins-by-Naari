@@ -14,21 +14,21 @@ export const AdminFeedback = ({ feedbacks, loading }) => {
         <div style={{ animation: "popIn 0.4s cubic-bezier(.22,.68,0,1.2)" }}>
             <div style={{ marginBottom: 28 }}>
                 <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Customer Satisfaction</p>
-                <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>All Feedbacks</h1>
+                <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "inherit", marginBottom: 6 }}>All Feedbacks</h1>
                 <p style={{ color: "#999", fontSize: 14 }}>{feedbacks?.length || 0} reviews shared by our community</p>
             </div>
 
             {(!feedbacks || feedbacks.length === 0) ? (
-                <div style={{ background: "rgba(255,255,255,0.7)", borderRadius: 22, padding: "60px 40px", textAlign: "center", border: "1px solid rgba(143,174,142,0.2)" }}>
+                <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 22, padding: "60px 40px", textAlign: "center", border: "1px solid rgba(143,174,142,0.2)" }}>
                     <div style={{ fontSize: 52, marginBottom: 16 }}>💬</div>
-                    <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>No feedback yet</h3>
+                    <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "inherit", marginBottom: 8 }}>No feedback yet</h3>
                     <p style={{ color: "#aaa", fontSize: 15, fontWeight: 600 }}>Once customers start sharing their experiences, they'll appear here.</p>
                 </div>
             ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 20 }}>
                     {feedbacks.map((f, i) => (
                         <div key={f._id} style={{
-                            background: "rgba(255,255,255,0.85)",
+                            background: "rgba(255,255,255,0.05)",
                             backdropFilter: "blur(12px)",
                             borderRadius: 24,
                             padding: "24px",
@@ -45,7 +45,7 @@ export const AdminFeedback = ({ feedbacks, loading }) => {
                                         {f.user?.name?.[0] || "?"}
                                     </div>
                                     <div>
-                                        <h4 style={{ fontWeight: 800, fontSize: 15, color: "#2d3b2d", marginBottom: 2 }}>{f.user?.name || "Unknown User"}</h4>
+                                        <h4 style={{ fontWeight: 800, fontSize: 15, color: "inherit", marginBottom: 2 }}>{f.user?.name || "Unknown User"}</h4>
                                         <span style={{ fontSize: 11, color: "#bbb", fontWeight: 700 }}>
                                             {new Date(f.createdAt).toLocaleDateString("en-IN", { day: 'numeric', month: 'short', year: 'numeric' })}
                                         </span>
@@ -57,7 +57,7 @@ export const AdminFeedback = ({ feedbacks, loading }) => {
                             </div>
 
                             <div style={{ padding: "16px", background: "rgba(143,174,142,0.05)", borderRadius: 16, border: "1px solid rgba(143,174,142,0.08)" }}>
-                                <p style={{ color: "#555", fontSize: 14, lineHeight: 1.6, fontStyle: "italic" }}>"{f.comment}"</p>
+                                <p style={{ color: "inherit", fontSize: 14, lineHeight: 1.6, fontStyle: "italic", opacity: 0.8 }}>"{f.comment}"</p>
                             </div>
 
                             <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: "auto" }}>

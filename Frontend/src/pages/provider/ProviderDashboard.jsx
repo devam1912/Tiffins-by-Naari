@@ -24,6 +24,9 @@ export const ProviderDashboard = () => {
     const [loadingStats, setLoadingStats] = useState(true);
     const [isStatusLoading, setIsStatusLoading] = useState(false);
 
+    // Dark Mode
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('naari-theme') === 'dark');
+
     // Redirect if not logged in
     useEffect(() => {
         if (!token) navigate("/login");
@@ -58,6 +61,22 @@ export const ProviderDashboard = () => {
         transition: `opacity 0.65s ease ${delay}ms, transform 0.65s cubic-bezier(.22,.68,0,1.2) ${delay}ms`,
     });
 
+    // Persist dark mode
+    useEffect(() => { localStorage.setItem('naari-theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
+
+    // Theme
+    const T = darkMode ? {
+        bg: '#000000', card: '#141414', text: '#ffffff', textSec: '#cccccc',
+        textMuted: '#888888', border: 'rgba(165,200,158,0.15)', accent: '#8FAE8E',
+        sidebarBg: 'linear-gradient(165deg, #2d4a2d 0%, #1a2a1a 100%)',
+        rowBg: '#1a1a1a', cardShadow: '0 10px 30px rgba(0,0,0,0.4)',
+    } : {
+        bg: '#E7E6B6', card: '#fff', text: '#2d3b2d', textSec: '#888',
+        textMuted: '#aaa', border: '#f0f0f0', accent: '#8FAE8E',
+        sidebarBg: 'linear-gradient(165deg, #8FA873 0%, #5a7a50 100%)',
+        rowBg: '#fcfdfc', cardShadow: '0 10px 30px rgba(0,0,0,0.03)',
+    };
+
     const menuItems = [
         { name: "Dashboard", icon: "⊞" },
         { name: "Menu Management", icon: "🍱" },
@@ -70,12 +89,12 @@ export const ProviderDashboard = () => {
     const businessName = profile?.businessName || stats?.businessName || "My Kitchen";
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+        <div style={{ display: "flex", minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Nunito', sans-serif", transition: "background 0.4s ease, color 0.4s ease" }}>
             <style>{`
                 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
                 ::-webkit-scrollbar { width: 5px; }
-                ::-webkit-scrollbar-track { background: #E7E6B6; }
-                ::-webkit-scrollbar-thumb { background: #8FAE8E; border-radius: 10px; }
+                ::-webkit-scrollbar-track { background: ${T.bg}; }
+                ::-webkit-scrollbar-thumb { background: ${T.accent}; border-radius: 10px; }
                 
                 .nav-btn {
                     display:flex; align-items:center; gap:12px;
@@ -109,7 +128,7 @@ export const ProviderDashboard = () => {
             <aside style={{
                 width: collapsed ? 80 : 280,
                 minHeight: "100vh",
-                background: "linear-gradient(165deg, #8FA873 0%, #5a7a50 100%)",
+                background: T.sidebarBg, transition: "background 0.4s ease",
                 display: "flex", flexDirection: "column",
                 padding: "36px 24px",
                 position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
@@ -178,15 +197,16 @@ export const ProviderDashboard = () => {
                 minHeight: "100vh", overflowY: "auto",
             }}>
                 {/* Top header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
                     <div>
                         <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Welcome Back 👨‍🍳</p>
-                        <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>
+                        <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>
                             Namaste Chef, <em style={{ color: "#8FA873" }}>{firstName}!</em>
                         </h1>
                     </div>
 
-                    <div style={{ display: "flex", gap: 12 }}>
+                    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                        <button id="theme-toggle-provider" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, cursor: "pointer", transition: "all 0.3s ease" }}>{darkMode ? "☀️" : "🌙"}</button>
                         <div style={{ width: 44, height: 44, borderRadius: 14, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>🔔</div>
                         <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)" }}>{firstName[0]}</div>
                     </div>
@@ -198,13 +218,13 @@ export const ProviderDashboard = () => {
                         <div>
                             {/* Stats Grid */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24, marginBottom: 40 }}>
-                                {[
-                                    { label: "Monthly Revenue", value: `₹${stats?.monthlyRevenue?.toLocaleString() || 0}`, icon: "💰", bg: "#fff", textColor: "#2d3b2d" },
+                            {[
+                                    { label: "Monthly Revenue", value: `₹${stats?.monthlyRevenue?.toLocaleString() || 0}`, icon: "💰", bg: T.card, textColor: T.text },
                                     { label: "Active Subscribers", value: stats?.activeSubscribers || 0, icon: "👥", bg: "linear-gradient(135deg, #8FAE8E, #8FA873)", textColor: "#fff" },
-                                    { label: "Meals Today", value: stats?.todaysMeals || 0, icon: "🍱", bg: "#fff", textColor: "#2d3b2d" },
-                                    { label: "Kitchen Status", value: isServiceActive ? "Active" : "Paused", icon: "🍳", bg: "#fff", textColor: isServiceActive ? "#8FAE8E" : "#ef5350" },
+                                    { label: "Meals Today", value: stats?.todaysMeals || 0, icon: "🍱", bg: T.card, textColor: T.text },
+                                    { label: "Kitchen Status", value: isServiceActive ? "Active" : "Paused", icon: "🍳", bg: T.card, textColor: isServiceActive ? "#8FAE8E" : "#ef5350" },
                                 ].map((stat, i) => (
-                                    <div key={i} className="stat-card" style={{ background: stat.bg, padding: "32px", borderRadius: 24, boxShadow: "0 10px 30px rgba(0,0,0,0.03)", border: "1px solid rgba(255,255,255,0.6)" }}>
+                                    <div key={i} className="stat-card" style={{ background: stat.bg, padding: "32px", borderRadius: 24, boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
                                         <div style={{ fontSize: 32, marginBottom: 16 }}>{stat.icon}</div>
                                         <div style={{ fontSize: 14, fontWeight: 800, color: stat.textColor, opacity: 0.6, textTransform: "uppercase", letterSpacing: 1.5 }}>{stat.label}</div>
                                         <div style={{ fontSize: 32, fontWeight: 800, color: stat.textColor, marginTop: 4, fontFamily: "'Lora',serif" }}>{stat.value}</div>
@@ -213,8 +233,8 @@ export const ProviderDashboard = () => {
                             </div>
 
                             {/* Recent Activity Section */}
-                            <div style={{ background: "#fff", borderRadius: 32, padding: "36px", boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
-                                <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 24 }}>Recent Subscriptions</h2>
+                            <div style={{ background: T.card, borderRadius: 32, padding: "36px", boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
+                                <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: T.text, marginBottom: 24 }}>Recent Subscriptions</h2>
                                 {loadingStats ? (
                                     <div style={{ padding: "40px", textAlign: "center", color: "#8FA873" }}>Syncing kitchen data...</div>
                                 ) : !stats?.recentActivity || stats.recentActivity.length === 0 ? (
@@ -223,7 +243,7 @@ export const ProviderDashboard = () => {
                                     <div style={{ overflowX: "auto" }}>
                                         <table style={{ width: "100%", borderCollapse: "collapse" }}>
                                             <thead>
-                                                <tr style={{ borderBottom: "1px solid #f0f0f0" }}>
+                                                <tr style={{ borderBottom: `1px solid ${T.border}` }}>
                                                     <th style={{ textAlign: "left", padding: "12px 10px", fontSize: 11, color: "#8FAE8E", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Customer</th>
                                                     <th style={{ textAlign: "left", padding: "12px 10px", fontSize: 11, color: "#8FAE8E", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Plan</th>
                                                     <th style={{ textAlign: "left", padding: "12px 10px", fontSize: 11, color: "#8FAE8E", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Amount</th>
@@ -232,13 +252,13 @@ export const ProviderDashboard = () => {
                                             </thead>
                                             <tbody>
                                                 {stats.recentActivity.map((activity, idx) => (
-                                                    <tr key={idx} style={{ borderBottom: "1px solid #fafafa" }}>
-                                                        <td style={{ padding: "18px 10px", fontWeight: 700, color: "#2d3b2d", fontSize: 14 }}>{activity.user?.name || "Customer"}</td>
+                                                    <tr key={idx} style={{ borderBottom: `1px solid ${T.border}` }}>
+                                                        <td style={{ padding: "18px 10px", fontWeight: 700, color: T.text, fontSize: 14 }}>{activity.user?.name || "Customer"}</td>
                                                         <td style={{ padding: "18px 10px" }}>
                                                             <span style={{ padding: "4px 10px", borderRadius: 8, background: "#eef2ff", color: "#4f46e5", fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>{activity.planType}</span>
                                                         </td>
-                                                        <td style={{ padding: "18px 10px", fontWeight: 800, color: "#2d3b2d" }}>₹{activity.amountPaid}</td>
-                                                        <td style={{ padding: "18px 10px", textAlign: "right", color: "#aaa", fontSize: 13 }}>{new Date(activity.createdAt).toLocaleDateString()}</td>
+                                                        <td style={{ padding: "18px 10px", fontWeight: 800, color: T.text }}>₹{activity.amountPaid}</td>
+                                                        <td style={{ padding: "18px 10px", textAlign: "right", color: T.textMuted, fontSize: 13 }}>{new Date(activity.createdAt).toLocaleDateString()}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -248,7 +268,7 @@ export const ProviderDashboard = () => {
                             </div>
                         </div>
                     ) : (
-                        <div style={{ background: "#fff", borderRadius: 32, padding: "40px", boxShadow: "0 20px 50px rgba(0,0,0,0.03)" }}>
+                        <div style={{ background: T.card, borderRadius: 32, padding: "40px", boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
                             {activeTab === "Menu Management" ? <ProviderMenu /> :
                                 activeTab === "Active Subscriptions" ? <ActiveSubscriptions /> :
                                     activeTab === "Orders Today" ? <OrdersToday /> :

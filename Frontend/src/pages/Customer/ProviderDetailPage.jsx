@@ -81,7 +81,6 @@ const ProviderDetailPage = () => {
         link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,600;1,700&family=Nunito:wght@400;600;700;800;900&display=swap";
         link.rel = "stylesheet";
         document.head.appendChild(link);
-
         // Load Razorpay script
         const script = document.createElement("script");
         script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -408,6 +407,26 @@ const ProviderDetailPage = () => {
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Details grid */}
+                        <div style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", borderRadius: 22, border: "1.5px solid rgba(143,174,142,0.18)", boxShadow: "0 2px 20px rgba(90,120,70,0.07)", padding: "26px 28px", ...a(200) }}>
+                            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 18 }}>Provider Info</h2>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 28px" }}>
+                                {[
+                                    { icon: "👩‍🍳", label: "Owner", value: tiffin.ownerName },
+                                    { icon: "📞", label: "Phone", value: tiffin.phone || tiffin.contact },
+                                    { icon: "📍", label: "Location", value: addr },
+                                    { icon: "📋", label: "FSSAI", value: tiffin.fssaiNumber },
+                                    { icon: "💰", label: "Per Meal", value: tiffin.pricePerMeal ? `₹${tiffin.pricePerMeal}` : null },
+                                    { icon: "⭐", label: "Rating", value: tiffin.rating ? `${Number(tiffin.rating).toFixed(1)} / 5` : "New" },
+                                ].filter(d => d.value).map(({ icon, label, value }) => (
+                                    <div key={label}>
+                                        <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#c8c8b4", marginBottom: 5 }}>{icon} {label}</p>
+                                        <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.4 }}>{value}</p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

@@ -70,20 +70,19 @@ export default function CustomerDashboard() {
     // ✅ Token ab Redux se aa raha hai, localStorage se nahi
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Fetch Subscriptions and Orders (Non-location dependent)
     Promise.all([
-      axios.get("http://localhost:5000/api/tiffins"),
-      axios.get("http://localhost:5000/api/subscriptions", { headers }),
-      axios.get("http://localhost:5000/api/orders", { headers }),
+      axios.get("http://localhost:5000/api/subscriptions/my-subscriptions", { headers }),
+      axios.get("http://localhost:5000/api/orders/my", { headers }),
     ])
-      .then(([tiffinsRes, subsRes, ordersRes]) => {
-        setStats({
-          tiffins: tiffinsRes.data.length || 0,
-          subscriptions: subsRes.data.length || 0,
-          orders: ordersRes.data.length || 0,
-        });
-
+      .then(([subsRes, ordersRes]) => {
+        setStats(prev => ({
+          ...prev,
+          subscriptions: subsRes.data?.data?.length || 0,
+          orders: ordersRes.data?.length || 0,
+        }));
       })
-      .catch(err => console.error("Dashboard fetch error:", err));
+      .catch(err => console.error("Dashboard stats fetch error:", err));
 
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);
@@ -92,6 +91,15 @@ export default function CustomerDashboard() {
   useEffect(() => {
     if (location.lat && location.lng) {
       const headers = { Authorization: `Bearer ${token}` };
+      
+      // 1. Fetch nearby tiffins count for stats
+      axios.get(`http://localhost:5000/api/tiffins/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
+        .then(res => {
+          setStats(prev => ({ ...prev, tiffins: res.data.length || 0 }));
+        })
+        .catch(err => console.error("Nearby tiffins fetch error:", err));
+
+      // 2. Fetch specific recommendations
       axios.get(`http://localhost:5000/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
         .then(res => setRecommendations(res.data.providers || []))
         .catch(err => console.error("Recs fetch error:", err));

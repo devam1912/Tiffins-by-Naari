@@ -17,6 +17,7 @@ export default function Sidebar({
     { id: "dashboard", icon: "⊞", label: "Dashboard", path: "/CustomerDashboard" },
     { id: "tiffins", icon: "🍱", label: "Browse Tiffins", path: "/tiffins" },
     { id: "subscriptions", icon: "📅", label: "Subscriptions", path: "/subscriptions" },
+    { id: "order-history", icon: "📜", label: "Order History", path: "/order-history" },
     { id: "profile", icon: "👤", label: "My Profile", path: "/CustomerProfile" },
   ];
 

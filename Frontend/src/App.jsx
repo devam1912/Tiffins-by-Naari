@@ -10,6 +10,7 @@ import RegisterProvider from "./pages/provider/RegisterProvider";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import BrowseTiffins from "./pages/Customer/BrowseTiffins";
 import ProviderDetailPage from "./pages/Customer/ProviderDetailPage";
+import CustomerSubscriptions from "./pages/Customer/CustomerSubscriptions";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/tiffins" element={<BrowseTiffins />} />
         <Route path="/provider/:id" element={<ProviderDetailPage />} />
+        <Route path="/subscriptions" element={<CustomerSubscriptions />} />
       </Routes>
     </BrowserRouter>
   );

@@ -2,6 +2,11 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { 
+    fetchProviderDashboard, 
+    fetchProviderProfile, 
+    toggleServiceStatus 
+} from "../../store/providerSlice";
 import API from "../../api/auth";
 import { ProviderMenu } from "../../components/ProviderMenu";
 import { ActiveSubscriptions } from "../../components/ActiveSubscriptions";
@@ -14,15 +19,18 @@ export const ProviderDashboard = () => {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth.user);
     const token = useSelector((state) => state.auth.token);
+    const { 
+        stats, 
+        profile, 
+        loading: loadingStats, 
+        statusLoading: isStatusLoading 
+    } = useSelector((state) => state.provider);
 
     const [loaded, setLoaded] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState("Dashboard");
-    const [isServiceActive, setIsServiceActive] = useState(true);
-    const [stats, setStats] = useState(null);
-    const [profile, setProfile] = useState(null);
-    const [loadingStats, setLoadingStats] = useState(true);
-    const [isStatusLoading, setIsStatusLoading] = useState(false);
+
+    const isServiceActive = profile?.isActive ?? true;
 
     // Dark Mode
     const [darkMode, setDarkMode] = useState(() => localStorage.getItem('naari-theme') === 'dark');
@@ -166,7 +174,7 @@ export const ProviderDashboard = () => {
                                 <span style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5 }}>Service Status</span>
                                 <button
                                     className="status-toggle"
-                                    onClick={toggleServiceStatus}
+                                    onClick={handleServiceToggle}
                                     disabled={isStatusLoading}
                                 />
                             </div>
@@ -275,7 +283,7 @@ export const ProviderDashboard = () => {
                                         activeTab === "Profile Settings" ? (
                                             <ProfileSettings
                                                 isServiceActive={isServiceActive}
-                                                toggleServiceStatus={toggleServiceStatus}
+                                                toggleServiceStatus={handleServiceToggle}
                                                 isStatusLoading={isStatusLoading}
                                                 profileData={profile || stats}
                                             />

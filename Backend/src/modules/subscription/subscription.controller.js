@@ -97,73 +97,73 @@ const createSubscription = async (req, res) => {
 
     const totalPrice = basePrice * totalDays;
 
-   
-   // 💰 Wallet deduction
-const walletResult = await deductCredit(req.user._id, totalPrice);
 
-const walletUsed = walletResult.deducted;
-const remainingToPay = walletResult.remainingToPay;
+    // 💰 Wallet deduction
+    const walletResult = await deductCredit(req.user._id, totalPrice);
 
-// 🟢 FULL WALLET PAYMENT
-if (remainingToPay === 0) {
-  // 5% platform fee, 95% to provider
-  const { platformFee, providerEarning } = await creditProviderAfterPayment(
-    providerId,
-    totalPrice,
-    `Subscription (wallet) ${planType} plan - ${timeSlot}`
-  );
+    const walletUsed = walletResult.deducted;
+    const remainingToPay = walletResult.remainingToPay;
 
-  const subscription = await Subscription.create({
-    user: req.user._id,
-    provider: providerId,
-    planType,
-    timeSlot,
-    startDate,
-    endDate,
-    totalPrice,
-    remainingMeals: totalDays,
-    amountPaid: totalPrice,
-    platformFee,
-    providerEarning,
-    paymentStatus: "paid",
-    status: "active",
-  });
+    // 🟢 FULL WALLET PAYMENT
+    if (remainingToPay === 0) {
+      // 5% platform fee, 95% to provider
+      const { platformFee, providerEarning } = await creditProviderAfterPayment(
+        providerId,
+        totalPrice,
+        `Subscription (wallet) ${planType} plan - ${timeSlot}`
+      );
 
-  return res.status(201).json({
-    message: "Subscription activated using wallet",
-    subscription,
-  });
-}
+      const subscription = await Subscription.create({
+        user: req.user._id,
+        provider: providerId,
+        planType,
+        timeSlot,
+        startDate,
+        endDate,
+        totalPrice,
+        remainingMeals: totalDays,
+        amountPaid: totalPrice,
+        platformFee,
+        providerEarning,
+        paymentStatus: "paid",
+        status: "active",
+      });
 
-// 🟡 PARTIAL / FULL RAZORPAY
-const razorpayOrder = await razorpay.orders.create({
-  amount: remainingToPay * 100,
-  currency: "INR",
-  receipt: `sub_${Date.now()}`,
-});
+      return res.status(201).json({
+        message: "Subscription activated using wallet",
+        subscription,
+      });
+    }
 
-const subscription = await Subscription.create({
-  user: req.user._id,
-  provider: providerId,
-  planType,
-  timeSlot,
-  startDate,
-  endDate,
-  totalPrice,
-  remainingMeals: totalDays,
-  amountPaid: walletUsed,
-  paymentStatus: walletUsed > 0 ? "partial" : "pending",
-  razorpayOrderId: razorpayOrder.id,
-  status: "pending",
-});
+    // 🟡 PARTIAL / FULL RAZORPAY
+    const razorpayOrder = await razorpay.orders.create({
+      amount: remainingToPay * 100,
+      currency: "INR",
+      receipt: `sub_${Date.now()}`,
+    });
 
-res.status(201).json({
-  message: "Razorpay payment required",
-  subscription,
-  razorpayOrderId: razorpayOrder.id,
-  amountToPay: remainingToPay,
-  key: process.env.RAZORPAY_KEY_ID,
-});
+    const subscription = await Subscription.create({
+      user: req.user._id,
+      provider: providerId,
+      planType,
+      timeSlot,
+      startDate,
+      endDate,
+      totalPrice,
+      remainingMeals: totalDays,
+      amountPaid: walletUsed,
+      paymentStatus: walletUsed > 0 ? "partial" : "pending",
+      razorpayOrderId: razorpayOrder.id,
+      status: "pending",
+    });
+
+    res.status(201).json({
+      message: "Razorpay payment required",
+      subscription,
+      razorpayOrderId: razorpayOrder.id,
+      amountToPay: remainingToPay,
+      key: process.env.RAZORPAY_KEY_ID,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: error.message });
@@ -177,8 +177,8 @@ const verifySubscriptionPayment = async (req, res) => {
     const { razorpay_payment_id, razorpay_signature } = req.body;
 
     const subscription = await Subscription.findById(subscriptionId)
-    .populate("user", "name email")
-    .populate("provider", "businessName");
+      .populate("user", "name email")
+      .populate("provider", "businessName");
 
     //  TEST MODE BYPASS (Thunder testing)
     if (process.env.NODE_ENV === "test") {
@@ -337,9 +337,9 @@ const pauseSubscription = async (req, res) => {
       (end - start) / (1000 * 60 * 60 * 24)
     );
 
-    subscription.endDate.setDate(
-      subscription.endDate.getDate() + pauseDuration
-    );
+    const newEndDate = new Date(subscription.endDate);
+    newEndDate.setDate(newEndDate.getDate() + pauseDuration);
+    subscription.endDate = newEndDate;
 
     subscription.pauseStart = start;
     subscription.pauseEnd = end;
@@ -416,7 +416,7 @@ const getOrderReceipt = async (req, res) => {
       status: order.status,
     };
 
-      res.json(receipt);
+    res.json(receipt);
   } catch (error) {
     console.error("Receipt Error:", error);
     res.status(500).json({ message: "Server error" });
@@ -506,7 +506,7 @@ const markMealReady = async (req, res) => {
     if (
       subscription.lastServedDate &&
       new Date(subscription.lastServedDate).toDateString() ===
-        today.toDateString()
+      today.toDateString()
     ) {
       return res.status(400).json({
         message: "Meal already marked as ready for today",
@@ -626,12 +626,12 @@ const handleVacationResume = async (subscription) => {
   ) {
     const pauseDuration = Math.ceil(
       (subscription.pauseEnd - subscription.pauseStart) /
-        (1000 * 60 * 60 * 24)
+      (1000 * 60 * 60 * 24)
     );
 
-    subscription.endDate.setDate(
-      subscription.endDate.getDate() + pauseDuration
-    );
+    const newEndDate = new Date(subscription.endDate);
+    newEndDate.setDate(newEndDate.getDate() + pauseDuration);
+    subscription.endDate = newEndDate;
 
     subscription.status = "active";
     subscription.pauseStart = null;

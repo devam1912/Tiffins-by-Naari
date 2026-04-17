@@ -56,7 +56,7 @@ const providerSchema = new mongoose.Schema(
     },
 
     deliverySlots: {
-      type: [String], // lunch, dinner
+      type: [String], 
     },
 
     location: {

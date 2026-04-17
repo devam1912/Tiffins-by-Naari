@@ -39,7 +39,7 @@ const selectMealForDay = async (req, res) => {
       });
     }
 
-    // Prevent duplicate selection (unique index also protects)
+    
     const existingSelection = await MealSelection.findOne({
       subscription: subscriptionId,
       date: selectedDate,

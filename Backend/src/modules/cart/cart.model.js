@@ -1,6 +1,11 @@
 const mongoose = require("mongoose");
 
 const cartItemSchema = new mongoose.Schema({
+    provider: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Provider",
+        required: true,
+    },
     name: { type: String, required: true },
     type: { type: String },
     price: { type: Number, required: true },
@@ -14,11 +19,6 @@ const cartSchema = new mongoose.Schema(
             ref: "User",
             required: true,
             unique: true,
-        },
-        provider: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Provider",
-            required: true,
         },
         timeSlot: {
             type: String,
@@ -34,7 +34,7 @@ const cartSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// Method to calculate total price
+
 cartSchema.methods.calculateTotal = function () {
     this.totalPrice = this.items.reduce(
         (acc, item) => acc + item.price * item.quantity,

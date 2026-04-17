@@ -2,7 +2,7 @@ const User = require("../user/user.model");
 const generateToken = require("../../utils/jwt");
 const { sendEmail } = require("../../utils/notification.service");
 
-// ================= REGISTER =================
+
 const registerUser = async (req, res) => {
   try {
     const { name, email, phone, password, role } = req.body;
@@ -47,7 +47,7 @@ const registerUser = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-// ================= LOGIN =================
+
 const loginUser = async (req, res) => {
   try {
     const { email, phone, password } = req.body;
@@ -58,7 +58,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    // Build query
+    
     let loginQuery = [];
     if (email) loginQuery.push({ email });
     if (phone) loginQuery.push({ phone });
@@ -172,7 +172,7 @@ const verifyOTP = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.user; // set by auth middleware from JWT
+    const userId = req.user; 
 
     const user = await User.findById(userId);
     if (!user) {
@@ -181,7 +181,7 @@ const updateProfile = async (req, res) => {
 
     const { name, email, phone, address } = req.body;
 
-    // update only provided fields
+    
     if (name !== undefined) user.name = name;
     if (email !== undefined) user.email = email;
     if (phone !== undefined) user.phone = phone;

@@ -1,12 +1,12 @@
 const Payout = require("./payout.model");
 const Provider = require("../tiffin/provider.model");
 
-// Admin sees all payouts remaining (provider wallet balances) and total paid
+
 const getAllPayoutBalances = async (req, res) => {
   try {
     const providers = await Provider.find().select("_id businessName ownerName email phone walletBalance");
     
-    // Calculate total paid for each provider
+    
     const payouts = await Payout.aggregate([
       { $match: { type: "debit", status: "completed" } },
       { $group: { _id: "$provider", totalPaid: { $sum: "$amount" } } }
@@ -29,7 +29,7 @@ const getAllPayoutBalances = async (req, res) => {
   }
 };
 
-// Admin deducts (payouts) from provider wallet
+
 const processPayout = async (req, res) => {
   try {
     const { providerId } = req.params;
@@ -60,7 +60,7 @@ const processPayout = async (req, res) => {
   }
 };
 
-// Credit provider wallet (internal/webhook/admin use)
+
 const creditProviderWallet = async (req, res) => {
   try {
     const { providerId } = req.params;
@@ -85,7 +85,7 @@ const creditProviderWallet = async (req, res) => {
   }
 };
 
-// Admin sees specific provider's payout history
+
 const getProviderPayoutHistory = async (req, res) => {
   try {
     const { providerId } = req.params;
@@ -98,7 +98,7 @@ const getProviderPayoutHistory = async (req, res) => {
   }
 };
 
-// Provider sees their own history
+
 const getMyPayoutHistory = async (req, res) => {
   try {
     const provider = await Provider.findOne({ user: req.user._id });

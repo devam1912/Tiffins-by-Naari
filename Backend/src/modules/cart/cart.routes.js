@@ -9,7 +9,7 @@ const {
 
 const router = express.Router();
 
-// All routes are protected and for authenticated users
+
 router.use(protect);
 
 router.get("/", getCart);

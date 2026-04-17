@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../modules/user/user.model");
 
-// Protect routes (authentication)
+
 const protect = async (req, res, next) => {
   try {
     let token;
@@ -31,7 +31,7 @@ const protect = async (req, res, next) => {
   }
 };
 
-// Role-based access control
+
 const authorize = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {

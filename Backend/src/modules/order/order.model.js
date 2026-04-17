@@ -25,15 +25,15 @@ const orderSchema = new mongoose.Schema(
     },
 
     items: [
-      {
-        type: {
+      new mongoose.Schema(
+        {
           name: { type: String, required: true },
           itemType: { type: String, default: "" },
           price: { type: Number, default: 0 },
           quantity: { type: Number, default: 1 },
         },
-        _id: false,
-      },
+        { _id: false }
+      )
     ],
 
     totalPrice: {

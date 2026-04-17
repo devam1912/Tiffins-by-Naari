@@ -1,7 +1,7 @@
 const Cart = require("./cart.model");
 const cron = require("node-cron");
 
-// --- UTILS --- //
+
 const isTimeValidForSlot = (timeSlot) => {
     const now = new Date();
     const hours = now.getHours();
@@ -9,13 +9,13 @@ const isTimeValidForSlot = (timeSlot) => {
     const currentTime = hours + minutes / 60;
 
     if (timeSlot === "lunch") {
-        // Lunch available till 15:00 (3:00 PM)
+        
         if (currentTime >= 15) return false;
         return true;
     }
 
     if (timeSlot === "dinner") {
-        // Dinner available from 19:00 (7:00 PM) to 22:30 (10:30 PM)
+        
         if (currentTime < 19 || currentTime >= 22.5) return false;
         return true;
     }
@@ -23,8 +23,8 @@ const isTimeValidForSlot = (timeSlot) => {
     return false;
 };
 
-// --- CRON JOBS --- //
-// 1. At 3:00 PM (15:00), clear all lunch carts
+
+
 cron.schedule("0 15 * * *", async () => {
     try {
         await Cart.updateMany({ timeSlot: "lunch" }, { $set: { items: [], totalPrice: 0 } });
@@ -34,7 +34,7 @@ cron.schedule("0 15 * * *", async () => {
     }
 });
 
-// 2. At 10:30 PM (22:30), clear all dinner carts
+
 cron.schedule("30 22 * * *", async () => {
     try {
         await Cart.updateMany({ timeSlot: "dinner" }, { $set: { items: [], totalPrice: 0 } });
@@ -44,18 +44,18 @@ cron.schedule("30 22 * * *", async () => {
     }
 });
 
-// --- CONTROLLERS --- //
 
-// 🟢 Get User's Cart
+
+
 const getCart = async (req, res) => {
     try {
-        let cart = await Cart.findOne({ user: req.user._id }).populate("provider", "businessName");
+        let cart = await Cart.findOne({ user: req.user._id }).populate({ path: 'items.provider', select: 'businessName' });
 
         if (!cart) {
             return res.status(200).json({ items: [], totalPrice: 0 });
         }
 
-        // Dynamic clean up if someone fetches an expired cart before cron does, or if cron was down
+        
         if (cart.items.length > 0 && !isTimeValidForSlot(cart.timeSlot)) {
             cart.items = [];
             cart.totalPrice = 0;
@@ -69,11 +69,11 @@ const getCart = async (req, res) => {
     }
 };
 
-// 🟢 Add item to Cart
+
 const addItemToCart = async (req, res) => {
     try {
         const { providerId, timeSlot, item } = req.body;
-        // item should be { name, price, quantity(optional), type(optional) }
+        
 
         if (!providerId || !timeSlot || !item) {
             return res.status(400).json({ message: "providerId, timeSlot, and item details are required" });
@@ -88,25 +88,28 @@ const addItemToCart = async (req, res) => {
         if (!cart) {
             cart = new Cart({
                 user: req.user._id,
-                provider: providerId,
                 timeSlot: timeSlot,
                 items: []
             });
         }
 
-        // If provider or timeslot changes, start a fresh cart
-        if (cart.provider?.toString() !== providerId || cart.timeSlot !== timeSlot) {
-            cart.provider = providerId;
+        
+        
+        if (cart.timeSlot !== timeSlot) {
             cart.timeSlot = timeSlot;
             cart.items = [];
         }
 
-        // Check if item already exists in cart
-        const existingItemIndex = cart.items.findIndex(i => i.name === item.name);
+        
+        const existingItemIndex = cart.items.findIndex(
+            i => i.name === item.name && i.provider.toString() === providerId
+        );
+
         if (existingItemIndex > -1) {
             cart.items[existingItemIndex].quantity += (item.quantity || 1);
         } else {
             cart.items.push({
+                provider: providerId,
                 name: item.name,
                 price: item.price,
                 type: item.type,
@@ -123,10 +126,10 @@ const addItemToCart = async (req, res) => {
     }
 };
 
-// 🟢 Remove item from Cart
+
 const removeItemFromCart = async (req, res) => {
     try {
-        const { itemName } = req.body;
+        const { itemName, providerId } = req.body;
 
         if (!itemName) {
             return res.status(400).json({ message: "itemName is required" });
@@ -137,7 +140,7 @@ const removeItemFromCart = async (req, res) => {
             return res.status(404).json({ message: "Cart not found" });
         }
 
-        // Dynamic clear if it's expired
+        
         if (cart.items.length > 0 && !isTimeValidForSlot(cart.timeSlot)) {
             cart.items = [];
             cart.totalPrice = 0;
@@ -145,9 +148,16 @@ const removeItemFromCart = async (req, res) => {
             return res.status(400).json({ message: `Cart cleared because ${cart.timeSlot} ordering time passed.` });
         }
 
-        const itemIndex = cart.items.findIndex(i => i.name === itemName);
+        let itemIndex = -1;
+        
+        if (providerId) {
+            itemIndex = cart.items.findIndex(i => i.name === itemName && i.provider.toString() === providerId);
+        } else {
+            itemIndex = cart.items.findIndex(i => i.name === itemName);
+        }
+
         if (itemIndex > -1) {
-            // Decrease quantity or remove completely
+            
             if (cart.items[itemIndex].quantity > 1) {
                 cart.items[itemIndex].quantity -= 1;
             } else {
@@ -157,7 +167,7 @@ const removeItemFromCart = async (req, res) => {
             cart.calculateTotal();
             await cart.save();
         } else {
-            return res.status(404).json({ message: "Item not in cart" });
+            return res.status(404).json({ message: "Item not in cart or already expired" });
         }
 
         res.status(200).json(cart);
@@ -166,7 +176,7 @@ const removeItemFromCart = async (req, res) => {
     }
 };
 
-// 🟢 Clear Cart completely
+
 const clearCart = async (req, res) => {
     try {
         const cart = await Cart.findOne({ user: req.user._id });

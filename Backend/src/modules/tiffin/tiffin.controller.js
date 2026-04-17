@@ -48,7 +48,7 @@ const createProviderRequest = async (req, res) => {
   const email = req.user.email;
   const phone = req.user.phone;
 
-    // ===== Check existing provider =====
+    
     const existing = await Provider.findOne({ user: req.user._id });
 
     if (existing) {
@@ -57,7 +57,7 @@ const createProviderRequest = async (req, res) => {
       });
     }
 
-    // ===== Upload FSSAI certificate =====
+    
     let certificateUrl = null;
 
     if (req.file) {
@@ -76,7 +76,7 @@ const createProviderRequest = async (req, res) => {
       certificateUrl = uploadResult.secure_url;
     }
 
-    // ===== Create provider =====
+    
     const provider = await Provider.create({
       user: req.user._id,
       businessName,

@@ -1,5 +1,7 @@
 const Provider = require("../tiffin/provider.model");
 const { geocode } = require("../../utils/geocoder");
+const axios = require("axios");
+
 
 /**
  * Get recommended tiffin providers based on location and radius
@@ -81,6 +83,22 @@ const getNearbyRecommendations = async (req, res) => {
     }
 };
 
+/**
+ * Fetch personalized food recommendations from Python service
+ */
+const getUserRecommendations = async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const response = await axios.get(`http://127.0.0.1:8000/recommendations/${userId}`);
+        
+        res.status(200).json(response.data);
+    } catch (error) {
+        console.error("Recommendation Service Error:", error.message);
+        res.status(500).json({ error: "Failed to fetch recommendations" });
+    }
+};
+
 module.exports = {
     getNearbyRecommendations,
+    getUserRecommendations,
 };

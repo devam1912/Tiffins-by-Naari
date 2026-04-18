@@ -26,7 +26,7 @@ export const fetchAdminData = createAsyncThunk(
         menus: mRes.data.menus || [],
         subscriptions: sRes.data.data || sRes.data || [],
         payoutBalances: payRes.data || [],
-        stats: statsRes.data || { totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 }
+        stats: statsRes.data.data || statsRes.data || { totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 }
       };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || "Failed to fetch admin data");

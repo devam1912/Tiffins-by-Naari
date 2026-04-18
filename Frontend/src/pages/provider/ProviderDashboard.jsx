@@ -226,16 +226,17 @@ export const ProviderDashboard = () => {
                         <div>
                             {/* Stats Grid */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24, marginBottom: 40 }}>
-                            {[
+                                {[
                                     { label: "Monthly Revenue", value: `₹${stats?.monthlyRevenue?.toLocaleString() || 0}`, icon: "💰", bg: T.card, textColor: T.text },
                                     { label: "Active Subscribers", value: stats?.activeSubscribers || 0, icon: "👥", bg: "linear-gradient(135deg, #8FAE8E, #8FA873)", textColor: "#fff" },
-                                    { label: "Meals Today", value: stats?.todaysMeals || 0, icon: "🍱", bg: T.card, textColor: T.text },
+                                    { label: "Today's Meals", value: stats?.todaysMeals || 0, subValue: `🌞 ${stats?.lunchCount || 0} | 🌙 ${stats?.dinnerCount || 0}`, icon: "🍱", bg: T.card, textColor: T.text },
                                     { label: "Kitchen Status", value: isServiceActive ? "Active" : "Paused", icon: "🍳", bg: T.card, textColor: isServiceActive ? "#8FAE8E" : "#ef5350" },
                                 ].map((stat, i) => (
                                     <div key={i} className="stat-card" style={{ background: stat.bg, padding: "32px", borderRadius: 24, boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
                                         <div style={{ fontSize: 32, marginBottom: 16 }}>{stat.icon}</div>
-                                        <div style={{ fontSize: 14, fontWeight: 800, color: stat.textColor, opacity: 0.6, textTransform: "uppercase", letterSpacing: 1.5 }}>{stat.label}</div>
-                                        <div style={{ fontSize: 32, fontWeight: 800, color: stat.textColor, marginTop: 4, fontFamily: "'Lora',serif" }}>{stat.value}</div>
+                                        <div style={{ fontSize: 13, fontWeight: 800, color: stat.textColor, opacity: 0.6, textTransform: "uppercase", letterSpacing: 1.5 }}>{stat.label}</div>
+                                        <div style={{ fontSize: 30, fontWeight: 800, color: stat.textColor, marginTop: 4, fontFamily: "'Lora',serif" }}>{stat.value}</div>
+                                        {stat.subValue && <div style={{ fontSize: 12, fontWeight: 700, color: stat.textColor, opacity: 0.5, marginTop: 4 }}>{stat.subValue}</div>}
                                     </div>
                                 ))}
                             </div>

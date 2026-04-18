@@ -1,6 +1,4 @@
-/**
- * Geocoder utility using OpenStreetMap Nominatim API
- */
+
 
 const geocode = async (address) => {
   try {

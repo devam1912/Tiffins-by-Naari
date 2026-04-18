@@ -58,7 +58,7 @@ const submitForApproval = async (req, res) => {
       });
     }
 
-    //enforcing menu completion
+    
     if (!provider.profileCompleted) {
       return res.status(403).json({
         message: "Complete profile before publishing menu",
@@ -112,13 +112,13 @@ const rejectMenu = async (req, res) => {
       return res.status(404).json({ message: "Menu not found" });
     }
 
-    // Unpublish menu
+    
     menu.isPublished = false;
     menu.isApproved = false;
     menu.rejectionRemark = remark || "Rejected by admin";
     await menu.save();
 
-    // 🔁 Find active subscriptions + populate user for email
+    
     const subs = await Subscription.find({
       provider: menu.provider._id,
       status: "active",
@@ -143,16 +143,16 @@ const rejectMenu = async (req, res) => {
 
       const refund = Math.round(pricePerDay * remainingDays);
 
-      // 💳 Add refund to wallet
+      
       if (refund > 0) {
         await addCredit(sub.user._id, refund);
       }
 
-      // ❌ cancel subscription
+      
       sub.status = "cancelled";
       await sub.save();
 
-      // 📧 Notify subscriber
+      
       if (sub.user?.email) {
         await sendEmail(
           sub.user.email,
@@ -167,7 +167,7 @@ We apologize for the inconvenience.`
       }
     }
 
-    // 📧 Notify provider
+    
     if (menu.provider.email) {
       await sendEmail(
         menu.provider.email,

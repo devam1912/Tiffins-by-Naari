@@ -35,7 +35,7 @@ const mealSelectionSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent duplicate for same subscription + date
+
 mealSelectionSchema.index(
   { subscription: 1, date: 1 },
   { unique: true }

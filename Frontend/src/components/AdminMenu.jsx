@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import { approveMenu, rejectMenu } from "../store/adminSlice";
 import API from "../api/auth";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -87,7 +89,7 @@ export const AdminMenu = ({ menus = [] }) => {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Menu Moderation</h2>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "inherit", margin: 0 }}>Menu Moderation</h2>
                     <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{menus.length} menus from registered kitchen partners</p>
                 </div>
                 <div style={{ position: "relative" }}>
@@ -96,7 +98,7 @@ export const AdminMenu = ({ menus = [] }) => {
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Search by kitchen or chef..."
-                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: "1px solid #eee", borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240 }}
+                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240, background: "transparent", color: "inherit" }}
                     />
                 </div>
             </div>
@@ -115,14 +117,14 @@ export const AdminMenu = ({ menus = [] }) => {
                         const loading = actionLoading[menu._id];
 
                         return (
-                            <div key={menu._id} style={{ border: "1px solid #f0f0f0", borderRadius: 20, overflow: "hidden", background: "#fcfdfc" }}>
+                            <div key={menu._id} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, overflow: "hidden", background: "rgba(255,255,255,0.03)" }}>
                                 {/* Row */}
                                 <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, cursor: "pointer" }}
                                     onClick={() => setSelected(isExpanded ? null : menu._id)}>
                                     <div style={{ width: 42, height: 42, borderRadius: 12, background: "#fff8f0", border: "1px solid #ffe0b2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🍱</div>
 
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 800, fontSize: 15, color: "#2d3b2d" }}>{menu.provider?.businessName || "Unknown Kitchen"}</div>
+                                        <div style={{ fontWeight: 800, fontSize: 15, color: "inherit" }}>{menu.provider?.businessName || "Unknown Kitchen"}</div>
                                         <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Chef: {menu.provider?.ownerName || "—"} &bull; {menu.weekMenu?.length || 0} days scheduled</div>
                                     </div>
 
@@ -163,7 +165,7 @@ export const AdminMenu = ({ menus = [] }) => {
 
                                 {/* Expanded: weekly menu detail */}
                                 {isExpanded && (
-                                    <div style={{ borderTop: "1px solid #f5f5f5", padding: "20px 24px", background: "#fff" }}>
+                                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "20px 24px", background: "rgba(255,255,255,0.02)" }}>
                                         <p style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 }}>Weekly Schedule</p>
                                         <div style={{ display: "flex", overflowX: "auto", gap: 12, paddingBottom: 8 }}>
                                             {DAYS.map(day => {
@@ -172,7 +174,7 @@ export const AdminMenu = ({ menus = [] }) => {
                                                 const dinnerItems = dayData?.dinner?.items || [];
                                                 const hasItems = lunchItems.length > 0 || dinnerItems.length > 0;
                                                 return (
-                                                    <div key={day} style={{ minWidth: 140, borderRadius: 14, background: "#f9fafb", border: "1px solid #f0f0f0", padding: 14, flexShrink: 0 }}>
+                                                    <div key={day} style={{ minWidth: 140, borderRadius: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", padding: 14, flexShrink: 0 }}>
                                                         <p style={{ fontWeight: 800, fontSize: 11, color: "#8FAE8E", textTransform: "uppercase", marginBottom: 10 }}>{day.slice(0, 3)}</p>
                                                         {!hasItems && <p style={{ fontSize: 11, color: "#ddd", fontStyle: "italic" }}>No items</p>}
                                                         {lunchItems.length > 0 && (
@@ -181,7 +183,8 @@ export const AdminMenu = ({ menus = [] }) => {
                                                                 {lunchItems.map((item, i) => (
                                                                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                                                                         <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#8FAE8E", flexShrink: 0, display: "inline-block" }} />
-                                                                        <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
+                                                                        <span style={{ fontSize: 12, color: "inherit", flex: 1 }}>{item.name}</span>
+                                                                        {item.price > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", whiteSpace: "nowrap" }}>₹{item.price}</span>}
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -192,7 +195,8 @@ export const AdminMenu = ({ menus = [] }) => {
                                                                 {dinnerItems.map((item, i) => (
                                                                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                                                                         <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6366f1", flexShrink: 0, display: "inline-block" }} />
-                                                                        <span style={{ fontSize: 12, color: "#374151" }}>{item.name}</span>
+                                                                        <span style={{ fontSize: 12, color: "inherit", flex: 1 }}>{item.name}</span>
+                                                                        {item.price > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: "#6366f1", whiteSpace: "nowrap" }}>₹{item.price}</span>}
                                                                     </div>
                                                                 ))}
                                                             </div>

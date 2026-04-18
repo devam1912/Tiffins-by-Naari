@@ -37,6 +37,31 @@ export const fetchProviderSubscriptions = createAsyncThunk(
   }
 );
 
+export const fetchProviderOrders = createAsyncThunk(
+  "provider/fetchOrders",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await API.get("/orders/tsp");
+      return res.data || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch orders");
+    }
+  }
+);
+
+export const updateOrderStatus = createAsyncThunk(
+  "provider/updateOrderStatus",
+  async ({ orderId, status }, { rejectWithValue, dispatch }) => {
+    try {
+      const res = await API.patch(`/orders/tsp/${orderId}/status`, { status });
+      dispatch(fetchProviderOrders());
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to update order status");
+    }
+  }
+);
+
 export const fetchProviderMenu = createAsyncThunk(
   "provider/fetchMenu",
   async (userId, { rejectWithValue }) => {
@@ -111,6 +136,7 @@ const providerSlice = createSlice({
     profile: null,
     stats: null,
     subscriptions: [],
+    orders: [],
     menu: null,
     loading: false,
     statusLoading: false,
@@ -133,6 +159,9 @@ const providerSlice = createSlice({
       })
       .addCase(fetchProviderSubscriptions.fulfilled, (state, action) => {
         state.subscriptions = action.payload;
+      })
+      .addCase(fetchProviderOrders.fulfilled, (state, action) => {
+        state.orders = action.payload;
       })
       .addCase(fetchProviderMenu.fulfilled, (state, action) => {
         state.menu = action.payload;

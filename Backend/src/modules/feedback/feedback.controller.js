@@ -13,14 +13,14 @@ const addFeedback = async (req, res) => {
       });
     }
 
-    // check subscription relation
+    
     const hasSubscription = await Subscription.exists({
       user: req.user._id,
       provider: providerId,
       status: { $in: ["active", "completed", "paused"] },
     });
 
-    // check order relation
+    
     const hasOrder = await Order.exists({
       user: req.user._id,
       provider: providerId,
@@ -34,7 +34,7 @@ const addFeedback = async (req, res) => {
       });
     }
 
-    // prevent duplicate feedback per provider per user
+    
     const existing = await Feedback.findOne({
       user: req.user._id,
       provider: providerId,

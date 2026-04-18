@@ -3,19 +3,19 @@ const Provider = require("../tiffin/provider.model");
 const Order = require("../order/order.model");
 const Subscription = require("../subscription/subscription.model");
 
-// GET all users
+
 const getAllUsers = async (req, res) => {
   const users = await User.find().select("-password");
   res.json(users);
 };
 
-// GET all providers
+
 const getAllProviders = async (req, res) => {
   const providers = await Provider.find().populate("user", "name email");
   res.json(providers);
 };
 
-// GET all orders
+
 const getAllOrders = async (req, res) => {
   const orders = await Order.find()
     .populate("user", "name")
@@ -23,7 +23,7 @@ const getAllOrders = async (req, res) => {
   res.json(orders);
 };
 
-// GET dashboard stats
+
 const getAdminStats = async (req, res) => {
   const totalUsers = await User.countDocuments({ role: "customer" });
   const totalProviders = await Provider.countDocuments();
@@ -57,7 +57,7 @@ const getPendingProviders = async (req, res) => {
   }
 };
 
-// GET all subscriptions (admin)
+
 const getAllSubscriptions = async (req, res) => {
   try {
     const filter = {};

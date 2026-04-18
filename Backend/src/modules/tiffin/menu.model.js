@@ -11,11 +11,11 @@ const menuItemSchema = new mongoose.Schema({
   },
 
   image: {
-    type: String, // URL of uploaded image
+    type: String, 
   },
 
   type: {
-    type: String, // dal, sabzi, rice, bread, dessert
+    type: String, 
   },
 
   price: {

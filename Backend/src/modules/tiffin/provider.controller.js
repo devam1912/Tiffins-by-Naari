@@ -23,7 +23,7 @@ const updateProviderProfile = async (req, res) => {
       return res.status(404).json({ message: "Provider profile not found" });
     }
 
-    // ===== Update basic info =====
+    
     const updateData = {
       businessName: businessName || provider.businessName,
       ownerName: ownerName || provider.ownerName,
@@ -35,7 +35,7 @@ const updateProviderProfile = async (req, res) => {
       location: location || provider.location,
     };
 
-    // ===== Handle FSSAI certificate upload if provided =====
+    
     if (req.file) {
       const uploadResult = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
@@ -52,7 +52,7 @@ const updateProviderProfile = async (req, res) => {
       updateData.fssaiCertificate = uploadResult.secure_url;
     }
 
-    // Save changes
+    
     const updatedProvider = await Provider.findOneAndUpdate(
       { user: req.user._id },
       { $set: updateData },
@@ -82,13 +82,13 @@ const deactivateTSP = async (req, res) => {
 
     const today = new Date();
 
-    // Get all active subscriptions
+    
     const activeSubs = await Subscription.find({
       provider: provider._id,
       status: "active",
     }).populate("user");
 
-    // ⏸ Pause all active subscriptions
+    
     await Subscription.updateMany(
       {
         provider: provider._id,
@@ -100,7 +100,7 @@ const deactivateTSP = async (req, res) => {
       }
     );
 
-    // Notify users
+    
     for (const sub of activeSubs) {
       if (sub.user?.email) {
         await sendEmail(
@@ -156,7 +156,7 @@ const reactivateTSP = async (req, res) => {
 
       await sub.save();
 
-      // Notify user
+      
       if (sub.user?.email) {
         await sendEmail(
           sub.user.email,

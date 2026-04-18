@@ -1,19 +1,16 @@
 const Provider = require("../tiffin/provider.model");
 const { geocode } = require("../../utils/geocoder");
 
-/**
- * Get recommended tiffin providers based on location and radius
- * Query params: address, lat, lng, radius (default 5, options 5, 10, 15, 20)
- */
+
 const getNearbyRecommendations = async (req, res) => {
     try {
         let { address, lat, lng, radius = 5 } = req.query;
         radius = parseInt(radius);
 
-        // Validate radius
+        
         const validRadii = [5, 10, 15, 20];
         if (!validRadii.includes(radius)) {
-            radius = 5; // Default to 5 if invalid
+            radius = 5; 
         }
 
         let coordinates = null;
@@ -33,7 +30,7 @@ const getNearbyRecommendations = async (req, res) => {
                 .json({ message: "Address or Coordinates (lat/lng) required" });
         }
 
-        // Query providers using geospatial search
+        
         const providers = await Provider.find({
             location: {
                 $near: {
@@ -41,16 +38,16 @@ const getNearbyRecommendations = async (req, res) => {
                         type: "Point",
                         coordinates: coordinates,
                     },
-                    $maxDistance: radius * 1000, // MongoDB uses meters
+                    $maxDistance: radius * 1000, 
                 },
             },
             isActive: true,
             isApproved: true,
         }).select("businessName ownerName phone email cuisineType location pricingModel deliverySlots");
 
-        // Format response for Leaflet integration
+        
         const formattedProviders = providers.map((provider) => {
-            // Calculate approximate distance if needed, or let MongoDB sorting do the job
+            
             return {
                 id: provider._id,
                 businessName: provider.businessName,

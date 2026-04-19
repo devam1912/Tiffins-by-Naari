@@ -57,7 +57,7 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                     width: "100%", padding: "12px 16px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14,
                     fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box",
                     background: opts.disabled ? "#f9fafb" : "#fff",
-                    color: opts.disabled ? "#aaa" : "#2d3b2d",
+                    color: opts.disabled ? "#aaa" : "inherit",
                     cursor: opts.disabled ? "not-allowed" : "text",
                 }}
             />
@@ -70,7 +70,7 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Profile Settings</h2>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "inherit", margin: 0 }}>Profile Settings</h2>
                     <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>Manage your kitchen identity and contact information.</p>
                 </div>
                 <button onClick={handleSave} disabled={saving}
@@ -83,10 +83,10 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                 {/* Left: Form */}
                 <div>
                     {/* Kitchen Identity */}
-                    <div style={{ background: "#fff", borderRadius: 22, padding: "28px", border: "1px solid #f0f0f0", marginBottom: 24 }}>
+                    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 22, padding: "28px", border: "1px solid rgba(255,255,255,0.1)", marginBottom: 24 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
                             <span style={{ fontSize: 22 }}>🏪</span>
-                            <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Kitchen Identity</span>
+                            <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "inherit" }}>Kitchen Identity</span>
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                             <div>{field("Kitchen Name", "kitchenName", { placeholder: "Enter kitchen name" })}</div>
@@ -105,10 +105,10 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                     </div>
 
                     {/* Contact */}
-                    <div style={{ background: "#fff", borderRadius: 22, padding: "28px", border: "1px solid #f0f0f0" }}>
+                    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 22, padding: "28px", border: "1px solid rgba(255,255,255,0.1)" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 24 }}>
                             <span style={{ fontSize: 22 }}>📞</span>
-                            <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Contact & Location</span>
+                            <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "inherit" }}>Contact & Location</span>
                         </div>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                             <div>{field("Email", "email", { disabled: true, hint: "Contact support to change email" })}</div>
@@ -121,13 +121,13 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
                 {/* Right: Profile Card + Status */}
                 <div>
                     {/* Profile Avatar Card */}
-                    <div style={{ background: "#fff", borderRadius: 22, overflow: "hidden", border: "1px solid #f0f0f0", marginBottom: 20 }}>
+                    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 22, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", marginBottom: 20 }}>
                         <div style={{ height: 80, background: "linear-gradient(135deg, #8FAE8E, #5a7a50)" }} />
                         <div style={{ padding: "0 24px 28px", textAlign: "center", marginTop: -40 }}>
                             <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#fff", border: "4px solid #fff", boxShadow: "0 4px 16px rgba(0,0,0,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 32, color: "#8FAE8E", margin: "0 auto" }}>
                                 {formData.kitchenName.charAt(0) || "?"}
                             </div>
-                            <h3 style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d", marginTop: 12, marginBottom: 2 }}>{formData.kitchenName || "My Kitchen"}</h3>
+                            <h3 style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "inherit", marginTop: 12, marginBottom: 2 }}>{formData.kitchenName || "My Kitchen"}</h3>
                             <p style={{ fontSize: 13, color: "#aaa" }}>{formData.chefName || "Chef"}</p>
                             <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 12 }}>
                                 <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 10px", borderRadius: 100, background: "#e8f5e9", color: "#2e7d32", textTransform: "uppercase" }}>Verified</span>

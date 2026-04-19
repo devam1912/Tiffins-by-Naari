@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send } from "lucide-react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchProviderMenu, saveMenu, submitMenuForApproval } from "../store/providerSlice";
 import API from "../api/auth";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -141,14 +142,14 @@ export const ProviderMenu = () => {
     const renderMenuItemCard = (item, mealType) => {
         const isApproved = item.status === "approved";
         return (
-            <div key={item.id || item._id} style={{ background: "#fff", border: "1px solid #f0f0f0", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div key={item.id || item._id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "#f9fafb", border: "1px solid #f0f0f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <UtensilsCrossed size={16} color={item.status === "pending" ? "#f59e0b" : "#d1d5db"} />
                     </div>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <span style={{ fontWeight: 700, fontSize: 14, color: "#2d3b2d" }}>{item.name}</span>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: "inherit" }}>{item.name}</span>
                             <span style={{ background: "#f3f4f6", color: "#6b7280", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6, textTransform: "uppercase" }}>{item.type}</span>
                             <span style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E" }}>₹{item.price || 0}</span>
                             <StatusBadge status={item.status} />
@@ -195,7 +196,7 @@ export const ProviderMenu = () => {
             {/* Header actions */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Menu Manager</h2>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "inherit", margin: 0 }}>Menu Manager</h2>
                     <p style={{ fontSize: 13, color: "#999", marginTop: 4 }}>
                         {menuStatus.isApproved ? "✅ Menu is approved & live" : menuStatus.submittedForApproval ? "⏳ Awaiting admin approval" : "Draft — save and submit for approval"}
                     </p>
@@ -217,7 +218,7 @@ export const ProviderMenu = () => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 28 }}>
                 <div>
                     {/* Day Tabs — FIXED: explicit colors, always readable */}
-                    <div style={{ display: "flex", background: "#fff", padding: 6, borderRadius: 18, border: "1px solid #f0f0f0", overflowX: "auto", gap: 4, marginBottom: 28 }}>
+                    <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", padding: 6, borderRadius: 18, border: "1px solid rgba(255,255,255,0.1)", overflowX: "auto", gap: 4, marginBottom: 28 }}>
                         {DAYS.map(day => (
                             <button
                                 key={day}
@@ -244,7 +245,7 @@ export const ProviderMenu = () => {
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                     <div style={{ width: 32, height: 32, borderRadius: 10, background: "#fffbeb", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#f59e0b" /></div>
-                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Lunch</span>
+                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "inherit" }}>Lunch</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -276,7 +277,7 @@ export const ProviderMenu = () => {
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                     <div style={{ width: 32, height: 32, borderRadius: 10, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#6366f1" /></div>
-                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "#2d3b2d" }}>Dinner</span>
+                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "inherit" }}>Dinner</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
@@ -307,15 +308,15 @@ export const ProviderMenu = () => {
 
                 {/* Subscriber Preview */}
                 <div style={{ position: "sticky", top: 28 }}>
-                    <div style={{ background: "#fff", borderRadius: 24, overflow: "hidden", border: "1px solid #f0f0f0", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}>
+                    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}>
                         <div style={{ background: "#5a7a50", padding: "16px 20px", display: "flex", alignItems: "center", gap: 8 }}>
                             <Eye size={16} color="#fff" />
                             <span style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>Subscriber View</span>
                         </div>
                         <div style={{ padding: 20 }}>
-                            <div style={{ background: "#f8fafc", borderRadius: 16, padding: 16, border: "1px solid #f0f0f0" }}>
+                            <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,0.08)" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                                    <span style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{selectedDay}'s Menu</span>
+                                    <span style={{ fontWeight: 800, fontSize: 14, color: "inherit" }}>{selectedDay}'s Menu</span>
                                     <Leaf size={14} color="#16a34a" />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -331,7 +332,7 @@ export const ProviderMenu = () => {
                                 </div>
                                 <div style={{ marginTop: 16 }}>
                                     <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 6, fontWeight: 800, textTransform: "uppercase" }}>Tiffin Price</p>
-                                    <div style={{ display: "flex", alignItems: "center", background: "#f0f0f0", borderRadius: 10, padding: "10px 14px", fontWeight: 800, color: "#374151", gap: 6 }}>
+                                    <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 14px", fontWeight: 800, color: "inherit", gap: 6 }}>
                                         <span>₹</span><span>{currentDayData.lunch.price || 0}</span>
                                     </div>
                                 </div>
@@ -355,7 +356,7 @@ export const ProviderMenu = () => {
                     <div onClick={() => setIsModalOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)" }} />
                     <div style={{ position: "relative", background: "#fff", width: "100%", maxWidth: 440, borderRadius: 26, padding: 32, boxShadow: "0 40px 80px rgba(0,0,0,0.2)" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-                            <h3 style={{ fontFamily: "'Lora', serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>
+                            <h3 style={{ fontFamily: "'Lora', serif", fontSize: 22, fontWeight: 700, color: "inherit", margin: 0 }}>
                                 {editingItem?.item ? "Edit Item" : "New Menu Item"}
                             </h3>
                             <button onClick={() => setIsModalOpen(false)} style={{ padding: 8, border: "none", background: "#f5f5f5", borderRadius: "50%", cursor: "pointer" }}>

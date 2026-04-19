@@ -29,7 +29,7 @@ export const AdminUsers = ({ users = [] }) => {
         <div className="space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d" }}>User Management</h2>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "inherit" }}>User Management</h2>
                     <Typography className="text-gray-500 mt-1">Manage and monitor all registered platform users.</Typography>
                 </div>
                 <div className="flex gap-3">

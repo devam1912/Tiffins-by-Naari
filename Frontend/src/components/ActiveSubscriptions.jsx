@@ -67,7 +67,7 @@ export const ActiveSubscriptions = () => {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Active Subscriptions</h2>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "inherit", margin: 0 }}>Active Subscriptions</h2>
                     <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>
                         {activeSubs.length} active • {pausedSubs.length} paused • {subscriptions.length} total
                     </p>
@@ -83,7 +83,7 @@ export const ActiveSubscriptions = () => {
                         />
                     </div>
                     <button onClick={() => dispatch(fetchProviderSubscriptions())}
-                        style={{ padding: "10px 18px", borderRadius: 12, border: "1px solid #eee", background: "#fff", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                        style={{ padding: "10px 18px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "inherit", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                         🔄 Refresh
                     </button>
                 </div>
@@ -130,7 +130,7 @@ export const ActiveSubscriptions = () => {
                         const subId = `SUB-${(sub._id || "").slice(-6).toUpperCase()}`;
 
                         return (
-                            <div key={sub._id} style={{ border: "1px solid #f0f0f0", borderRadius: 20, overflow: "hidden", background: "#fcfdfc" }}>
+                            <div key={sub._id} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, overflow: "hidden", background: "rgba(255,255,255,0.03)" }}>
                                 {/* Row */}
                                 <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, cursor: "pointer", flexWrap: "wrap" }}
                                     onClick={() => setSelectedSub(isExpanded ? null : sub._id)}>
@@ -142,7 +142,7 @@ export const ActiveSubscriptions = () => {
 
                                     {/* Name & ID */}
                                     <div style={{ flex: 1, minWidth: 120 }}>
-                                        <div style={{ fontWeight: 800, fontSize: 14, color: "#2d3b2d" }}>{sub.user?.name || "Unknown"}</div>
+                                        <div style={{ fontWeight: 800, fontSize: 14, color: "inherit" }}>{sub.user?.name || "Unknown"}</div>
                                         <div style={{ fontSize: 11, color: "#aaa", marginTop: 2 }}>{subId} &bull; {sub.user?.email || ""}</div>
                                     </div>
 
@@ -188,29 +188,29 @@ export const ActiveSubscriptions = () => {
 
                                 {/* Expanded Detail */}
                                 {isExpanded && (
-                                    <div style={{ borderTop: "1px solid #f5f5f5", padding: "20px 24px", background: "#fff" }}>
+                                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "20px 24px", background: "rgba(255,255,255,0.02)" }}>
                                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
-                                            <div style={{ background: "#f9fafb", padding: 16, borderRadius: 14, border: "1px solid #f0f0f0" }}>
+                                            <div style={{ background: "rgba(255,255,255,0.05)", padding: 16, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)" }}>
                                                 <p style={{ fontSize: 10, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 6 }}>Timeline</p>
-                                                <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>{formatDate(sub.startDate)} → {formatDate(sub.endDate)}</p>
+                                                <p style={{ fontSize: 13, fontWeight: 700, color: "inherit" }}>{formatDate(sub.startDate)} → {formatDate(sub.endDate)}</p>
                                                 <p style={{ fontSize: 11, color: "#8FAE8E", fontWeight: 700, marginTop: 4 }}>{getDaysRemaining(sub.endDate)} days remaining</p>
                                             </div>
-                                            <div style={{ background: "#f9fafb", padding: 16, borderRadius: 14, border: "1px solid #f0f0f0" }}>
+                                            <div style={{ background: "rgba(255,255,255,0.05)", padding: 16, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)" }}>
                                                 <p style={{ fontSize: 10, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 6 }}>Payment</p>
-                                                <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>₹{sub.amountPaid || 0} / ₹{sub.totalPrice || 0}</p>
+                                                <p style={{ fontSize: 13, fontWeight: 700, color: "inherit" }}>₹{sub.amountPaid || 0} / ₹{sub.totalPrice || 0}</p>
                                                 <span style={{ fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 8, textTransform: "uppercase", background: sub.paymentStatus === "paid" ? "#e8f5e9" : "#fff8e1", color: sub.paymentStatus === "paid" ? "#2e7d32" : "#e65100" }}>
                                                     {sub.paymentStatus || "pending"}
                                                 </span>
                                             </div>
-                                            <div style={{ background: "#f9fafb", padding: 16, borderRadius: 14, border: "1px solid #f0f0f0" }}>
+                                            <div style={{ background: "rgba(255,255,255,0.05)", padding: 16, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)" }}>
                                                 <p style={{ fontSize: 10, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 6 }}>Meals</p>
-                                                <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>{remaining} of {totalMeals} remaining</p>
+                                                <p style={{ fontSize: 13, fontWeight: 700, color: "inherit" }}>{remaining} of {totalMeals} remaining</p>
                                                 {sub.lastServedDate && <p style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>Last served: {formatDate(sub.lastServedDate)}</p>}
                                             </div>
                                             {sub.user?.phone && (
-                                                <div style={{ background: "#f9fafb", padding: 16, borderRadius: 14, border: "1px solid #f0f0f0" }}>
+                                                <div style={{ background: "rgba(255,255,255,0.05)", padding: 16, borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)" }}>
                                                     <p style={{ fontSize: 10, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 6 }}>Contact</p>
-                                                    <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>📞 {sub.user.phone}</p>
+                                                    <p style={{ fontSize: 13, fontWeight: 700, color: "inherit" }}>📞 {sub.user.phone}</p>
                                                     {sub.user?.email && <p style={{ fontSize: 11, color: "#aaa", marginTop: 4 }}>✉️ {sub.user.email}</p>}
                                                 </div>
                                             )}

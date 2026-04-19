@@ -2,16 +2,16 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
-// Middlewares
+
 app.use(cors());
 app.use(express.json());
 
-// Health route
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({ message: "API is running" });
 });
 
-// Routes
+
 const adminRoutes = require("./modules/admin/admin.routes");
 const authRoutes = require("./modules/auth/auth.routes");
 const tiffinRoutes = require("./modules/tiffin/tiffin.routes");

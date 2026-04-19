@@ -1,6 +1,6 @@
 const User = require("./user.model");
 
-// Add credit (refund)
+
 const addCredit = async (userId, amount) => {
   const user = await User.findById(userId);
 
@@ -12,7 +12,7 @@ const addCredit = async (userId, amount) => {
   return user.walletBalance;
 };
 
-// Deduct credit (during payment)
+
 const deductCredit = async (userId, amount) => {
   const user = await User.findById(userId);
 

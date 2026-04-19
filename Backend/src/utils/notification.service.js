@@ -1,7 +1,7 @@
 const twilio = require("twilio");
 const nodemailer = require("nodemailer");
 
-// ================= TWILIO (FUTURE USE) =================
+
 const client = twilio(
   process.env.TWILIO_SID,
   process.env.TWILIO_AUTH_TOKEN
@@ -23,7 +23,7 @@ const sendSMS = async (to, message) => {
   }
 };
 
-// ================= EMAIL (ACTIVE FOR OTP) =================
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {

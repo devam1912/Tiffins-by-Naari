@@ -9,29 +9,29 @@ const { sendEmail } = require("../../utils/notification.service");
 const Order = require("../order/order.model");
 const mongoose = require("mongoose");
 
-// ================= CREATE SUBSCRIPTION =================
+
 const createSubscription = async (req, res) => {
   try {
     const { providerId, planType, timeSlot } = req.body;
 
-    // ✅ Validate planType
+    
     const validPlans = ["weekly", "monthly", "yearly"];
     if (!validPlans.includes(planType)) {
       return res.status(400).json({ message: "Invalid plan type" });
     }
 
-    // ✅ Validate timeSlot
+    
     if (!["lunch", "dinner"].includes(timeSlot)) {
       return res.status(400).json({ message: "Invalid time slot" });
     }
 
-    // ✅ Check provider
+    
     const provider = await Provider.findById(providerId);
     if (!provider || !provider.isApproved) {
       return res.status(400).json({ message: "Provider not available" });
     }
 
-    // ✅ Prevent duplicate subscription
+    
     const existing = await Subscription.findOne({
       user: req.user._id,
       provider: providerId,
@@ -45,7 +45,7 @@ const createSubscription = async (req, res) => {
       });
     }
 
-    // ✅ Fetch menu
+    
     const menu = await Menu.findOne({
       provider: providerId,
       isPublished: true,
@@ -98,15 +98,15 @@ const createSubscription = async (req, res) => {
     const totalPrice = basePrice * totalDays;
 
 
-    // 💰 Wallet deduction
+    
     const walletResult = await deductCredit(req.user._id, totalPrice);
 
     const walletUsed = walletResult.deducted;
     const remainingToPay = walletResult.remainingToPay;
 
-    // 🟢 FULL WALLET PAYMENT
+    
     if (remainingToPay === 0) {
-      // 5% platform fee, 95% to provider
+      
       const { platformFee, providerEarning } = await creditProviderAfterPayment(
         providerId,
         totalPrice,
@@ -135,7 +135,7 @@ const createSubscription = async (req, res) => {
       });
     }
 
-    // 🟡 PARTIAL / FULL RAZORPAY
+    
     const razorpayOrder = await razorpay.orders.create({
       amount: remainingToPay * 100,
       currency: "INR",
@@ -180,14 +180,14 @@ const verifySubscriptionPayment = async (req, res) => {
       .populate("user", "name email")
       .populate("provider", "businessName");
 
-    //  TEST MODE BYPASS (Thunder testing)
+    
     if (process.env.NODE_ENV === "test") {
       subscription.razorpayPaymentId = razorpay_payment_id;
       subscription.paymentStatus = "paid";
       subscription.amountPaid = subscription.totalPrice;
       subscription.status = "active";
 
-      // 5% platform fee, 95% to provider
+      
       const { platformFee, providerEarning } = await creditProviderAfterPayment(
         subscription.provider._id || subscription.provider,
         subscription.totalPrice,
@@ -206,7 +206,7 @@ const verifySubscriptionPayment = async (req, res) => {
       });
     }
 
-    //real signature verification
+    
     const body =
       subscription.razorpayOrderId + "|" + razorpay_payment_id;
 
@@ -224,7 +224,7 @@ const verifySubscriptionPayment = async (req, res) => {
     subscription.amountPaid = subscription.totalPrice;
     subscription.status = "active";
 
-    // 5% platform fee, 95% to provider
+    
     const { platformFee, providerEarning } = await creditProviderAfterPayment(
       subscription.provider._id || subscription.provider,
       subscription.totalPrice,
@@ -248,7 +248,7 @@ const verifySubscriptionPayment = async (req, res) => {
 
 
 
-// ================= CANCEL SUBSCRIPTION =================
+
 const cancelSubscription = async (req, res) => {
   try {
     const { subscriptionId } = req.params;
@@ -302,7 +302,7 @@ const cancelSubscription = async (req, res) => {
   }
 };
 
-// ================= PAUSE SUBSCRIPTION =================
+
 const pauseSubscription = async (req, res) => {
   try {
     const { subscriptionId } = req.params;
@@ -358,7 +358,7 @@ const pauseSubscription = async (req, res) => {
   }
 };
 
-// ================= RESUME SUBSCRIPTION =================
+
 const resumeSubscription = async (req, res) => {
   try {
     const { subscriptionId } = req.params;
@@ -467,34 +467,34 @@ const markMealReady = async (req, res) => {
 
     await handleVacationResume(subscription);
 
-    // Get provider of logged-in user
+    
     const provider = await Provider.findOne({ user: req.user._id });
 
     if (!provider) {
       return res.status(403).json({ message: "Provider not found" });
     }
 
-    // Ensure this provider owns the subscription
+    
     if (subscription.provider._id.toString() !== provider._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    // Provider must be active
+    
     if (!subscription.provider.isActive) {
       return res.status(400).json({ message: "Provider is inactive" });
     }
 
-    // Subscription must be active
+    
     if (subscription.status !== "active") {
       return res.status(400).json({ message: "Subscription not active" });
     }
 
-    // Pause check
+    
     if (subscription.status === "paused") {
       return res.status(400).json({ message: "Subscription is paused" });
     }
 
-    // Expiry check
+    
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -502,7 +502,7 @@ const markMealReady = async (req, res) => {
       return res.status(400).json({ message: "Subscription has expired" });
     }
 
-    // Prevent double serving on same day
+    
     if (
       subscription.lastServedDate &&
       new Date(subscription.lastServedDate).toDateString() ===
@@ -513,23 +513,23 @@ const markMealReady = async (req, res) => {
       });
     }
 
-    //  No meals left
+    
     if (subscription.remainingMeals <= 0) {
       return res.status(400).json({ message: "No meals remaining" });
     }
 
-    // Deduct meal
+    
     subscription.remainingMeals -= 1;
     subscription.lastServedDate = today;
 
-    //  Auto complete
+    
     if (subscription.remainingMeals === 0) {
       subscription.status = "completed";
     }
 
     await subscription.save();
 
-    //  Notify user
+    
     if (subscription.user?.email) {
       await sendEmail(
         subscription.user.email,
@@ -568,7 +568,7 @@ const setVacationMode = async (req, res) => {
       return res.status(404).json({ message: "Subscription not found" });
     }
 
-    //  ownership check
+    
     if (subscription.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -583,14 +583,14 @@ const setVacationMode = async (req, res) => {
       return res.status(400).json({ message: "pauseEnd is required" });
     }
 
-    // calculate pauseStart = next service day
+    
     let pauseStart;
 
     if (subscription.lastServedDate) {
       pauseStart = new Date(subscription.lastServedDate);
       pauseStart.setDate(pauseStart.getDate() + 1);
     } else {
-      pauseStart = new Date(); // no meals served yet
+      pauseStart = new Date(); 
     }
 
     const end = new Date(pauseEnd);

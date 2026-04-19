@@ -3,7 +3,6 @@ const { geocode } = require("../../utils/geocoder");
 const axios = require("axios");
 
 
-
 const getNearbyRecommendations = async (req, res) => {
     try {
         let { address, lat, lng, radius = 5 } = req.query;

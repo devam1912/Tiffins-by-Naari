@@ -1,12 +1,19 @@
+import os
 from fastapi import FastAPI
 import pandas as pd
 from pymongo import MongoClient
 from bson import ObjectId
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = FastAPI()
 
 # Replace with the connection link provided
-MONGO_URI = "mongodb+srv://kajalvarlani937_db_user:HU7wyeVDrcEQxqIk@tbn.xwygha8.mongodb.net/?appName=tbn"
+MONGO_URI = os.environ.get("MONGO_URI")
+if not MONGO_URI:
+    raise ValueError("No MONGO_URI set in environment variables")
+
 client = MongoClient(MONGO_URI)
 
 # The default database for the cluster

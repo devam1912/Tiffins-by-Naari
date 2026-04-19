@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import API from "../../api/auth";
+import { toast } from "sonner";
+import { addItemToCart, fetchCart } from "../../store/cartSlice";
 
 /* ─────────────────────────────────────────
    SUCCESS OVERLAY
@@ -46,20 +48,26 @@ const SuccessOverlay = ({ name, plan, slot, onClose, onView }) => {
 const ProviderDetailPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const tiffin = location.state?.tiffin;
     const { token, user } = useSelector(s => s.auth);
+    const { items: cartItems, timeSlot: cartSlot, isLoading: cartLoading } = useSelector(s => s.cart);
 
     const [planType, setPlanType] = useState("");
     const [timeSlot, setTimeSlot] = useState("");
     const [loading, setLoading] = useState(false);
+    const [addingToCart, setAddingToCart] = useState(null); // stores item name being added
 
     const [menuData, setMenuData] = useState(null);
     const [menuLoading, setMenuLoading] = useState(true);
     const [menuExpanded, setMenuExpanded] = useState(false);
 
+    // Current day for ordering restrictions
+    const currentDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
     useEffect(() => {
         if (tiffin && tiffin._id) {
-            axios.get(`http://localhost:5000/api/tiffins/menu/${tiffin._id}`)
+            API.get(`/tiffins/menu/${tiffin._id}`)
                 .then(res => {
                     setMenuData(res.data);
                     setMenuLoading(false);
@@ -68,10 +76,14 @@ const ProviderDetailPage = () => {
                     console.error("Error fetching menu:", err);
                     setMenuLoading(false);
                 });
+            
+            if (token) {
+                dispatch(fetchCart());
+            }
         } else {
             setMenuLoading(false);
         }
-    }, [tiffin]);
+    }, [tiffin, token, dispatch]);
     const [success, setSuccess] = useState(false);
     const [subError, setSubError] = useState("");
     const [vis, setVis] = useState(false);
@@ -100,9 +112,8 @@ const ProviderDetailPage = () => {
         try {
             setLoading(true); setSubError("");
 
-            const res = await axios.post("http://localhost:5000/api/subscriptions",
-                { providerId: tiffin._id, planType, timeSlot },
-                { headers: { Authorization: `Bearer ${token}` } }
+            const res = await API.post("/subscriptions",
+                { providerId: tiffin._id, planType, timeSlot }
             );
 
             const { subscription, razorpayOrderId, amountToPay, key } = res.data;
@@ -125,10 +136,10 @@ const ProviderDetailPage = () => {
                     try {
                         setLoading(true);
                         // Verify payment on backend
-                        await axios.post(`http://localhost:5000/api/subscriptions/verify-payment/${subscription._id}`, {
+                        await API.post(`/subscriptions/verify-payment/${subscription._id}`, {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature
-                        }, { headers: { Authorization: `Bearer ${token}` } });
+                        });
 
                         setSuccess(true);
                     } catch (err) {
@@ -154,6 +165,44 @@ const ProviderDetailPage = () => {
             console.error(err);
             setSubError(err.response?.data?.message || "Something went wrong. Try again.");
         } finally { setLoading(false); }
+    };
+
+    const handleAddToCart = async (item, slot, fallbackPrice) => {
+        if (!token) {
+            toast.error("Please login to add items to cart");
+            return;
+        }
+
+        // Logic check: if cart already has items from another slot
+        if (cartItems.length > 0 && cartSlot !== slot) {
+            if (!window.confirm(`Your cart contains ${cartSlot} items. Adding this will clear your current cart. Continue?`)) {
+                return;
+            }
+        }
+
+        try {
+            setAddingToCart(item.name);
+            const resultAction = await dispatch(addItemToCart({
+                providerId: tiffin._id,
+                timeSlot: slot,
+                item: {
+                    name: item.name,
+                    price: item.price || fallbackPrice || tiffin.pricePerMeal || 0,
+                    type: item.type || "veg",
+                    quantity: 1
+                }
+            }));
+
+            if (addItemToCart.fulfilled.match(resultAction)) {
+                toast.success(`${item.name} added to cart!`);
+            } else {
+                toast.error(resultAction.payload || "Failed to add item");
+            }
+        } catch (err) {
+            toast.error("Something went wrong");
+        } finally {
+            setAddingToCart(null);
+        }
     };
 
     const a = (d = 0) => ({ opacity: vis ? 1 : 0, transform: vis ? "translateY(0)" : "translateY(22px)", transition: `opacity .52s ease ${d}ms, transform .52s cubic-bezier(.22,.68,0,1.2) ${d}ms` });
@@ -328,78 +377,154 @@ const ProviderDetailPage = () => {
                                     {menuLoading ? (
                                         <div style={{ padding: "40px", textAlign: "center", color: "#8FAE8E", fontWeight: 700, fontSize: 14 }}>✨ Preparing the menu...</div>
                                     ) : menuData && menuData.weekMenu && menuData.weekMenu.length > 0 ? (
-                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "20px" }}>
-                                            {menuData.weekMenu.map((dayMenu, idx) => (
-                                                <div key={idx} className="meal-row" style={{
-                                                    border: "1.5px solid rgba(143,174,142,0.08)",
-                                                    background: "rgba(255,255,255,0.45)",
-                                                    borderRadius: 20,
-                                                    padding: "20px",
-                                                    display: "flex",
-                                                    flexDirection: "column",
-                                                    gap: 16
-                                                }}>
-                                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px dashed rgba(143,174,142,0.2)", paddingBottom: 12 }}>
-                                                        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 800, color: "#2d3b2d" }}>{dayMenu.day}</h3>
-                                                        <span style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E" }}>DAY {idx + 1}</span>
-                                                    </div>
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "24px" }}>
+                                            {menuData.weekMenu.map((dayMenu, idx) => {
+                                                const isToday = dayMenu.day === currentDay;
+                                                return (
+                                                    <div key={idx} className="meal-row" style={{
+                                                        border: isToday ? "2px solid #8FAE8E" : "1.5px solid rgba(143,174,142,0.08)",
+                                                        background: isToday ? "rgba(143,174,142,0.05)" : "rgba(255,255,255,0.45)",
+                                                        borderRadius: 24,
+                                                        padding: "24px",
+                                                        display: "flex",
+                                                        flexDirection: "column",
+                                                        gap: 20,
+                                                        position: "relative",
+                                                        boxShadow: isToday ? "0 12px 28px rgba(143,174,142,0.15)" : "none",
+                                                        opacity: isToday ? 1 : 0.8,
+                                                        transition: "all 0.3s ease"
+                                                    }}>
+                                                        {isToday && (
+                                                            <div style={{ position: "absolute", top: -12, left: 24, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", padding: "4px 12px", borderRadius: 12, fontSize: 10, fontWeight: 900, letterSpacing: 1, boxShadow: "0 4px 12px rgba(143,174,142,0.3)" }}>
+                                                                AVAILABLE TODAY
+                                                            </div>
+                                                        )}
 
-                                                    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                                                        {dayMenu.lunch && dayMenu.lunch.items && dayMenu.lunch.items.length > 0 && (
-                                                            <div>
-                                                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                                                                    <span style={{ fontSize: 10 }}>🌞</span>
-                                                                    <span style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#8FA873" }}>Lunch • ₹{dayMenu.lunch.price}</span>
-                                                                </div>
-                                                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                                                                    {dayMenu.lunch.items.map((item, i) => (
-                                                                        <div key={i} style={{
-                                                                            display: "flex", alignItems: "center", gap: 8,
-                                                                            padding: "4px 10px 4px 4px", background: "#fff",
-                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20,
-                                                                            fontSize: 11, fontWeight: 700, color: "#4a4a3a",
-                                                                            transition: "transform 0.2s", cursor: "default"
-                                                                        }}>
-                                                                            {item.image ? (
-                                                                                <img src={item.image} alt={item.name} style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", background: "#f5f5f0" }} />
-                                                                            ) : (
-                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🍛</div>
-                                                                            )}
-                                                                            {item.name}
+                                                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px dashed rgba(143,174,142,0.2)", paddingBottom: 12 }}>
+                                                            <h3 style={{ margin: 0, fontSize: 17, fontWeight: 800, color: "#2d3b2d" }}>{dayMenu.day}</h3>
+                                                            {!isToday && <span style={{ fontSize: 9, fontWeight: 800, color: "#aaa", textTransform: "uppercase" }}>View only</span>}
+                                                        </div>
+
+                                                        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                                                            {/* LUNCH */}
+                                                            {dayMenu.lunch && dayMenu.lunch.items && dayMenu.lunch.items.length > 0 && (
+                                                                <div style={{ background: "rgba(255,255,255,0.4)", borderRadius: 16, padding: 12, border: "1px solid rgba(143,174,142,0.05)" }}>
+                                                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                                                                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                                            <span style={{ fontSize: 14 }}>🌞</span>
+                                                                            <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#8FA873" }}>Lunch Menu</span>
                                                                         </div>
-                                                                    ))}
+                                                                        <button 
+                                                                            onClick={() => handleAddToCart({ name: `Full Lunch (${dayMenu.day})`, price: dayMenu.lunch.price }, "lunch")}
+                                                                            disabled={!isToday || addingToCart === `Full Lunch (${dayMenu.day})`}
+                                                                            style={{
+                                                                                padding: "6px 12px", background: isToday ? "rgba(143,174,142,0.15)" : "#f0f0f0",
+                                                                                color: isToday ? "#4a7040" : "#aaa", border: "none", borderRadius: 10,
+                                                                                fontSize: 10, fontWeight: 800, cursor: isToday ? "pointer" : "not-allowed",
+                                                                                transition: "all 0.2s"
+                                                                            }}
+                                                                        >
+                                                                            Add Full Tiffin @ ₹{dayMenu.lunch.price}
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                                                        {dayMenu.lunch.items.map((item, i) => (
+                                                                            <div key={i} style={{
+                                                                                display: "flex", alignItems: "center", gap: 8,
+                                                                                padding: "4px 8px 4px 4px", background: "#fff",
+                                                                                border: "1.5px solid #f0f0e0", borderRadius: 20,
+                                                                                fontSize: 11, fontWeight: 700, color: "#4a4a3a",
+                                                                                position: "relative", minWidth: 100
+                                                                            }}>
+                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, overflow: "hidden" }}>
+                                                                                    {item.image ? (
+                                                                                        <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                                                    ) : "🥗"}
+                                                                                </div>
+                                                                                <span style={{ flex: 1, paddingRight: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
+                                                                                {item.price > 0 && <span style={{ fontSize: 9, color: "#8FAE8E", fontWeight: 800, marginRight: isToday ? 20 : 0 }}>₹{item.price}</span>}
+                                                                                {isToday && (
+                                                                                    <button 
+                                                                                        onClick={() => handleAddToCart(item, "lunch", dayMenu.lunch.price)}
+                                                                                        disabled={addingToCart === item.name}
+                                                                                        style={{
+                                                                                            position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
+                                                                                            width: 18, height: 18, borderRadius: "50%", background: "#8FAE8E",
+                                                                                            border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                                                                                            cursor: "pointer", fontSize: 12, fontWeight: 900
+                                                                                        }}
+                                                                                    >
+                                                                                        +
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
-                                                        {dayMenu.dinner && dayMenu.dinner.items && dayMenu.dinner.items.length > 0 && (
-                                                            <div>
-                                                                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                                                                    <span style={{ fontSize: 10 }}>🌙</span>
-                                                                    <span style={{ fontSize: 9, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#6b8a5e" }}>Dinner • ₹{dayMenu.dinner.price}</span>
-                                                                </div>
-                                                                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                                                                    {dayMenu.dinner.items.map((item, i) => (
-                                                                        <div key={i} style={{
-                                                                            display: "flex", alignItems: "center", gap: 8,
-                                                                            padding: "4px 10px 4px 4px", background: "#fff",
-                                                                            border: "1.5px solid #f0f0e0", borderRadius: 20,
-                                                                            fontSize: 11, fontWeight: 700, color: "#4a4a3a",
-                                                                            transition: "transform 0.2s", cursor: "default"
-                                                                        }}>
-                                                                            {item.image ? (
-                                                                                <img src={item.image} alt={item.name} style={{ width: 24, height: 24, borderRadius: "50%", objectFit: "cover", background: "#f5f5f0" }} />
-                                                                            ) : (
-                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12 }}>🥘</div>
-                                                                            )}
-                                                                            {item.name}
+                                                            )}
+
+                                                            {/* DINNER */}
+                                                            {dayMenu.dinner && dayMenu.dinner.items && dayMenu.dinner.items.length > 0 && (
+                                                                <div style={{ background: "rgba(255,255,255,0.4)", borderRadius: 16, padding: 12, border: "1px solid rgba(143,174,142,0.05)" }}>
+                                                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+                                                                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                                                            <span style={{ fontSize: 14 }}>🌙</span>
+                                                                            <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#6b8a5e" }}>Dinner Menu</span>
                                                                         </div>
-                                                                    ))}
+                                                                        <button 
+                                                                            onClick={() => handleAddToCart({ name: `Full Dinner (${dayMenu.day})`, price: dayMenu.dinner.price }, "dinner")}
+                                                                            disabled={!isToday || addingToCart === `Full Dinner (${dayMenu.day})`}
+                                                                            style={{
+                                                                                padding: "6px 12px", background: isToday ? "rgba(107,138,94,0.15)" : "#f0f0f0",
+                                                                                color: isToday ? "#3f5939" : "#aaa", border: "none", borderRadius: 10,
+                                                                                fontSize: 10, fontWeight: 800, cursor: isToday ? "pointer" : "not-allowed",
+                                                                                transition: "all 0.2s"
+                                                                            }}
+                                                                        >
+                                                                            Add Full Tiffin @ ₹{dayMenu.dinner.price}
+                                                                        </button>
+                                                                    </div>
+
+                                                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                                                        {dayMenu.dinner.items.map((item, i) => (
+                                                                            <div key={i} style={{
+                                                                                display: "flex", alignItems: "center", gap: 8,
+                                                                                padding: "4px 8px 4px 4px", background: "#fff",
+                                                                                border: "1.5px solid #f0f0e0", borderRadius: 20,
+                                                                                fontSize: 11, fontWeight: 700, color: "#4a4a3a",
+                                                                                position: "relative", minWidth: 100
+                                                                            }}>
+                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, overflow: "hidden" }}>
+                                                                                    {item.image ? (
+                                                                                        <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                                                    ) : "🍲"}
+                                                                                </div>
+                                                                                <span style={{ flex: 1, paddingRight: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
+                                                                                {item.price > 0 && <span style={{ fontSize: 9, color: "#6b8a5e", fontWeight: 800, marginRight: isToday ? 20 : 0 }}>₹{item.price}</span>}
+                                                                                {isToday && (
+                                                                                    <button 
+                                                                                        onClick={() => handleAddToCart(item, "dinner", dayMenu.dinner.price)}
+                                                                                        disabled={addingToCart === item.name}
+                                                                                        style={{
+                                                                                            position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
+                                                                                            width: 18, height: 18, borderRadius: "50%", background: "#6b8a5e",
+                                                                                            border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                                                                                            cursor: "pointer", fontSize: 12, fontWeight: 900
+                                                                                        }}
+                                                                                    >
+                                                                                        +
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        )}
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     ) : (
                                         <div style={{ padding: "32px", textAlign: "center", background: "rgba(143,174,142,0.05)", borderRadius: 18, border: "1px dashed rgba(143,174,142,0.3)" }}>

@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 export default function Sidebar({ 
   collapsed, 
@@ -11,12 +12,14 @@ export default function Sidebar({
   logout 
 }) {
   const navigate = useNavigate();
+  const { items: cartItems } = useSelector((s) => s.cart);
   const firstName = user?.name?.split(" ")[0] || "User";
 
   const navItems = [
     { id: "dashboard", icon: "⊞", label: "Dashboard", path: "/CustomerDashboard" },
     { id: "tiffins", icon: "🍱", label: "Browse Tiffins", path: "/tiffins" },
     { id: "subscriptions", icon: "📅", label: "Subscriptions", path: "/subscriptions" },
+    { id: "cart", icon: "🛒", label: "My Cart", path: "/cart", badge: cartItems.length },
     { id: "order-history", icon: "📜", label: "Order History", path: "/order-history" },
     { id: "profile", icon: "👤", label: "My Profile", path: "/CustomerProfile" },
   ];
@@ -32,6 +35,31 @@ export default function Sidebar({
       transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), padding 0.35s ease",
       boxShadow: "4px 0 36px rgba(50,80,40,0.2)",
     }}>
+      <style>{`
+        .nav-btn {
+          display:flex; align-items:center; gap:12px;
+          width:100%; padding:12px 16px; border-radius:14px;
+          border:none; background:none; cursor:pointer;
+          font-family:'Nunito',sans-serif; font-size:15px; font-weight:600;
+          color:rgba(255,255,255,0.7); transition:all 0.22s ease;
+          text-align:left; position:relative; overflow:hidden;
+        }
+        .nav-btn:hover { background:rgba(255,255,255,0.14)!important; color:#fff!important; transform:translateX(3px); }
+        .nav-btn.active { background:rgba(255,255,255,0.22)!important; color:#fff!important; box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+
+        .kitchen-cta {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 1px dashed rgba(255, 255, 255, 0.3) !important;
+            margin-top: 15px;
+            color: #fff !important;
+        }
+        .kitchen-cta:hover {
+            background: #fff !important;
+            color: #5a7a50 !important;
+            border-style: solid !important;
+        }
+        .logout-btn:hover { background:rgba(239,83,80,0.1)!important; color:#c62828!important; border-color:rgba(239,83,80,0.4)!important; }
+      `}</style>
       {/* Logo and Collapse Toggle */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", marginBottom: 36 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -67,7 +95,21 @@ export default function Sidebar({
             onClick={() => { setActiveNav(item.id); navigate(item.path); }}
             style={{ justifyContent: collapsed ? "center" : "flex-start" }}
           >
-            <span style={{ fontSize: 20 }}>{item.icon}</span>
+            <span style={{ fontSize: 20, position: "relative" }}>
+              {item.icon}
+              {item.badge > 0 && (
+                <span style={{ 
+                  position: "absolute", top: -5, right: -8, 
+                  background: "#fff", color: "#5a7a50", 
+                  fontSize: 10, fontWeight: 900, 
+                  width: 16, height: 16, borderRadius: "50%", 
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                }}>
+                  {item.badge}
+                </span>
+              )}
+            </span>
             {!collapsed && <span>{item.label}</span>}
           </button>
         ))}
@@ -78,7 +120,7 @@ export default function Sidebar({
           title={collapsed ? "List Your Kitchen" : ""}
           style={{ justifyContent: collapsed ? "center" : "flex-start", marginTop: "20px" }}
         >
-          <span style={{ fontSize: 20 }}>👩‍🍳</span>
+          <span style={{ fontSize: 20 }}>🥗</span>
           {!collapsed && (
             <div style={{ lineHeight: 1.2 }}>
               <div style={{ fontSize: 14 }}>List Your Kitchen</div>

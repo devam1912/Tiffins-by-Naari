@@ -58,7 +58,7 @@ const loginUser = async (req, res) => {
       });
     }
 
-    
+
     let loginQuery = [];
     if (email) loginQuery.push({ email });
     if (phone) loginQuery.push({ phone });
@@ -172,7 +172,7 @@ const verifyOTP = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const userId = req.user; 
+    const userId = req.user;
 
     const user = await User.findById(userId);
     if (!user) {
@@ -181,7 +181,7 @@ const updateProfile = async (req, res) => {
 
     const { name, email, phone, address } = req.body;
 
-    
+
     if (name !== undefined) user.name = name;
     if (email !== undefined) user.email = email;
     if (phone !== undefined) user.phone = phone;
@@ -197,7 +197,8 @@ const updateProfile = async (req, res) => {
         email: user.email,
         phone: user.phone,
         address: user.address,
-        role: user.role
+        role: user.role,
+        walletBalance: user.walletBalance
       }
     });
 
@@ -206,4 +207,16 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser, generateOTP, sendOTP, verifyOTP, updateProfile };
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { registerUser, loginUser, generateOTP, sendOTP, verifyOTP, updateProfile, getProfile };

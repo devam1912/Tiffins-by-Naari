@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
-import { 
-    fetchProviderDashboard, 
-    fetchProviderProfile, 
-    toggleServiceStatus 
+import {
+    fetchProviderDashboard,
+    fetchProviderProfile,
+    toggleServiceStatus
 } from "../../store/providerSlice";
 import API from "../../api/auth";
 import { ProviderMenu } from "../../components/ProviderMenu";
@@ -19,11 +19,11 @@ export const ProviderDashboard = () => {
     const dispatch = useDispatch();
     const user = useSelector((state) => state.auth.user);
     const token = useSelector((state) => state.auth.token);
-    const { 
-        stats, 
-        profile, 
-        loading: loadingStats, 
-        statusLoading: isStatusLoading 
+    const {
+        stats,
+        profile,
+        loading: loadingStats,
+        statusLoading: isStatusLoading
     } = useSelector((state) => state.provider);
 
     const [loaded, setLoaded] = useState(false);
@@ -205,7 +205,7 @@ export const ProviderDashboard = () => {
                 minHeight: "100vh", overflowY: "auto",
             }}>
                 {/* Top header */}
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
                     <div>
                         <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Welcome Back 👨‍🍳</p>
                         <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>

@@ -70,20 +70,19 @@ export default function CustomerDashboard() {
     // ✅ Token ab Redux se aa raha hai, localStorage se nahi
     const headers = { Authorization: `Bearer ${token}` };
 
+    // Fetch Subscriptions and Orders (Non-location dependent)
     Promise.all([
-      axios.get("http://localhost:5000/api/tiffins"),
-      axios.get("http://localhost:5000/api/subscriptions", { headers }),
-      axios.get("http://localhost:5000/api/orders", { headers }),
+      axios.get("http://localhost:5000/api/subscriptions/my-subscriptions", { headers }),
+      axios.get("http://localhost:5000/api/orders/my", { headers }),
     ])
-      .then(([tiffinsRes, subsRes, ordersRes]) => {
-        setStats({
-          tiffins: tiffinsRes.data.length || 0,
-          subscriptions: subsRes.data.length || 0,
-          orders: ordersRes.data.length || 0,
-        });
-
+      .then(([subsRes, ordersRes]) => {
+        setStats(prev => ({
+          ...prev,
+          subscriptions: subsRes.data?.data?.length || 0,
+          orders: ordersRes.data?.length || 0,
+        }));
       })
-      .catch(err => console.error("Dashboard fetch error:", err));
+      .catch(err => console.error("Dashboard stats fetch error:", err));
 
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);
@@ -92,6 +91,15 @@ export default function CustomerDashboard() {
   useEffect(() => {
     if (location.lat && location.lng) {
       const headers = { Authorization: `Bearer ${token}` };
+      
+      // 1. Fetch nearby tiffins count for stats
+      axios.get(`http://localhost:5000/api/tiffins/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
+        .then(res => {
+          setStats(prev => ({ ...prev, tiffins: res.data.length || 0 }));
+        })
+        .catch(err => console.error("Nearby tiffins fetch error:", err));
+
+      // 2. Fetch specific recommendations
       axios.get(`http://localhost:5000/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
         .then(res => setRecommendations(res.data.providers || []))
         .catch(err => console.error("Recs fetch error:", err));
@@ -119,6 +127,7 @@ export default function CustomerDashboard() {
     { id: "dashboard", icon: "⊞", label: "Dashboard", path: "/CustomerDashboard" },
     { id: "tiffins", icon: "🍱", label: "Browse Tiffins", path: "/tiffins" },
     { id: "subscriptions", icon: "📅", label: "Subscriptions", path: "/subscriptions" },
+    { id: "order-history", icon: "📜", label: "Order History", path: "/order-history" },
     { id: "profile", icon: "👤", label: "My Profile", path: "/CustomerProfile" },
   ];
 
@@ -140,12 +149,14 @@ export default function CustomerDashboard() {
       bg: "rgba(255,255,255,0.8)",
       shadow: "rgba(143,174,142,0.18)", textColor: "#2d3b2d",
       sub: "All-time orders", border: "1.5px solid rgba(143,174,142,0.3)",
+      onClick: () => navigate("/order-history"),
     },
   ];
 
   const quickActions = [
     { icon: "🍱", label: "Browse Tiffins", desc: "Explore home kitchens", path: "/tiffins", bg: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.38)" },
     { icon: "📅", label: "Subscriptions", desc: "Manage your meal plans", path: "/subscriptions", bg: "linear-gradient(135deg,#a8c5a0,#7a9e72)", shadow: "rgba(120,170,110,0.3)" },
+    { icon: "📜", label: "Order History", desc: "View your past orders", path: "/order-history", bg: "linear-gradient(135deg,#c5d490,#9ab870)", shadow: "rgba(154,184,112,0.3)" },
     { icon: "👤", label: "My Profile", desc: "Update your details", path: "/CustomerProfile", bg: "linear-gradient(135deg,#c5d490,#9ab870)", shadow: "rgba(154,184,112,0.3)" },
   ];
 
@@ -265,8 +276,16 @@ export default function CustomerDashboard() {
 
         {/* ── Stats ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 20, marginBottom: 44, ...anim(160) }}>
-          {statCards.map(({ icon, label, value, bg, shadow, textColor, sub, border }) => (
-            <div key={label} className="stat-card" style={{ background: bg, borderRadius: 22, padding: "28px 26px", boxShadow: `0 8px 32px ${shadow}`, border: border || "none", position: "relative", overflow: "hidden" }}>
+          {statCards.map(({ icon, label, value, bg, shadow, textColor, sub, border, onClick }) => (
+            <div key={label} 
+                 className="stat-card" 
+                 onClick={onClick}
+                 style={{ 
+                   background: bg, borderRadius: 22, padding: "28px 26px", 
+                   boxShadow: `0 8px 32px ${shadow}`, border: border || "none", 
+                   position: "relative", overflow: "hidden",
+                   cursor: onClick ? "pointer" : "default"
+                 }}>
               <div style={{ position: "absolute", width: 90, height: 90, borderRadius: "50%", background: "rgba(255,255,255,0.09)", bottom: -25, right: -20, pointerEvents: "none" }} />
               <div style={{ fontSize: 34, marginBottom: 16 }}>{icon}</div>
               <div style={{ fontFamily: "'Lora',serif", fontSize: 40, fontWeight: 700, color: textColor, lineHeight: 1 }}>{value}</div>

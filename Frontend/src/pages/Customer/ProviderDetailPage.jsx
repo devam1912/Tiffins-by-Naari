@@ -4,11 +4,12 @@ import { useSelector, useDispatch } from "react-redux";
 import API from "../../api/auth";
 import { toast } from "sonner";
 import { addItemToCart, fetchCart } from "../../store/cartSlice";
+import { fetchProfile } from "../../store/authSlice";
 
 /* ─────────────────────────────────────────
    SUCCESS OVERLAY
 ───────────────────────────────────────── */
-const SuccessOverlay = ({ name, plan, slot, onClose, onView }) => {
+const SuccessOverlay = ({ name, plan, slot, paymentMethod, onClose, onView }) => {
     useEffect(() => {
         const fn = e => { if (e.key === "Escape") onClose(); };
         document.addEventListener("keydown", fn);
@@ -25,7 +26,13 @@ const SuccessOverlay = ({ name, plan, slot, onClose, onView }) => {
                 <p style={{ fontSize: 10, fontWeight: 900, letterSpacing: 4, textTransform: "uppercase", color: "#8FA873", marginBottom: 10 }}>Subscribed!</p>
                 <h2 style={{ fontFamily: "'Lora',serif", fontSize: 28, fontWeight: 700, color: "#1a2a1a", marginBottom: 8, lineHeight: 1.2 }}>Meals are on the way!</h2>
                 <p style={{ color: "#999", fontSize: 13, marginBottom: 4, fontWeight: 600 }}>{name}</p>
-                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 32, textTransform: "capitalize" }}>{plan} plan · {slot} delivery</p>
+                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 16, textTransform: "capitalize" }}>{plan} plan · {slot} delivery</p>
+                {paymentMethod === "wallet" && (
+                    <div style={{ background: "rgba(143,174,142,0.1)", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 12, padding: "8px 14px", marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: 14 }}>👛</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#4a7040" }}>Paid using Wallet Balance</span>
+                    </div>
+                )}
                 <button onClick={onView}
                     style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 8px 24px rgba(143,174,142,0.45)", marginBottom: 10, transition: "opacity .2s" }}
                     onMouseEnter={e => e.currentTarget.style.opacity = ".85"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
@@ -56,7 +63,8 @@ const ProviderDetailPage = () => {
     const [planType, setPlanType] = useState("");
     const [timeSlot, setTimeSlot] = useState("");
     const [loading, setLoading] = useState(false);
-    const [addingToCart, setAddingToCart] = useState(null); // stores item name being added
+    const [addingToCart, setAddingToCart] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState("");
 
     const [menuData, setMenuData] = useState(null);
     const [menuLoading, setMenuLoading] = useState(true);
@@ -120,7 +128,9 @@ const ProviderDetailPage = () => {
 
             // CASE 1: Activated via Wallet balance (Fully covered)
             if (!razorpayOrderId) {
+                setPaymentMethod("wallet");
                 setSuccess(true);
+                dispatch(fetchProfile()); // refresh wallet balance
                 return;
             }
 
@@ -141,7 +151,9 @@ const ProviderDetailPage = () => {
                             razorpay_signature: response.razorpay_signature
                         });
 
+                        setPaymentMethod("gateway");
                         setSuccess(true);
+                        dispatch(fetchProfile()); // refresh wallet balance
                     } catch (err) {
                         setSubError("Payment verification failed. Please contact support.");
                     } finally {
@@ -253,7 +265,7 @@ const ProviderDetailPage = () => {
         }
       `}</style>
 
-            {success && <SuccessOverlay name={tiffin.businessName} plan={planType} slot={timeSlot} onClose={() => setSuccess(false)} onView={() => navigate("/subscriptions")} />}
+            {success && <SuccessOverlay name={tiffin.businessName} plan={planType} slot={timeSlot} paymentMethod={paymentMethod} onClose={() => setSuccess(false)} onView={() => navigate("/subscriptions")} />}
 
             {/* ══════════ HERO ══════════ */}
             <div style={{ background: "linear-gradient(158deg,#7da368 0%,#5d7f52 45%,#3f5939 100%)", position: "relative", overflow: "hidden" }}>
@@ -570,6 +582,20 @@ const ProviderDetailPage = () => {
                             </div>
 
                             <div style={{ padding: "22px 22px 24px" }}>
+
+                                {/* Wallet Chip */}
+                                {user?.walletBalance > 0 && (
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,rgba(143,174,142,0.12),rgba(143,168,115,0.06))", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 14, padding: "10px 14px", marginBottom: 18 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                            <span style={{ fontSize: 16 }}>👛</span>
+                                            <div>
+                                                <p style={{ fontSize: 9, fontWeight: 900, color: "#8FA873", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>Wallet Balance</p>
+                                                <p style={{ fontSize: 14, fontWeight: 900, color: "#2d3b2d" }}>₹{user.walletBalance}</p>
+                                            </div>
+                                        </div>
+                                        <span style={{ fontSize: 10, fontWeight: 700, color: "#8FA873", background: "rgba(143,174,142,0.15)", padding: "3px 8px", borderRadius: 8 }}>Auto-applied</span>
+                                    </div>
+                                )}
 
                                 {/* ── Plan ── */}
                                 <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2.5, textTransform: "uppercase", color: "#b8b8a4", marginBottom: 10 }}>Plan Duration</p>

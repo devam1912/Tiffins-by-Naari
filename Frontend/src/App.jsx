@@ -18,6 +18,7 @@ import { Toaster } from "sonner";
 import CustomerSubscriptions from "./pages/Customer/CustomerSubscriptions";
 import OrderHistory from "./pages/Customer/OrderHistory";
 import CartPage from "./pages/Customer/CartPage";
+import OrderDetailPage from "./pages/Customer/OrderDetailPage";
 
 export default function App() {
   const dispatch = useDispatch();
@@ -48,6 +49,7 @@ export default function App() {
         <Route path="/subscriptions" element={<CustomerSubscriptions />} />
         <Route path="/order-history" element={<OrderHistory />} />
         <Route path="/cart" element={<CartPage />} />
+        <Route path="/orders/:id" element={<OrderDetailPage />} />
       </Routes>
     </BrowserRouter>
   );

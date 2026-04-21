@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateProfile } from "../../api/auth";
 import { useSelector, useDispatch } from "react-redux";
-import { loginSuccess } from "../../store/authSlice";
+import { loginSuccess, logout } from "../../store/authSlice";
+import Sidebar from "../../components/Customer/Sidebar";
 
 export default function EditProfile() {
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
@@ -11,6 +12,9 @@ export default function EditProfile() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [activeNav, setActiveNav] = useState("profile");
+  const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
   const navigate = useNavigate();
 
   // ✅ Redux se user aur token
@@ -18,11 +22,36 @@ export default function EditProfile() {
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
   useEffect(() => {
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
+
+    // Geolocation for sidebar
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=18&addressdetails=1`);
+            const data = await response.json();
+            const city = data.address.city || data.address.town || data.address.village || "";
+            const suburb = data.address.suburb || data.address.neighbourhood || "";
+            setLocation({ address: suburb ? `${suburb}, ${city}` : city || "Location Found", loading: false });
+          } catch {
+            setLocation({ address: "Location unavailable", loading: false });
+          }
+        },
+        () => setLocation({ address: "Location access denied", loading: false })
+      );
+    } else {
+      setLocation({ address: "Geolocation not supported", loading: false });
+    }
 
     // ✅ localStorage ki jagah Redux store se user data
     if (user) {
@@ -81,17 +110,28 @@ export default function EditProfile() {
   });
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#E7E6B6",
-      fontFamily: "'Nunito', sans-serif",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "48px 20px",
-      position: "relative",
-      overflow: "hidden",
-    }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
+        user={user}
+        location={location}
+        logout={handleLogout}
+      />
+      <main style={{
+        marginLeft: collapsed ? 72 : 260,
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "48px 40px",
+        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
+        minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
+      }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         input::placeholder { color: #bbb; }
@@ -375,6 +415,7 @@ export default function EditProfile() {
           <span style={{ fontSize:12, color:"#aaa", fontWeight:600 }}>Your data is safe and never shared</span>
         </div>
       </div>
+      </main>
     </div>
   );
 }

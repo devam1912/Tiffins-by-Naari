@@ -195,8 +195,22 @@ const CartPage = () => {
             {/* Right: Checkout Summary */}
             <div style={{ position: "sticky", top: 40, ...anim(200) }}>
               <div style={{ background: "#fff", borderRadius: 32, padding: "32px", border: "1.5px solid rgba(143,174,142,0.25)", boxShadow: "0 20px 50px rgba(0,0,0,0.05)" }}>
-                <h2 style={{ fontFamily: "'Lora', serif", fontSize: 20, fontWeight: 700, color: "#2d3b2d", marginBottom: 24 }}>Order Summary</h2>
-                
+                <h2 style={{ fontFamily: "'Lora', serif", fontSize: 20, fontWeight: 700, color: "#2d3b2d", marginBottom: 16 }}>Order Summary</h2>
+
+                {/* Wallet Balance Chip */}
+                {user?.walletBalance > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,rgba(143,174,142,0.12),rgba(143,168,115,0.06))", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 14, padding: "10px 14px", marginBottom: 18 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 16 }}>👛</span>
+                      <div>
+                        <p style={{ fontSize: 9, fontWeight: 900, color: "#8FA873", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>Wallet Balance</p>
+                        <p style={{ fontSize: 14, fontWeight: 900, color: "#2d3b2d" }}>₹{user.walletBalance}</p>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#8FA873", background: "rgba(143,174,142,0.15)", padding: "3px 8px", borderRadius: 8 }}>Auto-applied</span>
+                  </div>
+                )}
+
                 <div style={{ marginBottom: 24 }}>
                   <label style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Delivery Date</label>
                   <input 

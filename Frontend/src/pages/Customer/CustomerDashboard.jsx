@@ -341,7 +341,7 @@ export default function CustomerDashboard() {
                   <p style={{ fontSize: 13, color: "#777", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
                     🛒 <strong>Owner:</strong> {rec.ownerName}
                   </p>
-                  <button onClick={() => navigate(`/tiffin/${rec.id}`)} style={{
+                  <button onClick={() => navigate(`/provider/${rec._id}`, { state: { tiffin: rec } })} style={{
                     marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
                     borderRadius: 14, padding: "10px", fontWeight: 700, fontSize: 14, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
                   }}>

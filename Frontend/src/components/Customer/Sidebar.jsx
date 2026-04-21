@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchProfile } from "../../store/authSlice";
 
 export default function Sidebar({ 
   collapsed, 
@@ -12,8 +13,15 @@ export default function Sidebar({
   logout 
 }) {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { items: cartItems } = useSelector((s) => s.cart);
-  const firstName = user?.name?.split(" ")[0] || "User";
+  const { user: reduxUser } = useSelector((s) => s.auth);
+  const resolvedUser = reduxUser || user;
+  const firstName = resolvedUser?.name?.split(" ")[0] || "User";
+
+  useEffect(() => {
+    dispatch(fetchProfile());
+  }, [dispatch]);
 
   const navItems = [
     { id: "dashboard", icon: "⊞", label: "Dashboard", path: "/CustomerDashboard" },
@@ -138,11 +146,21 @@ export default function Sidebar({
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, fontSize: 16, color: "#fff", flexShrink: 0 }}>
                 {firstName[0]?.toUpperCase()}
               </div>
-              <div style={{ overflow: 'hidden' }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.2, whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{user?.name || "User"}</div>
-                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 600, whiteSpace: 'nowrap' }}>
-                  📍 {location.loading ? "..." : location.address.split(',')[0]}
+              <div style={{ overflow: "hidden", flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#fff", lineHeight: 1.2, whiteSpace: "nowrap", textOverflow: "ellipsis" }}>{resolvedUser?.name || "User"}</div>
+                <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", fontWeight: 600, whiteSpace: "nowrap" }}>
+                  📍 {location.loading ? "..." : location.address.split(",")[0]}
                 </div>
+              </div>
+            </div>
+            {/* Wallet Balance */}
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 14 }}>👛</span>
+                <span style={{ fontSize: 11, color: "rgba(255,255,255,0.65)", fontWeight: 700 }}>Wallet Balance</span>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.18)", borderRadius: 20, padding: "3px 10px" }}>
+                <span style={{ fontSize: 13, fontWeight: 900, color: "#fff", letterSpacing: 0.5 }}>₹{resolvedUser?.walletBalance ?? 0}</span>
               </div>
             </div>
           </div>

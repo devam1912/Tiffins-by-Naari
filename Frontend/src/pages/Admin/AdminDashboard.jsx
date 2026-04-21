@@ -7,7 +7,8 @@ import {
   approveProvider, 
   rejectProvider, 
   processPayout, 
-  creditProviderWallet 
+  creditProviderWallet,
+  fetchProviderPayoutHistory
 } from "../../store/adminSlice";
 import API from "../../api/auth";
 
@@ -139,6 +140,51 @@ function PayoutModal({ provider, type = "debit", onClose, onConfirm, loading }) 
 }
 
 // ══════════════════════════════════════════
+// 3.5 HISTORY MODAL
+// ══════════════════════════════════════════
+function HistoryModal({ provider, records, loading, onClose }) {
+  return (
+    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 10001, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 32, padding: "36px 40px", maxWidth: 560, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(135deg,#8FAE8E,#8FA873)" }} />
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Transaction History</h2>
+        <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: "#8FAE8E", fontWeight: 700 }}>{provider?.businessName}</span></p>
+
+        <div style={{ overflowY: "auto", flex: 1, paddingRight: 8, margin: "0 -8px 24px 0" }}>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#888", fontWeight: 700, fontSize: 14 }}>Loading timeline...</div>
+          ) : records && records.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {records.map(r => {
+                const isCredit = r.type === "credit";
+                return (
+                  <div key={r._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderRadius: 16, border: "1px solid #f0f0f0", background: "#fcfdfc" }}>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{r.description || (isCredit ? "Wallet Addition" : "Payout Settled")}</p>
+                      <p style={{ fontSize: 11, color: "#aaa", fontWeight: 600 }}>{new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <p style={{ fontSize: 15, fontWeight: 800, color: isCredit ? "#8FAE8E" : "#ef5350" }}>{isCredit ? "+" : "-"}₹{r.amount.toLocaleString()}</p>
+                      <p style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: isCredit ? "#8FAE8E" : "#ef5350", background: isCredit ? "rgba(143,174,142,0.1)" : "rgba(239,83,80,0.1)", padding: "3px 8px", borderRadius: 8, display: "inline-block", marginTop: 4 }}>
+                        {isCredit ? "Credit" : "Debit"}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px", color: "#aaa", fontStyle: "italic", fontSize: 14 }}>No transactions logged.</div>
+          )}
+        </div>
+
+        <button onClick={onClose} style={{ width: "100%", padding: "14px", background: "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 800, cursor: "pointer", color: "#888", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="#eee"} onMouseLeave={e=>e.currentTarget.style.background="#f5f5f0"}>Close Window</button>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // 4. VIEW APPLICATION MODAL
 // ══════════════════════════════════════════
 function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
@@ -214,6 +260,8 @@ export default function AdminDashboard() {
       menus, 
       subscriptions,
       payoutBalances,
+      providerPayoutHistory,
+      historyLoading,
       stats, 
       loading: dataLoading 
   } = useSelector((state) => state.admin);
@@ -225,6 +273,7 @@ export default function AdminDashboard() {
   const [viewTarget, setViewTarget] = useState(null);
   const [payoutTarget, setPayoutTarget] = useState(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState(null);
+  const [historyTarget, setHistoryTarget] = useState(null);
 
   // Dark Mode
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('naari-theme') === 'dark');
@@ -382,6 +431,15 @@ export default function AdminDashboard() {
           onClose={() => setAdjustmentTarget(null)} 
           onConfirm={handleAdjustment} 
           loading={payoutLoading} 
+        />
+      )}
+      
+      {historyTarget && (
+        <HistoryModal
+          provider={historyTarget}
+          records={providerPayoutHistory}
+          loading={historyLoading}
+          onClose={() => setHistoryTarget(null)}
         />
       )}
 
@@ -551,8 +609,9 @@ export default function AdminDashboard() {
                         <td style={{ padding: "16px 12px", fontSize: 14, color: T.textSec }}>₹{p.totalPaid?.toLocaleString() || 0}</td>
                         <td style={{ padding: "16px 12px", textAlign: "right" }}>
                           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                            <button onClick={() => setAdjustmentTarget(p)} style={{ background: darkMode ? '#2a2a2a' : '#f0f0f0', border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer", color: T.textSec }}>Adjust</button>
-                            <button onClick={() => setPayoutTarget(p)} style={{ background: "#8FAE8E", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Payout</button>
+                            <button onClick={() => { setHistoryTarget(p); dispatch(fetchProviderPayoutHistory(p.providerId)); }} style={{ background: "transparent", border: `1px solid ${darkMode ? '#444' : '#ccc'}`, padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 800, cursor: "pointer", color: T.textSec, fontFamily: "'Nunito',sans-serif" }}>History</button>
+                            <button onClick={() => setAdjustmentTarget(p)} style={{ background: darkMode ? '#2a2a2a' : '#f0f0f0', border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 800, cursor: "pointer", color: T.textSec, fontFamily: "'Nunito',sans-serif" }}>Adjust</button>
+                            <button onClick={() => setPayoutTarget(p)} style={{ background: "#8FAE8E", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 800, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif" }}>Payout</button>
                           </div>
                         </td>
                       </tr>

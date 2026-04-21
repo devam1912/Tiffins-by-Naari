@@ -106,6 +106,18 @@ export const creditProviderWallet = createAsyncThunk(
   }
 );
 
+export const fetchProviderPayoutHistory = createAsyncThunk(
+  "admin/fetchPayoutHistory",
+  async (providerId, { rejectWithValue }) => {
+    try {
+      const res = await API.get(`/payouts/history/${providerId}`);
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to fetch payout history");
+    }
+  }
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -117,6 +129,8 @@ const adminSlice = createSlice({
     menus: [],
     subscriptions: [],
     payoutBalances: [],
+    providerPayoutHistory: [],
+    historyLoading: false,
     stats: { totalUsers: 0, totalProviders: 0, totalOrders: 0, totalRevenue: 0 },
     loading: false,
     error: null,
@@ -165,6 +179,16 @@ const adminSlice = createSlice({
         state.payoutBalances = state.payoutBalances.map(p => 
           p.providerId === providerId ? { ...p, walletBalance: (p.walletBalance || 0) + amount } : p
         );
+      })
+      .addCase(fetchProviderPayoutHistory.pending, (state) => {
+        state.historyLoading = true;
+      })
+      .addCase(fetchProviderPayoutHistory.fulfilled, (state, action) => {
+        state.historyLoading = false;
+        state.providerPayoutHistory = action.payload;
+      })
+      .addCase(fetchProviderPayoutHistory.rejected, (state) => {
+        state.historyLoading = false;
       });
   },
 });

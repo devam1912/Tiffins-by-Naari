@@ -4,6 +4,7 @@ import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
+import { toast } from "sonner";
 
 export default function OrderDetailPage() {
   const { id } = useParams();
@@ -20,6 +21,11 @@ export default function OrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
+
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
 
   if (!token) { navigate("/login"); return null; }
 
@@ -80,6 +86,29 @@ export default function OrderDetailPage() {
     transform: loaded ? "translateY(0)" : "translateY(22px)",
     transition: `opacity 0.65s ease ${delay}ms, transform 0.65s cubic-bezier(.22,.68,0,1.2) ${delay}ms`,
   });
+
+  const handleSubmitReview = async () => {
+    if (rating === 0) {
+      toast.error("Please select a rating.");
+      return;
+    }
+    setReviewSubmitting(true);
+    try {
+      await axios.post("http://localhost:5000/api/feedback", {
+        providerId: order.provider._id || order.provider,
+        rating,
+        comment
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      toast.success("Thank you for your feedback!");
+      setIsReviewOpen(false);
+      setRating(0);
+      setComment("");
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || "Failed to submit review.");
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
 
   const getStatusBadge = (status) => {
     const map = {
@@ -336,6 +365,18 @@ export default function OrderDetailPage() {
                 ))}
               </div>
 
+              {/* Rate button if completed */}
+              {order.status === "completed" && (
+                <button
+                  onClick={() => setIsReviewOpen(true)}
+                  style={{ width: "100%", padding: "14px", background: "#fff", color: "#5a7a50", border: "2px solid #8FAE8E", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", marginBottom: 12, transition: "all 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(143,174,142,0.1)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+                >
+                  ⭐ Rate Your Meal
+                </button>
+              )}
+
               {/* Back button */}
               <button
                 onClick={() => navigate("/order-history")}
@@ -347,6 +388,38 @@ export default function OrderDetailPage() {
               </button>
             </div>
 
+          </div>
+        )}
+
+        {/* ── Review Modal ── */}
+        {isReviewOpen && (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,18,10,0.7)", backdropFilter: "blur(10px)" }}>
+            <div style={{ background: "#fff", borderRadius: 28, padding: "40px", maxWidth: 420, width: "90%", boxShadow: "0 24px 60px rgba(0,0,0,0.25)", position: "relative" }}>
+              <h3 style={{ fontFamily: "'Lora',serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>Rate Your Meal</h3>
+              <p style={{ color: "#888", fontSize: 14, marginBottom: 20 }}>How was the food from {order?.provider?.businessName}?</p>
+              
+              <div style={{ display: "flex", gap: 8, marginBottom: 24, justifyContent: "flex-start" }}>
+                {[1, 2, 3, 4, 5].map(star => (
+                  <button key={star} onClick={() => setRating(star)} style={{ background: "none", border: "none", fontSize: 36, cursor: "pointer", color: star <= rating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s", padding: 0 }}>
+                    ★
+                  </button>
+                ))}
+              </div>
+              
+              <textarea
+                placeholder="Share your thoughts (optional)..."
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                style={{ width: "100%", padding: "16px", borderRadius: 16, border: "2px solid #f0f0e0", fontSize: 14, fontFamily: "'Nunito',sans-serif", minHeight: 120, marginBottom: 24, resize: "vertical", outline: "none" }}
+              />
+              
+              <div style={{ display: "flex", gap: 12 }}>
+                <button onClick={() => setIsReviewOpen(false)} style={{ flex: 1, padding: "14px", background: "transparent", border: "2px solid #e0e0d0", borderRadius: 16, fontWeight: 800, cursor: "pointer", color: "#888", fontFamily: "'Nunito',sans-serif" }}>Cancel</button>
+                <button onClick={handleSubmitReview} disabled={reviewSubmitting} style={{ flex: 2, padding: "14px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontWeight: 800, cursor: reviewSubmitting ? "not-allowed" : "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 8px 24px rgba(143,174,142,0.3)" }}>
+                  {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </main>

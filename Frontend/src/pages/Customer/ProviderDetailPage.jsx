@@ -70,6 +70,8 @@ const ProviderDetailPage = () => {
     const [menuLoading, setMenuLoading] = useState(true);
     const [menuExpanded, setMenuExpanded] = useState(false);
 
+    const [feedbacks, setFeedbacks] = useState([]);
+
     // Current day for ordering restrictions
     const currentDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
 
@@ -83,6 +85,14 @@ const ProviderDetailPage = () => {
                 .catch(err => {
                     console.error("Error fetching menu:", err);
                     setMenuLoading(false);
+                });
+            
+            API.get(`/feedback/provider/${tiffin._id}`)
+                .then(res => {
+                    setFeedbacks(res.data.feedbacks || []);
+                })
+                .catch(err => {
+                    console.error("Error fetching feedback:", err);
                 });
             
             if (token) {
@@ -565,6 +575,50 @@ const ProviderDetailPage = () => {
                                     </div>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* ── Customer Reviews ── */}
+                        <div style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", borderRadius: 22, border: "1.5px solid rgba(143,174,142,0.18)", boxShadow: "0 2px 20px rgba(90,120,70,0.07)", padding: "26px 28px", ...a(240) }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                                <h2 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Customer Reviews</h2>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: "#5a7a50", background: "rgba(143,174,142,0.15)", padding: "4px 10px", borderRadius: 12 }}>
+                                    {feedbacks.length} {feedbacks.length === 1 ? "Review" : "Reviews"}
+                                </span>
+                            </div>
+                            
+                            {feedbacks.length > 0 ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                                    {feedbacks.map((fb, i) => (
+                                        <div key={fb._id || i} style={{ paddingBottom: i < feedbacks.length - 1 ? 18 : 0, borderBottom: i < feedbacks.length - 1 ? "1.5px solid rgba(0,0,0,0.04)" : "none" }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#e8e8d8,#d4d4b8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#5a7a50" }}>
+                                                        {(fb.user?.name || "C")[0].toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p style={{ fontSize: 14, fontWeight: 800, color: "#2d3b2d", lineHeight: 1.2 }}>{fb.user?.name || "Happy Customer"}</p>
+                                                        <p style={{ fontSize: 10, color: "#aaa", fontWeight: 600 }}>{new Date(fb.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: "flex", gap: 2, background: "#fff", border: "1px solid #f0f0e0", padding: "4px 8px", borderRadius: 12 }}>
+                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                        <span key={star} style={{ fontSize: 11, color: star <= fb.rating ? "#f59e0b" : "#e5e7eb" }}>★</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {fb.comment && (
+                                                <div style={{ background: "rgba(255,255,255,0.5)", border: "1px solid rgba(0,0,0,0.03)", padding: "12px 14px", borderRadius: 12, marginTop: 10 }}>
+                                                    <p style={{ fontSize: 13, color: "#5a5a4a", lineHeight: 1.6 }}>"{fb.comment}"</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ padding: "24px", textAlign: "center", background: "rgba(143,174,142,0.05)", borderRadius: 16, border: "1px dashed rgba(143,174,142,0.3)" }}>
+                                    <p style={{ fontSize: 13, color: "#8FAE8E", fontWeight: 700 }}>No reviews yet. Be the first to try!</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 

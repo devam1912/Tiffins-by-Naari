@@ -1,9 +1,8 @@
+import os
 from fastapi import FastAPI
 import pandas as pd
 from pymongo import MongoClient
 from bson import ObjectId
-
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -11,8 +10,7 @@ load_dotenv()
 app = FastAPI()
 
 # --- DATABASE CONNECTION ---
-# By default, we use 'mongodb://mongodb:27017/tiffinsDB' for the Docker setup.
-# TO USE YOUR REMOTE MONGODB: Simply replace the link below or change it in the root .env file.
+# By default, we use 'mongodb://localhost:27017/tiffinsDB' for local development.
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/tiffinsDB")
 client = MongoClient(MONGO_URI)
 

@@ -14,12 +14,12 @@ export default function CustomerDashboard() {
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
   const [recommendations, setRecommendations] = useState([]);
 
-  // ✅ Redux se user aur token
+
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
 
-  // ✅ Login nahi hai toh redirect
+
   if (!token) { navigate("/login"); return; }
 
   useEffect(() => {
@@ -70,10 +70,11 @@ export default function CustomerDashboard() {
     // ✅ Token ab Redux se aa raha hai, localStorage se nahi
     const headers = { Authorization: `Bearer ${token}` };
 
+    const apiUrl = "http://localhost:5000/api";
     Promise.all([
-      axios.get("http://localhost:5000/api/tiffins"),
-      axios.get("http://localhost:5000/api/subscriptions", { headers }),
-      axios.get("http://localhost:5000/api/orders", { headers }),
+      axios.get(`${apiUrl}/tiffins`),
+      axios.get(`${apiUrl}/subscriptions`, { headers }),
+      axios.get(`${apiUrl}/orders`, { headers }),
     ])
       .then(([tiffinsRes, subsRes, ordersRes]) => {
         setStats({
@@ -92,7 +93,8 @@ export default function CustomerDashboard() {
   useEffect(() => {
     if (location.lat && location.lng) {
       const headers = { Authorization: `Bearer ${token}` };
-      axios.get(`http://localhost:5000/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
+      const apiUrl = "http://localhost:5000/api";
+      axios.get(`${apiUrl}/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
         .then(res => setRecommendations(res.data.providers || []))
         .catch(err => console.error("Recs fetch error:", err));
     }

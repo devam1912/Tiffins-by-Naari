@@ -7,7 +7,8 @@ export const fetchNearbyTiffins = createAsyncThunk(
     async ({ lat, lng, radius, token }, { rejectWithValue }) => {
         try {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const response = await axios.get("http://localhost:5000/api/tiffins/nearby", {
+            const apiUrl = 'http://localhost:5000/api';
+            const response = await axios.get(`${apiUrl}/tiffins/nearby`, {
                 params: { lat, lng, distance: radius },
                 headers,
             });

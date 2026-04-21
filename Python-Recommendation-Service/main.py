@@ -3,14 +3,21 @@ import pandas as pd
 from pymongo import MongoClient
 from bson import ObjectId
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 app = FastAPI()
 
-# Replace with the connection link provided
-MONGO_URI = "mongodb+srv://kajalvarlani937_db_user:HU7wyeVDrcEQxqIk@tbn.xwygha8.mongodb.net/?appName=tbn"
+# --- DATABASE CONNECTION ---
+# By default, we use 'mongodb://mongodb:27017/tiffinsDB' for the Docker setup.
+# TO USE YOUR REMOTE MONGODB: Simply replace the link below or change it in the root .env file.
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/tiffinsDB")
 client = MongoClient(MONGO_URI)
 
-# The default database for the cluster
-db = client["test"] 
+# Selecting the DB and Collection
+db = client.get_database() # Uses the DB name from the URI (tiffinsDB)
 collection = db["orders"]
 
 def prepare_items(user_id: str):

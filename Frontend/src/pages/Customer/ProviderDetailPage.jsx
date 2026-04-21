@@ -59,7 +59,8 @@ const ProviderDetailPage = () => {
 
     useEffect(() => {
         if (tiffin && tiffin._id) {
-            axios.get(`http://localhost:5000/api/tiffins/menu/${tiffin._id}`)
+            const apiUrl = "http://localhost:5000/api";
+            axios.get(`${apiUrl}/tiffins/menu/${tiffin._id}`)
                 .then(res => {
                     setMenuData(res.data);
                     setMenuLoading(false);
@@ -100,7 +101,8 @@ const ProviderDetailPage = () => {
         try {
             setLoading(true); setSubError("");
 
-            const res = await axios.post("http://localhost:5000/api/subscriptions",
+            const apiUrl = "http://localhost:5000/api";
+            const res = await axios.post(`${apiUrl}/subscriptions`,
                 { providerId: tiffin._id, planType, timeSlot },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -125,7 +127,8 @@ const ProviderDetailPage = () => {
                     try {
                         setLoading(true);
                         // Verify payment on backend
-                        await axios.post(`http://localhost:5000/api/subscriptions/verify-payment/${subscription._id}`, {
+                        const apiUrl = "http://localhost:5000/api";
+                        await axios.post(`${apiUrl}/subscriptions/verify-payment/${subscription._id}`, {
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature
                         }, { headers: { Authorization: `Bearer ${token}` } });

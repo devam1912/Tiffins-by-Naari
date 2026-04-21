@@ -86,7 +86,8 @@ const getNearbyRecommendations = async (req, res) => {
 const getUserRecommendations = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const response = await axios.get(`http://127.0.0.1:8000/recommendations/${userId}`);
+        const serviceUrl = process.env.RECOMMENDATION_SERVICE_URL || "http://recommendation:8000";
+        const response = await axios.get(`${serviceUrl}/recommendations/${userId}`);
         
         res.status(200).json(response.data);
     } catch (error) {

@@ -422,7 +422,6 @@ export const ProviderMenu = () => {
                                     </div>
                                 </div>
                             </div>
-                            </div>
                             
                             <div>
                                 <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Image</label>

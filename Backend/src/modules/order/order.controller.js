@@ -8,10 +8,16 @@ const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const { sendEmail } = require("../../utils/notification.service");
 
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let razorpay = null;
+function getRazorpay() {
+  if (!razorpay && process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return razorpay;
+}
 
 
 const getMyOrders = async (req, res) => {
@@ -239,7 +245,7 @@ const createOrder = async (req, res) => {
     }
 
     
-    const razorpayOrder = await razorpay.orders.create({
+    const razorpayOrder = await getRazorpay().orders.create({
       amount: remainingToPay * 100, 
       currency: "INR",
       receipt: `ord_${Date.now()}`,

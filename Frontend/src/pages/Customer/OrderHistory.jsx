@@ -40,7 +40,8 @@ export default function OrderHistory() {
     try {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
-      const res = await axios.get("http://localhost:5000/api/orders/my", { headers });
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      const res = await axios.get(`${BASE_URL}/api/orders/my`, { headers });
       setOrders(res.data || []);
       setError(null);
     } catch (err) {

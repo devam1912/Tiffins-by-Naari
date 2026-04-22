@@ -158,11 +158,15 @@ export default function Login() {
                         fontSize: 32, margin: "0 auto 28px",
                         backdropFilter: "blur(8px)",
                         animation: "floatY 5s ease-in-out infinite",
+<<<<<<< HEAD
                         color: "#fff",
                     }}>
                         <Utensils size={40} />
                     </div>
 
+=======
+                    }}><img src="/logo.png" alt="Logo" style={{ width: "90%", height: "90%", objectFit: "contain", borderRadius: 12 }} /></div>
+>>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
 
                     <h2 style={{
                         fontFamily: "'Lora', serif",

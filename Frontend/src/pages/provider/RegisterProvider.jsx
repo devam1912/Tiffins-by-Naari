@@ -154,7 +154,8 @@ export default function RegisterProvider() {
       formData.append("location[coordinates][]", coords[1]);
       formData.append("fssaiCertificate", fssaiFile);
 
-      await axios.post("http://localhost:5000/api/tiffins/register", formData, {
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      await axios.post(`${BASE_URL}/api/tiffins/register`, formData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });
 

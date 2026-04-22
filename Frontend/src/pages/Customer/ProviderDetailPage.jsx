@@ -30,8 +30,11 @@ import {
   AlertTriangle, 
   Utensils,
   ChevronDown,
-  Package
+  Package,
+  RefreshCcw
 } from "lucide-react";
+import Sidebar from "../../components/Customer/Sidebar";
+import { logout } from "../../store/authSlice";
 
 
 
@@ -86,9 +89,12 @@ const ProviderDetailPage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const tiffin = location.state?.tiffin;
-    const { token, user } = useSelector(s => s.auth);
+    const { token, user, location: userLocation } = useSelector(s => s.auth);
     const { items: cartItems, timeSlot: cartSlot, isLoading: cartLoading } = useSelector(s => s.cart);
     const { showConfirm } = useDialog();
+
+    const [collapsed, setCollapsed] = useState(false);
+    const [activeNav, setActiveNav] = useState("tiffins");
 
     const [planType, setPlanType] = useState("");
     const [timeSlot, setTimeSlot] = useState("");
@@ -135,6 +141,11 @@ const ProviderDetailPage = () => {
     const [success, setSuccess] = useState(false);
     const [subError, setSubError] = useState("");
     const [vis, setVis] = useState(false);
+
+    const handleLogout = () => {
+        dispatch(logout());
+        navigate("/login");
+    };
 
     useEffect(() => {
         const link = document.createElement("link");
@@ -275,7 +286,7 @@ const ProviderDetailPage = () => {
                 </div>
                 <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 10 }}>No provider data</h2>
                 <p style={{ color: "#aaa", fontSize: 14, marginBottom: 24, lineHeight: 1.7 }}>Go back and select a tiffin provider from the browse page.</p>
-                <button onClick={() => navigate("/browse")} style={{ background: "linear-gradient(135deg,#8FAE8E,#8FA873)", border: "none", borderRadius: 14, padding: "13px 28px", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <button onClick={() => navigate("/tiffins")} style={{ background: "linear-gradient(135deg,#8FAE8E,#8FA873)", border: "none", borderRadius: 14, padding: "13px 28px", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     Browse Providers <ArrowRight size={18} />
                 </button>
             </div>
@@ -283,7 +294,23 @@ const ProviderDetailPage = () => {
     );
 
     return (
-        <div style={{ minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
+        <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
+            <Sidebar 
+                collapsed={collapsed} 
+                setCollapsed={setCollapsed} 
+                activeNav={activeNav} 
+                setActiveNav={setActiveNav}
+                user={user}
+                location={userLocation || { address: "..." }}
+                logout={handleLogout}
+            />
+            
+            <div style={{ 
+                flex: 1, 
+                marginLeft: collapsed ? 72 : 260, 
+                transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
+                minWidth: 0 
+            }}>
             <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:4px}
@@ -775,7 +802,8 @@ const ProviderDetailPage = () => {
                 </div>
             </div>
         </div>
-    );
+    </div>
+  );
 };
 
 export default ProviderDetailPage;

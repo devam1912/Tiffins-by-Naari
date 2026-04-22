@@ -207,7 +207,7 @@ function pickItems(dayName, slot) {
   const meal = MENU_DATA[dayName][slot];
   const allItems = meal.items;
 
-
+  
   const count = Math.min(
     allItems.length,
     Math.max(2, Math.floor(Math.random() * allItems.length) + 1)
@@ -219,7 +219,7 @@ function pickItems(dayName, slot) {
     name: i.n,
     itemType: i.t,
     price: i.p,
-    quantity: Math.random() > 0.7 ? 2 : 1,
+    quantity: Math.random() > 0.7 ? 2 : 1, 
   }));
 
   const totalPrice = orderItems.reduce(
@@ -252,11 +252,11 @@ function generateDates(count) {
 async function seed() {
   try {
     await mongoose.connect(MONGO_URI);
-    console.log(" Connected to MongoDB\n");
+    console.log("✅ Connected to MongoDB\n");
 
-
-
-
+    
+    
+    
     const salt = await bcrypt.genSalt(10);
     const hashedPw = await bcrypt.hash("Test@1234", salt);
 
@@ -273,7 +273,7 @@ async function seed() {
         role: "provider",
         isVerified: true,
       });
-
+      
       await User.updateOne(
         { _id: providerUser._id },
         { password: hashedPw }
@@ -283,9 +283,9 @@ async function seed() {
       console.log("ℹ️  Provider user already exists:", providerUser._id);
     }
 
-
-
-
+    
+    
+    
     let provider = await Provider.findOne({ user: providerUser._id });
 
     if (!provider) {
@@ -310,9 +310,9 @@ async function seed() {
       console.log("ℹ️  Provider profile already exists:", provider._id);
     }
 
-
-
-
+    
+    
+    
     let menu = await Menu.findOne({ provider: provider._id });
 
     if (!menu) {
@@ -345,9 +345,9 @@ async function seed() {
         isApproved: true,
         submittedForApproval: true,
       });
-      console.log("Menu created & published:", menu._id);
+      console.log("✅ Menu created & published:", menu._id);
     } else {
-      console.log("Menu already exists:", menu._id);
+      console.log("ℹ️  Menu already exists:", menu._id);
     }
 
     // ─────────────────────────────────────────────
@@ -367,19 +367,19 @@ async function seed() {
         isVerified: true,
         walletBalance: 0,
       });
-
+      
       await User.updateOne(
         { _id: customer._id },
         { password: hashedPw }
       );
-      console.log("Customer user created:", customer._id);
+      console.log("✅ Customer user created:", customer._id);
     } else {
-      console.log("Customer user already exists:", customer._id);
+      console.log("ℹ️  Customer user already exists:", customer._id);
     }
 
-
-
-
+    
+    
+    
     const existingCount = await Order.countDocuments({
       user: customer._id,
       provider: provider._id,
@@ -387,7 +387,7 @@ async function seed() {
 
     if (existingCount >= 250) {
       console.log(
-        ` Already ${existingCount} orders exist. Skipping order creation.`
+        `ℹ️  Already ${existingCount} orders exist. Skipping order creation.`
       );
     } else {
       const needed = 250 - existingCount;
@@ -395,7 +395,7 @@ async function seed() {
 
       const orders = dates.map((date) => {
         const dayName = DAYS[date.getDay()];
-
+        
         const timeSlot = Math.random() < 0.6 ? "lunch" : "dinner";
         const { orderItems, totalPrice } = pickItems(dayName, timeSlot);
 
@@ -421,13 +421,13 @@ async function seed() {
 
       await Order.insertMany(orders);
       console.log(
-        `${needed} orders created! (total: ${existingCount + needed})`
+        `✅ ${needed} orders created! (total: ${existingCount + needed})`
       );
     }
 
-
-
-
+    
+    
+    
     const totalOrders = await Order.countDocuments({
       user: customer._id,
       provider: provider._id,
@@ -450,7 +450,7 @@ async function seed() {
 
     process.exit(0);
   } catch (err) {
-    console.error("Seed Error:", err);
+    console.error("❌ Seed Error:", err);
     process.exit(1);
   }
 }

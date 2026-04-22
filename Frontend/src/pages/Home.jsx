@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import heroImg from "../assets/hero.png";
 import forChefsImg from "../assets/for_chefs.png";
-import logoImg from "../assets/logo.png";
 
 /* ── useInView hook ── */
 function useInView(options = {}) {
@@ -176,8 +175,8 @@ export default function Home() {
         borderBottom: scrollY > 50 ? "1px solid rgba(143,174,142,0.2)" : "none",
         transition: "all 0.4s ease",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 19, ...h(0) }}>
-          <img src={logoImg} alt="Tiffins By Naari Logo" style={{ width: 44, height: 44, borderRadius: 12, objectFit: "cover", boxShadow: "0 4px 12px rgba(143,174,142,0.3)" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 19, ...h(0) }}>
+          <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 12px rgba(143,174,142,0.4)" }}>🍽️</div>
           Tiffins-By-Naari
         </div>
 
@@ -439,8 +438,8 @@ export default function Home() {
 
             {/* Brand */}
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: "'Lora', serif", fontSize: 21, fontWeight: 700, marginBottom: 14 }}>
-                <img src={logoImg} alt="Tiffins By Naari Logo" style={{ width: 42, height: 42, borderRadius: 10, objectFit: "cover" }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Lora', serif", fontSize: 21, fontWeight: 700, marginBottom: 14 }}>
+                <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🍽️</div>
                 Tiffins-By-Naari
               </div>
               <p style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, lineHeight: 1.85, maxWidth: 280, marginBottom: 24 }}>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signupUser } from "../api/auth";
-import logoImg from "../assets/logo.png";
 
 /* ══ ERROR DIALOG ══ */
 function ErrorDialog({ message, onClose }) {
@@ -149,8 +148,8 @@ export default function Signup() {
         <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.15)", top: "50%", left: "50%", transform: "translate(-50%,-50%)", animation: "spinSlow 25s linear infinite" }} />
 
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
-          <div style={{ width: 72, height: 72, borderRadius: 22, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite", overflow: "hidden" }}>
-            <img src={logoImg} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{ width: 72, height: 72, borderRadius: 22, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 28px", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite" }}>
+            🍽️
           </div>
           <h2 style={{ fontFamily: "'Lora',serif", fontSize: 34, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 16 }}>
             Join the<br /><em>Naari Family</em>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import logoImg from "../../assets/logo.png";
 
 function Modal({ variant, title, message, onClose }) {
   useEffect(() => {
@@ -144,8 +143,8 @@ export default function RegisterProvider() {
       formData.append("location[coordinates][]", coords[1]);
       formData.append("fssaiCertificate", fssaiFile);
 
-      const apiUrl = "http://localhost:5000/api";
-      await axios.post(`${apiUrl}/tiffins/register`, formData, {
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      await axios.post(`${BASE_URL}/api/tiffins/register`, formData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });
 
@@ -184,9 +183,7 @@ export default function RegisterProvider() {
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
           <div style={{ position: "relative", margin: "0 auto 32px", width: 96, height: 96 }}>
             <div style={{ position: "absolute", inset: -12, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.18)", animation: "pulseRing 2.5s ease-in-out infinite" }} />
-            <div style={{ width: 96, height: 96, borderRadius: 28, background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite", overflow: "hidden" }}>
-              <img src={logoImg} alt="Brand Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </div>
+            <div style={{ width: 96, height: 96, borderRadius: 28, background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite" }}>👩‍🍳</div>
           </div>
           <h2 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 18, ...anim(100) }}>List Your<br /><em>Kitchen Today</em></h2>
           <p style={{ color: "rgba(255,255,255,0.78)", fontSize: 15, lineHeight: 1.8, marginBottom: 32, ...anim(180) }}>Reach subscribers who crave real, home-cooked food every day.</p>

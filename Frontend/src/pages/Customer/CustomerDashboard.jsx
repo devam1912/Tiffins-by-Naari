@@ -14,12 +14,12 @@ export default function CustomerDashboard() {
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
   const [recommendations, setRecommendations] = useState([]);
 
-
+  // ✅ Redux se user aur token
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
 
-
+  // ✅ Login nahi hai toh redirect
   if (!token) { navigate("/login"); return; }
 
   useEffect(() => {
@@ -68,12 +68,13 @@ export default function CustomerDashboard() {
     document.head.appendChild(link);
 
     // ✅ Token ab Redux se aa raha hai, localStorage se nahi
+    const BASE_URL = import.meta.env.VITE_API_URL ?? "";
     const headers = { Authorization: `Bearer ${token}` };
 
     // Fetch Subscriptions and Orders (Non-location dependent)
     Promise.all([
-      axios.get("http://localhost:5000/api/subscriptions/my-subscriptions", { headers }),
-      axios.get("http://localhost:5000/api/orders/my", { headers }),
+      axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers }),
+      axios.get(`${BASE_URL}/api/orders/my`, { headers }),
     ])
       .then(([subsRes, ordersRes]) => {
         setStats(prev => ({
@@ -90,17 +91,18 @@ export default function CustomerDashboard() {
   // ✅ 3. Fetch Recommendations when location is available
   useEffect(() => {
     if (location.lat && location.lng) {
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const headers = { Authorization: `Bearer ${token}` };
       
       // 1. Fetch nearby tiffins count for stats
-      axios.get(`http://localhost:5000/api/tiffins/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
+      axios.get(`${BASE_URL}/api/tiffins/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
         .then(res => {
           setStats(prev => ({ ...prev, tiffins: res.data.length || 0 }));
         })
         .catch(err => console.error("Nearby tiffins fetch error:", err));
 
       // 2. Fetch specific recommendations
-      axios.get(`http://localhost:5000/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
+      axios.get(`${BASE_URL}/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
         .then(res => setRecommendations(res.data.providers || []))
         .catch(err => console.error("Recs fetch error:", err));
     }

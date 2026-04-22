@@ -33,8 +33,9 @@ export default function CustomerSubscriptions() {
   const fetchSubscriptions = async () => {
     try {
       setIsLoading(true);
-      const apiUrl = "http://localhost:5000/api";
-      const res = await axios.get(`${apiUrl}/subscriptions/my-subscriptions`, { headers });
+      const headers = { Authorization: `Bearer ${token}` };
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      const res = await axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers });
       setSubscriptions(res.data.data || []);
       setError(null);
     } catch (err) {
@@ -87,8 +88,9 @@ export default function CustomerSubscriptions() {
   const handleResume = async (id) => {
     try {
       setActionLoading(true);
-      const apiUrl = "http://localhost:5000/api";
-      await axios.patch(`${apiUrl}/subscriptions/${id}/resume`, {}, { headers });
+      const headers = { Authorization: `Bearer ${token}` };
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      await axios.patch(`${BASE_URL}/api/subscriptions/${id}/resume`, {}, { headers });
       await fetchSubscriptions();
     } catch (err) {
       alert(err.response?.data?.message || "Failed to resume subscription");
@@ -104,8 +106,9 @@ export default function CustomerSubscriptions() {
     }
     try {
       setActionLoading(true);
-      const apiUrl = "http://localhost:5000/api";
-      await axios.patch(`${apiUrl}/subscriptions/${selectedSub}/pause`, {
+      const headers = { Authorization: `Bearer ${token}` };
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      await axios.patch(`${BASE_URL}/api/subscriptions/${selectedSub}/pause`, {
         pauseStart,
         pauseEnd
       }, { headers });
@@ -121,8 +124,9 @@ export default function CustomerSubscriptions() {
   const handleCancelSubmit = async () => {
     try {
       setActionLoading(true);
-      const apiUrl = "http://localhost:5000/api";
-      await axios.patch(`${apiUrl}/subscriptions/${selectedSub}/cancel`, {}, { headers });
+      const headers = { Authorization: `Bearer ${token}` };
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      await axios.patch(`${BASE_URL}/api/subscriptions/${selectedSub}/cancel`, {}, { headers });
       setModalType(null);
       await fetchSubscriptions();
     } catch (err) {

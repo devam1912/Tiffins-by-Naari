@@ -1,0 +1,28 @@
+# Dependencies (will be installed fresh inside container)
+**/node_modules
+**/__pycache__
+**/venv
+
+# Build artifacts (frontend will be rebuilt inside container)
+Frontend/dist
+
+# Environment files (passed at runtime via --env-file or -e)
+**/.env
+**/.env.*
+
+# Version control & IDE
+**/.git
+**/.gitignore
+**/.vscode
+**/.idea
+**/.DS_Store
+
+# Docker files (no need to copy themselves)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Misc
+**/*.log
+**/coverage
+**/.nyc_output

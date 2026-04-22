@@ -85,13 +85,16 @@ const getNearbyRecommendations = async (req, res) => {
 const getUserRecommendations = async (req, res) => {
     try {
         const userId = req.params.userId;
-        const serviceUrl = process.env.RECOMMENDATION_SERVICE_URL || "http://recommendation:8000";
-        const response = await axios.get(`${serviceUrl}/recommendations/${userId}`);
-        
+        // Python service runs on localhost:8000 inside the container
+        const PYTHON_URL = process.env.RECOMMENDATION_SERVICE_URL || "http://127.0.0.1:8000";
+        const response = await axios.get(`${PYTHON_URL}/recommendations/${userId}`, {
+            timeout: 8000, // Don't hang forever if Python is still loading
+        });
         res.status(200).json(response.data);
     } catch (error) {
-        console.error("Recommendation Service Error:", error.message);
-        res.status(500).json({ error: "Failed to fetch recommendations" });
+        console.warn("Recommendation Service unavailable (non-fatal):", error.message);
+        // Return empty recommendations gracefully — never a 500
+        res.status(200).json({ top_picks: [], similar_items: [] });
     }
 };
 

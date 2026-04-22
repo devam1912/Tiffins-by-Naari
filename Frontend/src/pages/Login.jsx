@@ -3,7 +3,6 @@ import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/auth";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/authSlice";
-import logoImg from "../assets/logo.png";
 export default function Login() {
     const [loaded, setLoaded] = useState(false);
     const [form, setForm] = useState({ email: "", password: "" });
@@ -145,13 +144,10 @@ export default function Login() {
                         background: "rgba(255,255,255,0.18)",
                         border: "1px solid rgba(255,255,255,0.25)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        margin: "0 auto 28px",
+                        fontSize: 32, margin: "0 auto 28px",
                         backdropFilter: "blur(8px)",
                         animation: "floatY 5s ease-in-out infinite",
-                        overflow: "hidden"
-                    }}>
-                        <img src={logoImg} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                    </div>
+                    }}>🍽️</div>
 
                     <h2 style={{
                         fontFamily: "'Lora', serif",

@@ -9,17 +9,28 @@ load_dotenv()
 
 app = FastAPI()
 
-# --- DATABASE CONNECTION ---
-# By default, we use 'mongodb://localhost:27017/tiffinsDB' for local development.
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/tiffinsDB")
-client = MongoClient(MONGO_URI)
+# Replace with the connection link provided
+MONGO_URI = os.environ.get("MONGO_URI")
+if not MONGO_URI:
+    print("WARNING: No MONGO_URI set in environment variables. Recommendation service will not work.")
 
-# Selecting the DB and Collection
-db = client.get_database() # Uses the DB name from the URI (tiffinsDB)
-collection = db["orders"]
+# Lazy connection — avoids crashing at startup if MongoDB is unreachable
+_client = None
+_collection = None
+
+def get_collection():
+    global _client, _collection
+    if _collection is None:
+        if not MONGO_URI:
+            raise ValueError("No MONGO_URI set in environment variables")
+        _client = MongoClient(MONGO_URI)
+        db = _client["test"]
+        _collection = db["orders"]
+    return _collection
 
 def prepare_items(user_id: str):
     # Retrieve user orders
+    collection = get_collection()
     try:
         user_object_id = ObjectId(user_id)
         data = list(collection.find({"user": user_object_id}))

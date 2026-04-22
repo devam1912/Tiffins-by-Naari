@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderMenu, saveMenu, submitMenuForApproval } from "../store/providerSlice";
+import { useDialog } from "../context/DialogContext";
 import API from "../api/auth";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -18,6 +19,7 @@ export const ProviderMenu = () => {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     const { menu, loading } = useSelector((state) => state.provider);
+    const { showConfirm } = useDialog();
 
     const [selectedDay, setSelectedDay] = useState("Monday");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -88,7 +90,11 @@ export const ProviderMenu = () => {
     };
 
     const handleSubmitForApproval = async () => {
-        if (!window.confirm("Submit this menu for admin approval?")) return;
+        const confirmed = await showConfirm(
+            "Submit Menu",
+            "Are you sure you want to submit this menu for admin approval? You won't be able to edit items until they are approved or rejected."
+        );
+        if (!confirmed) return;
         setIsSubmitting(true);
         try {
             await dispatch(submitMenuForApproval()).unwrap();

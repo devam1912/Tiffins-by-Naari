@@ -18,6 +18,11 @@ import { Toaster } from "sonner";
 import CustomerSubscriptions from "./pages/Customer/CustomerSubscriptions";
 import OrderHistory from "./pages/Customer/OrderHistory";
 import CartPage from "./pages/Customer/CartPage";
+import OrderDetailPage from "./pages/Customer/OrderDetailPage";
+import NotificationPage from "./pages/Customer/NotificationPage";
+import { DialogProvider } from "./context/DialogContext";
+import GlobalCart from "./components/Customer/GlobalCart";
+
 
 export default function App() {
   const dispatch = useDispatch();
@@ -31,24 +36,30 @@ export default function App() {
 
   return (
 
-    <BrowserRouter>
-      <Toaster position="top-center" expand={false} richColors />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/CustomerDashboard" element={<CustomerDashboard />} />
-        <Route path="/CustomerProfile" element={<CustomerProfile />} />
-        <Route path="/verify-otp" element={<VerifyOtp />} />
-        <Route path="/ProviderDashboard" element={<ProviderDashboard />} />
-        <Route path="/RegisterProvider" element={<RegisterProvider />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/tiffins" element={<BrowseTiffins />} />
-        <Route path="/provider/:id" element={<ProviderDetailPage />} />
-        <Route path="/subscriptions" element={<CustomerSubscriptions />} />
-        <Route path="/order-history" element={<OrderHistory />} />
-        <Route path="/cart" element={<CartPage />} />
-      </Routes>
-    </BrowserRouter>
+    <DialogProvider>
+      <BrowserRouter>
+        <Toaster position="top-center" expand={false} richColors />
+        <GlobalCart />
+        <Routes>
+
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/CustomerDashboard" element={<CustomerDashboard />} />
+          <Route path="/CustomerProfile" element={<CustomerProfile />} />
+          <Route path="/verify-otp" element={<VerifyOtp />} />
+          <Route path="/ProviderDashboard" element={<ProviderDashboard />} />
+          <Route path="/RegisterProvider" element={<RegisterProvider />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/tiffins" element={<BrowseTiffins />} />
+          <Route path="/provider/:id" element={<ProviderDetailPage />} />
+          <Route path="/subscriptions" element={<CustomerSubscriptions />} />
+          <Route path="/order-history" element={<OrderHistory />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/notifications" element={<NotificationPage />} />
+        </Routes>
+      </BrowserRouter>
+    </DialogProvider>
   );
 }

@@ -7,9 +7,32 @@ import {
   approveProvider, 
   rejectProvider, 
   processPayout, 
-  creditProviderWallet 
+  creditProviderWallet,
+  fetchProviderPayoutHistory
 } from "../../store/adminSlice";
 import API from "../../api/auth";
+import { useDialog } from "../../context/DialogContext";
+import { 
+  Shield, 
+  LayoutDashboard, 
+  Users, 
+  ChefHat, 
+  UtensilsCrossed, 
+  ShoppingBag, 
+  IndianRupee, 
+  Calendar, 
+  MessageSquare, 
+  LogOut, 
+  Sun, 
+  Moon, 
+  X, 
+  FileText, 
+  Check, 
+  Plus, 
+  Minus, 
+  ArrowRight 
+} from "lucide-react";
+
 
 // Internal Components
 import { AdminUsers } from "../../components/AdminUsers";
@@ -27,7 +50,10 @@ function ApproveModal({ provider, onClose, onApprove, loading }) {
     >
       <div style={{ background: "#fff", borderRadius: 32, padding: "48px", maxWidth: 440, width: "100%", textAlign: "center", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(90deg,#8FAE8E,#D9D9A8)" }} />
-        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 36, color: "#fff" }}>👩‍🍳</div>
+        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: "#fff" }}>
+          <ChefHat size={40} />
+        </div>
+
         <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 12 }}>Approve Kitchen?</h2>
         <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
           Authorize <strong>{provider?.businessName}</strong>. This will enable their menu and notify <strong>{provider?.ownerName}</strong>.
@@ -139,6 +165,52 @@ function PayoutModal({ provider, type = "debit", onClose, onConfirm, loading }) 
 }
 
 // ══════════════════════════════════════════
+// 3.5 HISTORY MODAL
+// ══════════════════════════════════════════
+function HistoryModal({ provider, records, loading, onClose }) {
+  return (
+    <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 10001, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: 20 }}>
+      <div style={{ background: "#fff", borderRadius: 32, padding: "36px 40px", maxWidth: 560, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(135deg,#8FAE8E,#8FA873)" }} />
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Transaction History</h2>
+        <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: "#8FAE8E", fontWeight: 700 }}>{provider?.businessName}</span></p>
+
+        <div style={{ overflowY: "auto", flex: 1, paddingRight: 8, margin: "0 -8px 24px 0" }}>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "40px", color: "#888", fontWeight: 700, fontSize: 14 }}>Loading timeline...</div>
+          ) : records && records.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {records.map(r => {
+                const isCredit = r.type === "credit";
+                return (
+                  <div key={r._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderRadius: 16, border: "1px solid #f0f0f0", background: "#fcfdfc" }}>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{r.description || (isCredit ? "Wallet Addition" : "Payout Settled")}</p>
+                      <p style={{ fontSize: 11, color: "#aaa", fontWeight: 600 }}>{new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <p style={{ fontSize: 15, fontWeight: 800, color: isCredit ? "#8FAE8E" : "#ef5350" }}>{isCredit ? "+" : "-"}₹{r.amount.toLocaleString()}</p>
+                      <p style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: isCredit ? "#8FAE8E" : "#ef5350", background: isCredit ? "rgba(143,174,142,0.1)" : "rgba(239,83,80,0.1)", padding: "4px 10px", borderRadius: 8, display: "inline-flex", marginTop: 4, alignItems: 'center', gap: 4 }}>
+                        {isCredit ? <><Plus size={10} /> Credit</> : <><Minus size={10} /> Debit</>}
+                      </p>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: "center", padding: "40px", color: "#aaa", fontStyle: "italic", fontSize: 14 }}>No transactions logged.</div>
+          )}
+        </div>
+
+        <button onClick={onClose} style={{ width: "100%", padding: "14px", background: "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 800, cursor: "pointer", color: "#888", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="#eee"} onMouseLeave={e=>e.currentTarget.style.background="#f5f5f0"}>Close Window</button>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════
 // 4. VIEW APPLICATION MODAL
 // ══════════════════════════════════════════
 function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
@@ -158,8 +230,11 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
       <div style={{ background: "#fff", borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.2)" }}>
         <div style={{ padding: "28px 36px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfdfc" }}>
           <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d" }}>Kitchen Application</h2>
-          <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", color: "#aaa" }}>✕</button>
+          <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", color: "#aaa", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={18} />
+          </button>
         </div>
+
 
         <div style={{ padding: "36px", overflowY: "auto", flex: 1 }}>
           <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 32 }}>
@@ -175,7 +250,10 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
             <p style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 16 }}>Documentation</p>
             <div style={{ borderRadius: 16, border: "2px dashed #eee", background: "#f9faf9", padding: 16, textAlign: "center" }}>
               {provider?.fssaiCertificate ? (
-                isPdf ? <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer" style={{ color: "#8FAE8E", fontWeight: 700 }}>📄 Open Certificate</a> :
+                isPdf ? <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer" style={{ color: "#8FAE8E", fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <FileText size={18} /> Open Certificate
+                </a> :
+
                   <img src={provider.fssaiCertificate} alt="FSSAI" style={{ maxWidth: "100%", borderRadius: 8 }} />
               ) : <p style={{ color: "#ef5350", fontSize: 13 }}>Certificate missing.</p>}
             </div>
@@ -199,6 +277,7 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { showAlert } = useDialog();
   
   // UI & Data State
   const [loaded, setLoaded] = useState(false);
@@ -214,6 +293,8 @@ export default function AdminDashboard() {
       menus, 
       subscriptions,
       payoutBalances,
+      providerPayoutHistory,
+      historyLoading,
       stats, 
       loading: dataLoading 
   } = useSelector((state) => state.admin);
@@ -225,6 +306,7 @@ export default function AdminDashboard() {
   const [viewTarget, setViewTarget] = useState(null);
   const [payoutTarget, setPayoutTarget] = useState(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState(null);
+  const [historyTarget, setHistoryTarget] = useState(null);
 
   // Dark Mode
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('naari-theme') === 'dark');
@@ -250,7 +332,7 @@ export default function AdminDashboard() {
       await dispatch(approveProvider(approveTarget._id)).unwrap();
       setApproveTarget(null);
     } catch (err) {
-      alert(err || "Approval failed.");
+      showAlert("Error", err || "Approval failed.");
     } finally {
       setApproving(false);
     }
@@ -263,7 +345,7 @@ export default function AdminDashboard() {
       await dispatch(rejectProvider({ providerId: rejectTarget._id, reason })).unwrap();
       setRejectTarget(null);
     } catch (err) {
-      alert(err || "Rejection failed.");
+      showAlert("Error", err || "Rejection failed.");
     } finally {
       setRejecting(false);
     }
@@ -275,9 +357,9 @@ export default function AdminDashboard() {
     try {
       await dispatch(processPayout({ providerId: payoutTarget.providerId, amount, description })).unwrap();
       setPayoutTarget(null);
-      alert("Payout processed successfully!");
+      showAlert("Success", "Payout processed successfully!");
     } catch (err) {
-      alert(err || "Payout failed.");
+      showAlert("Error", err || "Payout failed.");
     } finally {
       setPayoutLoading(false);
     }
@@ -289,9 +371,9 @@ export default function AdminDashboard() {
     try {
       await dispatch(creditProviderWallet({ providerId: adjustmentTarget.providerId, amount, description })).unwrap();
       setAdjustmentTarget(null);
-      alert("Credit adjustment successful!");
+      showAlert("Success", "Credit adjustment successful!");
     } catch (err) {
-      alert(err || "Adjustment failed.");
+      showAlert("Error", err || "Adjustment failed.");
     } finally {
       setPayoutLoading(false);
     }
@@ -333,12 +415,13 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: "Platform Users", val: stats.totalUsers ?? users.length ?? 0, icon: "👥" },
-    { label: "Active Kitchens", val: stats.totalProviders ?? 0, icon: "👩‍🍳" },
-    { label: "Menus", val: menus.length, icon: "🍱" },
-    { label: "Orders", val: stats.totalOrders ?? 0, icon: "🛍️" },
-    { label: "Total Revenue", val: `₹${stats.totalRevenue?.toLocaleString() || 0}`, icon: "💰" }
+    { label: "Platform Users", val: stats.totalUsers ?? users.length ?? 0, icon: <Users size={32} /> },
+    { label: "Active Kitchens", val: stats.totalProviders ?? 0, icon: <ChefHat size={32} /> },
+    { label: "Menus", val: menus.length, icon: <UtensilsCrossed size={32} /> },
+    { label: "Orders", val: stats.totalOrders ?? 0, icon: <ShoppingBag size={32} /> },
+    { label: "Total Revenue", val: `₹${stats.totalRevenue?.toLocaleString() || 0}`, icon: <IndianRupee size={32} /> }
   ];
+
 
   const adminName = user?.name?.split(" ")[0] || "Admin";
 
@@ -384,18 +467,32 @@ export default function AdminDashboard() {
           loading={payoutLoading} 
         />
       )}
+      
+      {historyTarget && (
+        <HistoryModal
+          provider={historyTarget}
+          records={providerPayoutHistory}
+          loading={historyLoading}
+          onClose={() => setHistoryTarget(null)}
+        />
+      )}
 
       <aside style={{
         width: collapsed ? 80 : 280, minHeight: "100vh",
-        background: T.sidebarBg, transition: "background 0.4s ease",
         display: "flex", flexDirection: "column", padding: "36px 24px",
         position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
-        transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
+        transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), background 0.4s ease",
+        background: T.sidebarBg,
         boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>
+<<<<<<< HEAD
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <Shield size={24} />
+=======
           <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
+>>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
           </div>
           {!collapsed && <div>
             <div style={{ fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.1 }}>Naari Admin</div>
@@ -403,28 +500,31 @@ export default function AdminDashboard() {
           </div>}
         </div>
 
+
         <nav style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
           {[
-            { id: "dashboard", icon: "⊞", label: "Overview" },
-            { id: "users", icon: "👥", label: "Users" },
-            { id: "providers", icon: "👩‍🍳", label: "Tiffin Providers" },
-            { id: "menu", icon: "🍱", label: "Menus" },
-            { id: "orders", icon: "🛍️", label: "Orders" },
-            { id: "subscriptions", icon: "📅", label: "Subscriptions" },
-            { id: "payouts", icon: "💰", label: "Payouts" },
-            { id: "feedback", icon: "💬", label: "Feedbacks" }
+            { id: "dashboard", icon: <LayoutDashboard size={20} />, label: "Overview" },
+            { id: "users", icon: <Users size={20} />, label: "Users" },
+            { id: "providers", icon: <ChefHat size={20} />, label: "Tiffin Providers" },
+            { id: "menu", icon: <UtensilsCrossed size={20} />, label: "Menus" },
+            { id: "orders", icon: <ShoppingBag size={20} />, label: "Orders" },
+            { id: "subscriptions", icon: <Calendar size={20} />, label: "Subscriptions" },
+            { id: "payouts", icon: <IndianRupee size={20} />, label: "Payouts" },
+            { id: "feedback", icon: <MessageSquare size={20} />, label: "Feedbacks" }
 
           ].map(item => (
             <button key={item.id} className={`nav-btn ${activeNav === item.id ? "active" : ""}`} onClick={() => setActiveNav(item.id)}>
-              <span style={{ fontSize: 22 }}>{item.icon}</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </button>
           ))}
+
         </nav>
 
         <button onClick={handleLogout} style={{ marginTop: "auto", width: "100%", padding: "14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "rgba(255,255,255,0.6)", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
-          <span>🚪</span> {!collapsed && <span>Logout</span>}
+          <LogOut size={18} /> {!collapsed && <span>Logout</span>}
         </button>
+
       </aside>
 
       <main style={{ marginLeft: collapsed ? 80 : 280, flex: 1, padding: "44px", transition: "margin-left 0.35s ease" }}>
@@ -434,7 +534,10 @@ export default function AdminDashboard() {
             <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>Namaste, <em style={{ color: "#8FA873" }}>{adminName}!</em></h1>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button id="theme-toggle" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, cursor: "pointer", transition: "all 0.3s ease" }}>{darkMode ? "☀️" : "🌙"}</button>
+            <button id="theme-toggle" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", color: T.text, cursor: "pointer", transition: "all 0.3s ease" }}>
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
             <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff" }}>{adminName[0]}</div>
           </div>
         </div>
@@ -444,11 +547,12 @@ export default function AdminDashboard() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 24, marginBottom: 40 }}>
               {statCards.map((card, i) => (
                 <div key={i} style={{ background: T.card, padding: "32px", borderRadius: 28, boxShadow: darkMode ? "0 10px 30px rgba(0,0,0,0.2)" : "0 10px 30px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
-                  <div style={{ fontSize: 32, marginBottom: 16 }}>{card.icon}</div>
+                  <div style={{ color: "#8FAE8E", marginBottom: 16 }}>{card.icon}</div>
                   <p style={{ fontSize: 12, fontWeight: 800, color: T.textMuted, textTransform: "uppercase", marginBottom: 4 }}>{card.label}</p>
                   <h3 style={{ fontSize: 32, color: T.text, fontWeight: 800, fontFamily: "'Lora',serif" }}>{card.val}</h3>
                 </div>
               ))}
+
             </div>
 
             <div style={{ background: T.card, padding: "36px", borderRadius: 32, boxShadow: darkMode ? "0 20px 50px rgba(0,0,0,0.2)" : "0 20px 50px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
@@ -553,8 +657,9 @@ export default function AdminDashboard() {
                         <td style={{ padding: "16px 12px", fontSize: 14, color: T.textSec }}>₹{p.totalPaid?.toLocaleString() || 0}</td>
                         <td style={{ padding: "16px 12px", textAlign: "right" }}>
                           <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                            <button onClick={() => setAdjustmentTarget(p)} style={{ background: darkMode ? '#2a2a2a' : '#f0f0f0', border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, cursor: "pointer", color: T.textSec }}>Adjust</button>
-                            <button onClick={() => setPayoutTarget(p)} style={{ background: "#8FAE8E", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 700, color: "#fff", cursor: "pointer" }}>Payout</button>
+                            <button onClick={() => { setHistoryTarget(p); dispatch(fetchProviderPayoutHistory(p.providerId)); }} style={{ background: "transparent", border: `1px solid ${darkMode ? '#444' : '#ccc'}`, padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 800, cursor: "pointer", color: T.textSec, fontFamily: "'Nunito',sans-serif" }}>History</button>
+                            <button onClick={() => setAdjustmentTarget(p)} style={{ background: darkMode ? '#2a2a2a' : '#f0f0f0', border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 800, cursor: "pointer", color: T.textSec, fontFamily: "'Nunito',sans-serif" }}>Adjust</button>
+                            <button onClick={() => setPayoutTarget(p)} style={{ background: "#8FAE8E", border: "none", padding: "8px 12px", borderRadius: 10, fontSize: 11, fontWeight: 800, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif" }}>Payout</button>
                           </div>
                         </td>
                       </tr>

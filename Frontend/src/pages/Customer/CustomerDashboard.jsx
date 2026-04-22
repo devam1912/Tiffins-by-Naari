@@ -4,6 +4,26 @@ import axios from "axios";
 import Sidebar from "../../components/Customer/Sidebar";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { toast } from "sonner";
+import { 
+  Bell, 
+  MapPin, 
+  Home, 
+  Calendar, 
+  ShoppingBag, 
+  Soup, 
+  History, 
+  User, 
+  Lightbulb, 
+  Sparkles,
+  LayoutDashboard,
+  UtensilsCrossed,
+  ChevronRight,
+  Sun,
+  Moon,
+  CloudSun
+} from "lucide-react";
+
 
 export default function CustomerDashboard() {
   const navigate = useNavigate();
@@ -88,12 +108,45 @@ export default function CustomerDashboard() {
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!token) return;
+    const getUnreadCount = async () => {
+      try {
+        const headers = { Authorization: `Bearer ${token}` };
+        const [ordersRes, subsRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/orders/my", { headers }),
+          axios.get("http://localhost:5000/api/subscriptions/my-subscriptions", { headers })
+        ]);
+
+        const rawOrders = ordersRes.data || [];
+        const rawSubs = subsRes.data.data || [];
+        
+        const readIds = JSON.parse(localStorage.getItem(`read_notifs_${user?.id}`) || "[]");
+        let count = 0;
+
+        rawOrders.forEach(o => {
+          if (!readIds.includes(`order-${o._id}-${o.status}`)) count++;
+        });
+        rawSubs.forEach(s => {
+          if (!readIds.includes(`sub-${s._id}-${s.status}`)) count++;
+        });
+
+        setUnreadCount(count);
+      } catch (err) {
+        console.error("Unread count fetch error:", err);
+      }
+    };
+    getUnreadCount();
+  }, [token, user?.id]);
+
   // ✅ 3. Fetch Recommendations when location is available
   useEffect(() => {
     if (location.lat && location.lng) {
       const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const headers = { Authorization: `Bearer ${token}` };
-      
+
       // 1. Fetch nearby tiffins count for stats
       axios.get(`${BASE_URL}/api/tiffins/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
         .then(res => {
@@ -126,28 +179,28 @@ export default function CustomerDashboard() {
 
   // Navigation items
   const navItems = [
-    { id: "dashboard", icon: "⊞", label: "Dashboard", path: "/CustomerDashboard" },
-    { id: "tiffins", icon: "🍱", label: "Browse Tiffins", path: "/tiffins" },
-    { id: "subscriptions", icon: "📅", label: "Subscriptions", path: "/subscriptions" },
-    { id: "order-history", icon: "📜", label: "Order History", path: "/order-history" },
-    { id: "profile", icon: "👤", label: "My Profile", path: "/CustomerProfile" },
+    { id: "dashboard", icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/CustomerDashboard" },
+    { id: "tiffins", icon: <UtensilsCrossed size={20} />, label: "Browse Tiffins", path: "/tiffins" },
+    { id: "subscriptions", icon: <Calendar size={20} />, label: "Subscriptions", path: "/subscriptions" },
+    { id: "order-history", icon: <History size={20} />, label: "Order History", path: "/order-history" },
+    { id: "profile", icon: <User size={20} />, label: "My Profile", path: "/CustomerProfile" },
   ];
 
   const statCards = [
     {
-      icon: "🏡", label: "Kitchens Available", value: stats.tiffins,
+      icon: <Home size={28} />, label: "Kitchens Available", value: stats.tiffins,
       bg: "linear-gradient(135deg, #8FAE8E, #8FA873)",
       shadow: "rgba(143,174,142,0.4)", textColor: "#fff",
       sub: "Home kitchens near you",
     },
     {
-      icon: "📜", label: "Active Subscriptions", value: stats.subscriptions,
+      icon: <Calendar size={28} />, label: "Active Subscriptions", value: stats.subscriptions,
       bg: "linear-gradient(135deg, #D9D9A8, #c5ce88)",
       shadow: "rgba(180,190,100,0.3)", textColor: "#2d3b2d",
       sub: "Current meal plans",
     },
     {
-      icon: "🛍️", label: "Total Orders Placed", value: stats.orders,
+      icon: <ShoppingBag size={28} />, label: "Total Orders Placed", value: stats.orders,
       bg: "rgba(255,255,255,0.8)",
       shadow: "rgba(143,174,142,0.18)", textColor: "#2d3b2d",
       sub: "All-time orders", border: "1.5px solid rgba(143,174,142,0.3)",
@@ -156,10 +209,10 @@ export default function CustomerDashboard() {
   ];
 
   const quickActions = [
-    { icon: "🍱", label: "Browse Tiffins", desc: "Explore home kitchens", path: "/tiffins", bg: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.38)" },
-    { icon: "📅", label: "Subscriptions", desc: "Manage your meal plans", path: "/subscriptions", bg: "linear-gradient(135deg,#a8c5a0,#7a9e72)", shadow: "rgba(120,170,110,0.3)" },
-    { icon: "📜", label: "Order History", desc: "View your past orders", path: "/order-history", bg: "linear-gradient(135deg,#c5d490,#9ab870)", shadow: "rgba(154,184,112,0.3)" },
-    { icon: "👤", label: "My Profile", desc: "Update your details", path: "/CustomerProfile", bg: "linear-gradient(135deg,#c5d490,#9ab870)", shadow: "rgba(154,184,112,0.3)" },
+    { icon: <UtensilsCrossed size={28} />, label: "Browse Tiffins", desc: "Explore home kitchens", path: "/tiffins", bg: "linear-gradient(135deg,#8FAE8E,#8FA873)", shadow: "rgba(143,174,142,0.38)" },
+    { icon: <Calendar size={28} />, label: "Subscriptions", desc: "Manage your meal plans", path: "/subscriptions", bg: "linear-gradient(135deg,#a8c5a0,#7a9e72)", shadow: "rgba(120,170,110,0.3)" },
+    { icon: <History size={28} />, label: "Order History", desc: "View your past orders", path: "/order-history", bg: "linear-gradient(135deg,#c5d490,#9ab870)", shadow: "rgba(154,184,112,0.3)" },
+    { icon: <User size={28} />, label: "My Profile", desc: "Update your details", path: "/CustomerProfile", bg: "linear-gradient(135deg,#c5d490,#9ab870)", shadow: "rgba(154,184,112,0.3)" },
   ];
 
   return (
@@ -220,24 +273,46 @@ export default function CustomerDashboard() {
 
         {/* ── Top bar ── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, flexWrap: "wrap", gap: 16, ...anim(0) }}>
-          <div>
-            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>{greeting} 👋</p>
-            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3.2vw,38px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
-              Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
-            </h1>
-            <p style={{ color: "#888", fontSize: 14, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
-              📍 {location.address} · Ready for your next meal?
-            </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+             <div style={{ width: 50, height: 50, borderRadius: 16, background: "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8FAE8E" }}>
+                {hour < 12 ? <Sun size={28} /> : hour < 17 ? <CloudSun size={28} /> : <Moon size={28} />}
+             </div>
+             <div>
+                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>{greeting}</p>
+                <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3.2vw,38px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
+                  Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
+                </h1>
+                <p style={{ color: "#888", fontSize: 14, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
+                  <MapPin size={14} /> {location.address} · Ready for your next meal?
+                </p>
+             </div>
           </div>
 
           {/* Notification + Avatar */}
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.72)", backdropFilter: "blur(12px)", border: "1px solid rgba(143,174,142,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", boxShadow: "0 4px 14px rgba(143,174,142,0.12)", position: "relative" }}>
-              🔔
-              <span style={{ position: "absolute", top: 9, right: 10, width: 8, height: 8, borderRadius: "50%", background: "#ef5350", border: "2px solid #E7E6B6" }} />
+            <div
+              onClick={() => navigate("/notifications")}
+              style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.72)", backdropFilter: "blur(12px)", border: "1px solid rgba(143,174,142,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", boxShadow: "0 4px 14px rgba(143,174,142,0.12)", position: "relative" }}
+            >
+              <Bell size={20} color="#5a7a50" />
+              {unreadCount > 0 && (
+                <span style={{ 
+                  position: "absolute", top: 9, right: 10, 
+                  width: 18, height: 18, borderRadius: "50%", 
+                  background: "#ef5350", border: "2px solid #E7E6B6",
+                  color: "#fff", fontSize: 10, fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center"
+                }}>
+                  {unreadCount}
+                </span>
+              )}
             </div>
-            <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, fontSize: 17, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", cursor: "pointer" }}>
+
+            <div
+              onClick={() => navigate("/CustomerProfile")}
+              style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, fontSize: 17, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", cursor: "pointer" }}
+            >
               {firstName[0]?.toUpperCase()}
             </div>
           </div>
@@ -257,7 +332,7 @@ export default function CustomerDashboard() {
           <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.12)", bottom: "-50px", right: "60px", pointerEvents: "none", animation: "spinSlow 30s linear infinite" }} />
 
           <div style={{ position: "relative", zIndex: 1, maxWidth: 480 }}>
-            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,0.6)", marginBottom: 10 }}>Today's Menu is Ready 🍽️</p>
+            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,0.6)", marginBottom: 10 }}>Today's Menu is Ready</p>
             <h2 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(20px,2.8vw,30px)", fontWeight: 700, color: "#fff", lineHeight: 1.25, marginBottom: 12 }}>
               Discover Fresh Home-Cooked<br /><em>Meals Near You</em>
             </h2>
@@ -273,23 +348,25 @@ export default function CustomerDashboard() {
             </button>
           </div>
 
-          <div style={{ fontSize: 88, animation: "floatY 5s ease-in-out infinite", position: "relative", zIndex: 1, lineHeight: 1 }}>🥘</div>
+          <div style={{ animation: "floatY 5s ease-in-out infinite", position: "relative", zIndex: 1, color: "#fff", opacity: 0.8 }}>
+            <Soup size={100} strokeWidth={1} />
+          </div>
         </div>
 
         {/* ── Stats ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 20, marginBottom: 44, ...anim(160) }}>
           {statCards.map(({ icon, label, value, bg, shadow, textColor, sub, border, onClick }) => (
-            <div key={label} 
-                 className="stat-card" 
-                 onClick={onClick}
-                 style={{ 
-                   background: bg, borderRadius: 22, padding: "28px 26px", 
-                   boxShadow: `0 8px 32px ${shadow}`, border: border || "none", 
-                   position: "relative", overflow: "hidden",
-                   cursor: onClick ? "pointer" : "default"
-                 }}>
+            <div key={label}
+              className="stat-card"
+              onClick={onClick}
+              style={{
+                background: bg, borderRadius: 22, padding: "28px 26px",
+                boxShadow: `0 8px 32px ${shadow}`, border: border || "none",
+                position: "relative", overflow: "hidden",
+                cursor: onClick ? "pointer" : "default"
+              }}>
               <div style={{ position: "absolute", width: 90, height: 90, borderRadius: "50%", background: "rgba(255,255,255,0.09)", bottom: -25, right: -20, pointerEvents: "none" }} />
-              <div style={{ fontSize: 34, marginBottom: 16 }}>{icon}</div>
+              <div style={{ marginBottom: 16, color: textColor }}>{icon}</div>
               <div style={{ fontFamily: "'Lora',serif", fontSize: 40, fontWeight: 700, color: textColor, lineHeight: 1 }}>{value}</div>
               <div style={{ fontSize: 14, fontWeight: 700, color: textColor, marginTop: 8, opacity: 0.9 }}>{label}</div>
               <div style={{ fontSize: 12, color: textColor, marginTop: 4, opacity: 0.55, fontWeight: 600 }}>{sub}</div>
@@ -306,9 +383,9 @@ export default function CustomerDashboard() {
         {/* ── Quick action cards ── */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(190px,1fr))", gap: 18, marginBottom: 44, ...anim(280) }}>
           {quickActions.map(({ icon, label, desc, path, bg, shadow }) => (
-            <button key={label} className="quick-btn" onClick={() => navigate(path)} style={{ background: bg, borderRadius: 22, padding: "26px 22px", boxShadow: `0 8px 24px ${shadow}`, textAlign: "left", position: "relative", overflow: "hidden" }}>
+            <button key={label} className="quick-btn" onClick={() => navigate(path)} style={{ background: bg, borderRadius: 22, padding: "26px 22px", boxShadow: `0 8px 24px ${shadow}`, textAlign: "left", position: "relative", overflow: "hidden", color: "#fff" }}>
               <div style={{ position: "absolute", width: 80, height: 80, borderRadius: "50%", background: "rgba(255,255,255,0.1)", bottom: -22, right: -16, pointerEvents: "none" }} />
-              <div style={{ fontSize: 36, marginBottom: 14 }}>{icon}</div>
+              <div style={{ marginBottom: 14 }}>{icon}</div>
               <div style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#fff", marginBottom: 5 }}>{label}</div>
               <div style={{ fontSize: 13, color: "rgba(255,255,255,0.75)", lineHeight: 1.5 }}>{desc}</div>
               <div style={{ marginTop: 16, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.9)" }}>Open →</div>
@@ -319,7 +396,7 @@ export default function CustomerDashboard() {
         {/* ── Recommendations ── */}
         <div style={{ marginBottom: 44, ...anim(300) }}>
           <div style={{ marginBottom: 16 }}>
-            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>Recommended For You ✨</h2>
+            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>Recommended For You <Sparkles size={20} style={{ display: 'inline', verticalAlign: 'middle', color: '#8FA873' }} /></h2>
             <p style={{ color: "#888", fontSize: 14 }}>Personalized kitchens based on your location and history</p>
           </div>
 
@@ -332,8 +409,8 @@ export default function CustomerDashboard() {
                   boxShadow: "0 4px 20px rgba(143,174,142,0.1)", display: "flex", flexDirection: "column",
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c5d490,#9ab870)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-                      🥗
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c5d490,#9ab870)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                      <Soup size={22} />
                     </div>
                     <span style={{ fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 12, background: "#e8f5e9", color: "#5a7a50", textTransform: "uppercase", letterSpacing: 1 }}>
                       {rec.cuisineType || "Mixed"}
@@ -341,9 +418,9 @@ export default function CustomerDashboard() {
                   </div>
                   <h3 style={{ fontFamily: "'Lora',serif", fontSize: 18, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{rec.businessName}</h3>
                   <p style={{ fontSize: 13, color: "#777", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
-                    🛒 <strong>Owner:</strong> {rec.ownerName}
+                    <User size={14} /> <strong>Owner:</strong> {rec.ownerName}
                   </p>
-                  <button onClick={() => navigate(`/tiffin/${rec.id}`)} style={{
+                  <button onClick={() => navigate(`/provider/${rec._id}`, { state: { tiffin: rec } })} style={{
                     marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
                     borderRadius: 14, padding: "10px", fontWeight: 700, fontSize: 14, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
                   }}>
@@ -376,12 +453,12 @@ export default function CustomerDashboard() {
             </div>
 
             {[
-              { icon: "📅", text: `${stats.subscriptions} subscription plan(s) currently active`, time: "Updated recently", bg: "#fff9e6" },
-              { icon: "🏡", text: `${stats.tiffins} home kitchens available near you`, time: "Live data", bg: "#e8f5e9" },
-              { icon: "🛍️", text: `${stats.orders} total orders placed so far`, time: "All time", bg: "#fff9e6" },
-            ].map(({ icon, text, time, bg }, i) => (
+              { icon: <Calendar size={18} />, text: `${stats.subscriptions} subscription plan(s) currently active`, time: "Updated recently", bg: "#fff9e6", color: "#d4a017" },
+              { icon: <Home size={18} />, text: `${stats.tiffins} home kitchens available near you`, time: "Live data", bg: "#e8f5e9", color: "#5a7a50" },
+              { icon: <ShoppingBag size={18} />, text: `${stats.orders} total orders placed so far`, time: "All time", bg: "#fff9e6", color: "#d4a017" },
+            ].map(({ icon, text, time, bg, color }, i) => (
               <div key={i} className="activity-row" style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 14px", borderRadius: 14, marginBottom: 4, transition: "background 0.2s", cursor: "default" }}>
-                <div style={{ width: 42, height: 42, borderRadius: 13, background: bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>{icon}</div>
+                <div style={{ width: 42, height: 42, borderRadius: 13, background: bg, display: "flex", alignItems: "center", justifyContent: "center", color: color, flexShrink: 0 }}>{icon}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 14, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.4 }}>{text}</div>
                   <div style={{ fontSize: 12, color: "#bbb", fontWeight: 600, marginTop: 2 }}>{time}</div>
@@ -395,7 +472,9 @@ export default function CustomerDashboard() {
             {/* Tip card */}
             <div style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(14px)", border: "1px solid rgba(143,174,142,0.2)", borderRadius: 22, padding: "22px", boxShadow: "0 4px 20px rgba(143,174,142,0.1)" }}>
               <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#D9D9A8,#c5d490)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, flexShrink: 0 }}>💡</div>
+                <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#D9D9A8,#c5d490)", display: "flex", alignItems: "center", justifyContent: "center", color: "#5a7a50", flexShrink: 0 }}>
+                  <Lightbulb size={22} />
+                </div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 800, color: "#2d3b2d", marginBottom: 6 }}>Save more!</div>
                   <div style={{ fontSize: 13, color: "#777", lineHeight: 1.65 }}>A weekly subscription saves up to <strong style={{ color: "#5a7a50" }}>20%</strong> vs daily orders.</div>

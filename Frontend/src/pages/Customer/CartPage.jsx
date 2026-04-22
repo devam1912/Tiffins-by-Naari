@@ -5,13 +5,28 @@ import axios from "axios";
 import API from "../../api/auth";
 import { toast } from "sonner";
 import { fetchCart, removeItemFromCart, addItemToCart, clearCart } from "../../store/cartSlice";
-import { logout } from "../../store/authSlice";
+import { logout, fetchProfile } from "../../store/authSlice";
 import Sidebar from "../../components/Customer/Sidebar";
+import { useDialog } from "../../context/DialogContext";
+import { 
+  ShoppingCart, 
+  ShoppingBag, 
+  Leaf, 
+  Soup, 
+  Wallet, 
+  ArrowRight,
+  Trash2,
+  Plus,
+  Minus,
+  Calendar
+} from "lucide-react";
+
 
 
 const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { showAlert, showConfirm } = useDialog();
   const { token, user } = useSelector((s) => s.auth);
   const { items, timeSlot, totalPrice, isLoading } = useSelector((s) => s.cart);
 
@@ -72,6 +87,7 @@ const CartPage = () => {
 
       if (!razorpayOrderId) {
         toast.success("Order placed successfully using wallet!");
+        dispatch(fetchProfile());
         dispatch(clearCart());
         navigate("/order-history");
         return;
@@ -93,6 +109,7 @@ const CartPage = () => {
             });
             
             toast.success("Payment successful! Order placed.");
+            dispatch(fetchProfile());
             dispatch(clearCart());
             navigate("/order-history");
           } catch (err) {
@@ -138,19 +155,21 @@ const CartPage = () => {
         maxWidth: 1200
       }}>
         <div style={anim(0)}>
-          <h1 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>
-            Your Cart 🛒
+          <h1 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
+            Your Cart <ShoppingCart size={32} />
           </h1>
           <p style={{ color: "#7a7a6a", marginBottom: 32 }}>Review your items and schedule your delivery.</p>
         </div>
 
         {items.length === 0 ? (
           <div style={{ ...anim(100), textAlign: "center", padding: "80px 40px", background: "rgba(255,255,255,0.4)", borderRadius: 32, border: "2px dashed rgba(143,174,142,0.3)" }}>
-            <div style={{ fontSize: 64, marginBottom: 16 }}>🥡</div>
+            <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center', color: '#8FAE8E' }}>
+              <ShoppingBag size={64} strokeWidth={1} />
+            </div>
             <h2 style={{ fontFamily: "'Lora', serif", color: "#4a5a4a", marginBottom: 12 }}>Your cart is empty</h2>
             <p style={{ color: "#8a8a7a", marginBottom: 24 }}>Hungry? Browse our kitchens and add some delicious meals!</p>
-            <button onClick={() => navigate("/tiffins")} style={{ padding: "12px 32px", background: "#8FAE8E", color: "#fff", border: "none", borderRadius: 16, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(143,174,142,0.3)" }}>
-              Browse Kitchens →
+            <button onClick={() => navigate("/tiffins")} style={{ padding: "12px 32px", background: "#8FAE8E", color: "#fff", border: "none", borderRadius: 16, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(143,174,142,0.3)", display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              Browse Kitchens <ArrowRight size={18} />
             </button>
           </div>
         ) : (
@@ -162,8 +181,15 @@ const CartPage = () => {
                   <span style={{ fontSize: 13, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5 }}>
                     {timeSlot?.toUpperCase()} DELIVERY
                   </span>
-                  <button onClick={() => dispatch(clearCart())} style={{ background: "none", border: "none", color: "#ba6666", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
-                    Clear All
+                  <button 
+                    onClick={async () => {
+                      if (await showConfirm("Clear Cart?", "Are you sure you want to remove all items from your cart?")) {
+                        dispatch(clearCart());
+                      }
+                    }} 
+                    style={{ background: "none", border: "none", color: "#ba6666", fontSize: 12, fontWeight: 700, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}
+                  >
+                    <Trash2 size={14} /> Clear All
                   </button>
                 </div>
                 
@@ -172,17 +198,17 @@ const CartPage = () => {
                     display: "flex", alignItems: "center", gap: 20, padding: "16px 0", 
                     borderBottom: idx === items.length - 1 ? "none" : "1px solid rgba(0,0,0,0.05)" 
                   }}>
-                    <div style={{ width: 64, height: 64, borderRadius: 16, background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
-                      {item.type === "veg" ? "🌱" : "🍲"}
+                    <div style={{ width: 64, height: 64, borderRadius: 16, background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", color: item.type === "veg" ? "#388e3c" : "#e67e22" }}>
+                      {item.type === "veg" ? <Leaf size={28} /> : <Soup size={28} />}
                     </div>
                     <div style={{ flex: 1 }}>
                       <h3 style={{ fontSize: 16, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>{item.name}</h3>
                       <p style={{ fontSize: 12, color: "#8a8a7a", marginTop: 4 }}>by {item.provider?.businessName || "Kitchen"}</p>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, background: "rgba(0,0,0,0.03)", padding: "4px 8px", borderRadius: 12 }}>
-                      <button onClick={() => handleUpdateQuantity(item, "decrease")} style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "#fff", cursor: "pointer" }}>-</button>
+                      <button onClick={() => handleUpdateQuantity(item, "decrease")} style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "#fff", cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Minus size={14} /></button>
                       <span style={{ width: 20, textAlign: "center", fontWeight: 700 }}>{item.quantity}</span>
-                      <button onClick={() => handleUpdateQuantity(item, "increase")} style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "#fff", cursor: "pointer" }}>+</button>
+                      <button onClick={() => handleUpdateQuantity(item, "increase")} style={{ width: 28, height: 28, borderRadius: "50%", border: "none", background: "#fff", cursor: "pointer", display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Plus size={14} /></button>
                     </div>
                     <div style={{ minWidth: 80, textAlign: "right", fontWeight: 800, color: "#2d3b2d" }}>
                       ₹{item.price * item.quantity}
@@ -195,8 +221,22 @@ const CartPage = () => {
             {/* Right: Checkout Summary */}
             <div style={{ position: "sticky", top: 40, ...anim(200) }}>
               <div style={{ background: "#fff", borderRadius: 32, padding: "32px", border: "1.5px solid rgba(143,174,142,0.25)", boxShadow: "0 20px 50px rgba(0,0,0,0.05)" }}>
-                <h2 style={{ fontFamily: "'Lora', serif", fontSize: 20, fontWeight: 700, color: "#2d3b2d", marginBottom: 24 }}>Order Summary</h2>
-                
+                <h2 style={{ fontFamily: "'Lora', serif", fontSize: 20, fontWeight: 700, color: "#2d3b2d", marginBottom: 16 }}>Order Summary</h2>
+
+                {/* Wallet Balance Chip */}
+                {user?.walletBalance > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,rgba(143,174,142,0.12),rgba(143,168,115,0.06))", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 14, padding: "10px 14px", marginBottom: 18 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <Wallet size={20} color="#8FA873" />
+                      <div>
+                        <p style={{ fontSize: 9, fontWeight: 900, color: "#8FA873", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>Wallet Balance</p>
+                        <p style={{ fontSize: 14, fontWeight: 900, color: "#2d3b2d" }}>₹{user.walletBalance}</p>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: "#8FA873", background: "rgba(143,174,142,0.15)", padding: "3px 8px", borderRadius: 8 }}>Auto-applied</span>
+                  </div>
+                )}
+
                 <div style={{ marginBottom: 24 }}>
                   <label style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Delivery Date</label>
                   <input 
@@ -233,7 +273,7 @@ const CartPage = () => {
                     cursor: "pointer", boxShadow: "0 10px 24px rgba(143,174,142,0.4)", display: "flex", alignItems: "center", justifyContent: "center", gap: 10
                   }}
                 >
-                  {placingOrder ? "Processing..." : "Place Order →"}
+                  {placingOrder ? "Processing..." : <span style={{display:'flex', alignItems:'center', gap:8}}>Place Order <ArrowRight size={18} /></span>}
                 </button>
                 
                 <p style={{ fontSize: 11, color: "#aaa", textAlign: "center", marginTop: 16, lineHeight: 1.5 }}>

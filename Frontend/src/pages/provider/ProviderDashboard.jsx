@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { toast } from "sonner";
 import {
     fetchProviderDashboard,
     fetchProviderProfile,
@@ -12,6 +13,23 @@ import { ProviderMenu } from "../../components/ProviderMenu";
 import { ActiveSubscriptions } from "../../components/ActiveSubscriptions";
 import { OrdersToday } from "../../components/OrdersToday";
 import { ProfileSettings } from "../../components/ProfileSettings";
+import { 
+  LayoutDashboard, 
+  UtensilsCrossed, 
+  Users, 
+  ShoppingBag, 
+  Settings, 
+  ChefHat, 
+  Bell, 
+  LogOut, 
+  Sun, 
+  Moon, 
+  Banknote, 
+  CookingPot,
+  Coffee,
+  CloudMoon
+} from "lucide-react";
+
 
 // --- Dashboard Component ---
 export const ProviderDashboard = () => {
@@ -86,11 +104,11 @@ export const ProviderDashboard = () => {
     };
 
     const menuItems = [
-        { name: "Dashboard", icon: "⊞" },
-        { name: "Menu Management", icon: "🍱" },
-        { name: "Active Subscriptions", icon: "👥" },
-        { name: "Orders Today", icon: "🛍️" },
-        { name: "Profile Settings", icon: "⚙️" },
+        { name: "Dashboard", icon: <LayoutDashboard size={20} /> },
+        { name: "Menu Management", icon: <UtensilsCrossed size={20} /> },
+        { name: "Active Subscriptions", icon: <Users size={20} /> },
+        { name: "Orders Today", icon: <ShoppingBag size={20} /> },
+        { name: "Profile Settings", icon: <Settings size={20} /> },
     ];
 
     const firstName = user?.name?.split(" ")[0] || "Chef";
@@ -136,16 +154,21 @@ export const ProviderDashboard = () => {
             <aside style={{
                 width: collapsed ? 80 : 280,
                 minHeight: "100vh",
-                background: T.sidebarBg, transition: "background 0.4s ease",
                 display: "flex", flexDirection: "column",
                 padding: "36px 24px",
                 position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
-                transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
+                transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), background 0.4s ease",
+                background: T.sidebarBg,
                 boxShadow: "6px 0 44px rgba(50,80,40,0.15)",
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, justifyContent: collapsed ? "center" : "flex-start" }}>
+<<<<<<< HEAD
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                        <ChefHat size={24} />
+=======
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
                         <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
+>>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
                     </div>
                     {!collapsed && (
                         <div>
@@ -193,7 +216,7 @@ export const ProviderDashboard = () => {
                             justifyContent: collapsed ? "center" : "flex-start"
                         }}
                     >
-                        <span>🚪</span>
+                        <LogOut size={18} />
                         {!collapsed && <span>Logout</span>}
                     </button>
                 </div>
@@ -209,16 +232,26 @@ export const ProviderDashboard = () => {
                 {/* Top header */}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
                     <div>
-                        <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Welcome Back 👨‍🍳</p>
+                        <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Welcome Back Chef</p>
                         <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>
-                            Namaste Chef, <em style={{ color: "#8FA873" }}>{firstName}!</em>
+                            Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
                         </h1>
                     </div>
 
                     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        <button id="theme-toggle-provider" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, cursor: "pointer", transition: "all 0.3s ease" }}>{darkMode ? "☀️" : "🌙"}</button>
-                        <div style={{ width: 44, height: 44, borderRadius: 14, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>🔔</div>
-                        <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)" }}>{firstName[0]}</div>
+                        <button id="theme-toggle-provider" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", color: darkMode ? T.accent : "#555", cursor: "pointer", transition: "all 0.3s ease" }}>{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
+                        <div 
+                          onClick={() => toast.info("No new notifications", { description: "We'll let you know when something happens." })}
+                          style={{ width: 44, height: 44, borderRadius: 14, background: T.card, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: T.accent, boxShadow: "0 4px 12px rgba(0,0,0,0.05)", cursor: "pointer" }}
+                        >
+                          <Bell size={20} />
+                        </div>
+                        <div 
+                          onClick={() => setActiveTab("Profile Settings")}
+                          style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", cursor: "pointer" }}
+                        >
+                          {firstName[0]}
+                        </div>
                     </div>
                 </div>
 
@@ -229,10 +262,10 @@ export const ProviderDashboard = () => {
                             {/* Stats Grid */}
                             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24, marginBottom: 40 }}>
                                 {[
-                                    { label: "Monthly Revenue", value: `₹${stats?.monthlyRevenue?.toLocaleString() || 0}`, icon: "💰", bg: T.card, textColor: T.text },
-                                    { label: "Active Subscribers", value: stats?.activeSubscribers || 0, icon: "👥", bg: "linear-gradient(135deg, #8FAE8E, #8FA873)", textColor: "#fff" },
-                                    { label: "Today's Meals", value: stats?.todaysMeals || 0, subValue: `🌞 ${stats?.lunchCount || 0} | 🌙 ${stats?.dinnerCount || 0}`, icon: "🍱", bg: T.card, textColor: T.text },
-                                    { label: "Kitchen Status", value: isServiceActive ? "Active" : "Paused", icon: "🍳", bg: T.card, textColor: isServiceActive ? "#8FAE8E" : "#ef5350" },
+                                    { label: "Monthly Revenue", value: `₹${stats?.monthlyRevenue?.toLocaleString() || 0}`, icon: <Banknote size={28} />, bg: T.card, textColor: T.text },
+                                    { label: "Active Subscribers", value: stats?.activeSubscribers || 0, icon: <Users size={28} />, bg: "linear-gradient(135deg, #8FAE8E, #8FA873)", textColor: "#fff" },
+                                    { label: "Today's Meals", value: stats?.todaysMeals || 0, subValue: <span><Coffee size={12} style={{verticalAlign:'middle'}} /> {stats?.lunchCount || 0} | <CloudMoon size={12} style={{verticalAlign:'middle'}} /> {stats?.dinnerCount || 0}</span>, icon: <UtensilsCrossed size={28} />, bg: T.card, textColor: T.text },
+                                    { label: "Kitchen Status", value: isServiceActive ? "Active" : "Paused", icon: <CookingPot size={28} />, bg: T.card, textColor: isServiceActive ? "#8FAE8E" : "#ef5350" },
                                 ].map((stat, i) => (
                                     <div key={i} className="stat-card" style={{ background: stat.bg, padding: "32px", borderRadius: 24, boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
                                         <div style={{ fontSize: 32, marginBottom: 16 }}>{stat.icon}</div>

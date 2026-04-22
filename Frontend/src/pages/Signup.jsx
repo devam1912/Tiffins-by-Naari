@@ -1,6 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { signupUser } from "../api/auth";
+import { 
+  Utensils, 
+  User, 
+  Mail, 
+  Smartphone, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  CheckCircle2, 
+  Check, 
+  ArrowLeft, 
+  ArrowRight, 
+  AlertTriangle 
+} from "lucide-react";
+
 
 /* ══ ERROR DIALOG ══ */
 function ErrorDialog({ message, onClose }) {
@@ -34,8 +49,9 @@ const validatePassword = (v) => v.length >= 8 && HAS_UPPER.test(v) && HAS_NUM.te
 
 function FieldHint({ show, message }) {
   if (!show) return null;
-  return <p style={{ fontSize: 12, color: "#ef5350", fontWeight: 600, marginTop: 5, paddingLeft: 2 }}>⚠ {message}</p>;
+  return <p style={{ fontSize: 12, color: "#ef5350", fontWeight: 600, marginTop: 5, paddingLeft: 2, display: 'flex', alignItems: 'center', gap: 4 }}><AlertTriangle size={12} /> {message}</p>;
 }
+
 
 const INITIAL_FORM = { name: "", email: "", phone: "", password: "", confirm: "" };
 
@@ -103,8 +119,8 @@ export default function Signup() {
     const p = form.password;
     if (!p) return null;
     const score = [p.length >= 8, HAS_UPPER.test(p), HAS_NUM.test(p)].filter(Boolean).length;
-    if (score === 1) return { label: "Weak",   color: "#ef5350", width: "28%" };
-    if (score === 2) return { label: "Fair",   color: "#ff9800", width: "60%" };
+    if (score <= 1) return { label: "Weak",   color: "#ef5350", width: "33%" };
+    if (score === 2) return { label: "Fair",   color: "#ff9800", width: "66%" };
     return             { label: "Strong", color: "#4caf50", width: "100%" };
   })();
 
@@ -148,9 +164,15 @@ export default function Signup() {
         <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.15)", top: "50%", left: "50%", transform: "translate(-50%,-50%)", animation: "spinSlow 25s linear infinite" }} />
 
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
+<<<<<<< HEAD
+          <div style={{ width: 72, height: 72, borderRadius: 22, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", margin: "0 auto 28px", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite" }}>
+            <Utensils size={40} />
+=======
           <div style={{ width: 72, height: 72, borderRadius: 22, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 28px", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite", overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "95%", height: "95%", objectFit: "contain", borderRadius: 12 }} />
+>>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
           </div>
+
           <h2 style={{ fontFamily: "'Lora',serif", fontSize: 34, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 16 }}>
             Join the<br /><em>Naari Family</em>
           </h2>
@@ -176,14 +198,20 @@ export default function Signup() {
 
         <div style={{ width: "100%", maxWidth: 440, position: "relative", zIndex: 1 }}>
 
-          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 28, ...anim(0) }}>← Back to home</a>
+          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 28, ...anim(0) }}>
+            <ArrowLeft size={16} /> Back to home
+          </a>
+
 
           <div style={{ ...anim(100) }}>
             <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Get Started</p>
             <h1 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>Create Account</h1>
             <p style={{ color: "#888", fontSize: 15, marginBottom: 24 }}>
               Already have an account?{" "}
-              <a href="/login" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }} className="link-hover">Log in →</a>
+              <a href="/login" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none", display: 'inline-flex', alignItems: 'center', gap: 4 }} className="link-hover">
+                Log in <ArrowRight size={14} />
+              </a>
+
             </p>
           </div>
 
@@ -212,7 +240,10 @@ export default function Signup() {
               {/* Name */}
               <div style={{ ...anim(250) }}>
                 <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" }}>👤</span>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", display: 'flex', alignItems: 'center' }}>
+                    <User size={18} />
+                  </span>
+
                   <input type="text" placeholder="Full name" {...f("name")} style={inputStyle("name", form.name.trim() !== "")} />
                 </div>
                 <FieldHint show={touched.name && !form.name.trim()} message="Name is required" />
@@ -221,7 +252,10 @@ export default function Signup() {
               {/* Email */}
               <div style={{ ...anim(300) }}>
                 <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" }}>📧</span>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", display: 'flex', alignItems: 'center' }}>
+                    <Mail size={18} />
+                  </span>
+
                   <input type="email" placeholder="Email address" {...f("email")} style={inputStyle("email", emailOk)} />
                 </div>
                 <FieldHint show={touched.email && !emailOk} message="Invalid email format" />
@@ -230,7 +264,10 @@ export default function Signup() {
               {/* Phone */}
               <div style={{ ...anim(350) }}>
                 <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" }}>📱</span>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", display: 'flex', alignItems: 'center' }}>
+                    <Smartphone size={18} />
+                  </span>
+
                   <input type="tel" placeholder="Phone number (10-digit)" {...f("phone")} style={inputStyle("phone", phoneOk)} />
                 </div>
                 <FieldHint show={touched.phone && !phoneOk} message="Phone must be a valid 10-digit Indian number" />
@@ -239,12 +276,16 @@ export default function Signup() {
               {/* Password */}
               <div style={{ ...anim(400) }}>
                 <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" }}>🔒</span>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", display: 'flex', alignItems: 'center' }}>
+                    <Lock size={18} />
+                  </span>
+
                   <input type={showPass ? "text" : "password"} placeholder="Create password" {...f("password")}
                     style={{ ...inputStyle("password", passwordOk), paddingRight: 48 }} />
-                  <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 0 }}>
-                    {showPass ? "🙈" : "👁️"}
+                  <button type="button" onClick={() => setShowPass(!showPass)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8FA873", padding: 0, display: 'flex', alignItems: 'center' }}>
+                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
+
                 </div>
                 {strength && (
                   <div style={{ marginTop: 8 }}>
@@ -254,18 +295,43 @@ export default function Signup() {
                     <span style={{ fontSize: 12, color: strength.color, fontWeight: 700, marginTop: 4, display: "block" }}>{strength.label} password</span>
                   </div>
                 )}
-                <FieldHint show={touched.password && !passwordOk} message="Password must be 8+ chars, include an uppercase letter and a number" />
+                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+                  {[
+                    { label: "At least 8 characters", met: form.password.length >= 8 },
+                    { label: "One uppercase letter", met: HAS_UPPER.test(form.password) },
+                    { label: "One number", met: HAS_NUM.test(form.password) },
+                  ].map((c, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{
+                        width: 14, height: 14, borderRadius: "50%",
+                        border: `1.5px solid ${c.met ? "#4caf50" : "#bbb"}`,
+                        background: c.met ? "#4caf50" : "transparent",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.3s ease"
+                      }}>
+                        {c.met && <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                      </div>
+                      <span style={{ fontSize: 12, color: c.met ? "#2d3b2d" : "#999", fontWeight: c.met ? 700 : 500, transition: "all 0.3s ease" }}>
+                        {c.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Confirm password */}
               <div style={{ ...anim(450) }}>
                 <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" }}>✅</span>
+                  <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", display: 'flex', alignItems: 'center' }}>
+                    <CheckCircle2 size={18} />
+                  </span>
+
                   <input type={showConfirm ? "text" : "password"} placeholder="Confirm password" {...f("confirm")}
                     style={{ ...inputStyle("confirm", confirmOk), paddingRight: 48 }} />
-                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 0 }}>
-                    {showConfirm ? "🙈" : "👁️"}
+                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8FA873", padding: 0, display: 'flex', alignItems: 'center' }}>
+                    {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
+
                 </div>
                 <FieldHint show={touched.confirm && !confirmOk} message="Passwords don't match" />
               </div>
@@ -273,8 +339,9 @@ export default function Signup() {
               {/* Terms */}
               <label style={{ display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer", ...anim(500) }}>
                 <div onClick={() => setAgreed(!agreed)} style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1, border: `2px solid ${agreed ? "#8FAE8E" : "#ccc"}`, background: agreed ? "#8FAE8E" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s ease", cursor: "pointer" }}>
-                  {agreed && <span style={{ color: "#fff", fontSize: 12, fontWeight: 900 }}>✓</span>}
+                  {agreed && <Check size={14} color="#fff" strokeWidth={3} />}
                 </div>
+
                 <span style={{ fontSize: 13, color: "#777", lineHeight: 1.5 }}>
                   I agree to the{" "}<a href="#" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }}>Terms of Service</a>{" "}and{" "}
                   <a href="#" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }}>Privacy Policy</a>
@@ -287,7 +354,12 @@ export default function Signup() {
               >
                 {loading ? (
                   <><span style={{ width: 17, height: 17, borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.35)", borderTopColor: "#fff", display: "inline-block", animation: "spinSlow 0.7s linear infinite" }} /> Creating Account...</>
-                ) : "Create My Account →"}
+                ) : (
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    Create My Account <ArrowRight size={18} />
+                  </span>
+                )}
+
               </button>
 
               {!isFormReady && (Object.values(form).some(v => v !== "") || agreed) && (

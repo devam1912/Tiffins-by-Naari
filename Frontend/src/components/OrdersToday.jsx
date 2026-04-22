@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderSubscriptions, markMealReady, fetchProviderOrders, updateOrderStatus } from "../store/providerSlice";
+<<<<<<< HEAD
+import { useDialog } from "../context/DialogContext";
+=======
 import { X, ChevronRight, Info, Trash2, CheckCircle2, Clock, Package, Phone, User, ExternalLink } from "lucide-react";
+>>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
 
 export const OrdersToday = () => {
     const dispatch = useDispatch();
+    const { showAlert } = useDialog();
     const { subscriptions: allSubs, orders, loading, error } = useSelector((state) => state.provider);
     const [actionLoading, setActionLoading] = useState(null);
     const [activeSection, setActiveSection] = useState("all"); // all, subscription, onetime
@@ -20,7 +25,7 @@ export const OrdersToday = () => {
         try {
             await dispatch(markMealReady(subId)).unwrap();
         } catch (err) {
-            alert(err || "Failed to mark meal ready");
+            showAlert("Error", err || "Failed to mark meal ready");
         } finally {
             setActionLoading(null);
         }
@@ -31,7 +36,7 @@ export const OrdersToday = () => {
         try {
             await dispatch(updateOrderStatus({ orderId, status })).unwrap();
         } catch (err) {
-            alert(err || "Failed to update order status");
+            showAlert("Error", err || "Failed to update order status");
         } finally {
             setActionLoading(null);
         }

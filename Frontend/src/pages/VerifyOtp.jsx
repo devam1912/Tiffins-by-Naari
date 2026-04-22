@@ -1,6 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { verifyOTP } from "../api/auth";
+import { 
+  Mail, 
+  ArrowLeft, 
+  ArrowRight, 
+  AlertTriangle 
+} from "lucide-react";
+
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
@@ -182,10 +189,12 @@ export default function VerifyOtp() {
           fontSize: 34, margin: "0 auto 24px",
           boxShadow: "0 12px 32px rgba(143,174,142,0.4)",
           animation: "floatY 5s ease-in-out infinite",
+          color: "#fff",
           ...anim(0),
         }}>
-          📩
+          <Mail size={38} />
         </div>
+
 
         {/* Heading */}
         <div style={{ ...anim(100) }}>
@@ -235,7 +244,6 @@ export default function VerifyOtp() {
           </div>
 
           {/* Error */}
-          {error && (
             <div style={{
               background: "#fff5f5", border: "1.5px solid #ef9a9a",
               borderRadius: 12, padding: "12px 16px",
@@ -243,10 +251,10 @@ export default function VerifyOtp() {
               marginBottom: 20, textAlign: "left",
               animation: "shakeX 0.4s ease",
             }}>
-              <span style={{ fontSize: 18 }}>⚠️</span>
+              <AlertTriangle size={18} color="#c62828" />
               <span style={{ color: "#c62828", fontSize: 14, fontWeight: 600 }}>{error}</span>
             </div>
-          )}
+
 
           {/* Submit */}
           <button
@@ -280,7 +288,12 @@ export default function VerifyOtp() {
                 }} />
                 Verifying...
               </>
-            ) : "Verify OTP →"}
+            ) : (
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                Verify OTP <ArrowRight size={18} />
+              </span>
+            )}
+
           </button>
         </form>
 
@@ -296,9 +309,10 @@ export default function VerifyOtp() {
               Resend OTP
             </button>
           </p>
-          <a href="/signup" className="link-hover" style={{ color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", transition: "color 0.2s" }}>
-            ← Back to Sign Up
+          <a href="/signup" className="link-hover" style={{ color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", transition: "color 0.2s", display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <ArrowLeft size={16} /> Back to Sign Up
           </a>
+
         </div>
 
         {/* Bottom pulsing dot note */}

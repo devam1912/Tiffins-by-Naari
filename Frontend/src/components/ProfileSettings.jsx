@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import API from "../api/auth";
+import { useDialog } from "../context/DialogContext";
 
 export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatusLoading, profileData }) => {
+    const { showAlert } = useDialog();
     const [isSaved, setIsSaved] = useState(false);
     const [saving, setSaving] = useState(false);
 
@@ -39,7 +41,7 @@ export const ProfileSettings = ({ isServiceActive, toggleServiceStatus, isStatus
             setIsSaved(true);
             setTimeout(() => setIsSaved(false), 3000);
         } catch (err) {
-            alert(err.response?.data?.message || "Profile update failed");
+            showAlert("Update Failed", err.response?.data?.message || "Profile update failed");
         } finally {
             setSaving(false);
         }

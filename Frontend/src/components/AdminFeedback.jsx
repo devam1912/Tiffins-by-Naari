@@ -1,4 +1,6 @@
 import React from "react";
+import { MessageSquare, Star } from "lucide-react";
+
 
 export const AdminFeedback = ({ feedbacks, loading }) => {
     if (loading) {
@@ -20,10 +22,13 @@ export const AdminFeedback = ({ feedbacks, loading }) => {
 
             {(!feedbacks || feedbacks.length === 0) ? (
                 <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 22, padding: "60px 40px", textAlign: "center", border: "1px solid rgba(143,174,142,0.2)" }}>
-                    <div style={{ fontSize: 52, marginBottom: 16 }}>💬</div>
+                    <div style={{ color: "rgba(143,174,142,0.2)", marginBottom: 16, display: 'flex', justifyContent: 'center' }}>
+                        <MessageSquare size={52} />
+                    </div>
                     <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "inherit", marginBottom: 8 }}>No feedback yet</h3>
                     <p style={{ color: "#aaa", fontSize: 15, fontWeight: 600 }}>Once customers start sharing their experiences, they'll appear here.</p>
                 </div>
+
             ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 20 }}>
                     {feedbacks.map((f, i) => (
@@ -51,9 +56,10 @@ export const AdminFeedback = ({ feedbacks, loading }) => {
                                         </span>
                                     </div>
                                 </div>
-                                <div style={{ background: "rgba(217,217,168,0.15)", color: "#a5a56d", padding: "6px 12px", borderRadius: 12, display: "flex", alignItems: "center", gap: 4, fontWeight: 800, fontSize: 13 }}>
-                                    <span>⭐</span> {f.rating}
+                                <div style={{ background: "rgba(217,217,168,0.15)", color: "#a5a56d", padding: "6px 12px", borderRadius: 12, display: "flex", alignItems: "center", gap: 6, fontWeight: 800, fontSize: 13 }}>
+                                    <Star size={14} fill="currentColor" /> {f.rating}
                                 </div>
+
                             </div>
 
                             <div style={{ padding: "16px", background: "rgba(143,174,142,0.05)", borderRadius: 16, border: "1px solid rgba(143,174,142,0.08)" }}>

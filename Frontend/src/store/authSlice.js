@@ -1,11 +1,25 @@
-// src/store/authSlice.js
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { getProfile } from "../api/auth";
+
+export const fetchProfile = createAsyncThunk(
+    "auth/fetchProfile",
+    async (_, thunkAPI) => {
+        try {
+            const res = await getProfile();
+            return res.data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to fetch profile");
+        }
+    }
+);
 
 const authSlice = createSlice({
   name: "auth",
   initialState: {
     user: JSON.parse(localStorage.getItem("user")) || null,
     token: localStorage.getItem("token") || null,
+    loading: false,
+    error: null,
   },
   reducers: {
     loginSuccess: (state, action) => {
@@ -20,6 +34,21 @@ const authSlice = createSlice({
       localStorage.removeItem("token");
       localStorage.removeItem("user");
     },
+  },
+  extraReducers: (builder) => {
+    builder
+        .addCase(fetchProfile.pending, (state) => {
+            state.loading = true;
+        })
+        .addCase(fetchProfile.fulfilled, (state, action) => {
+            state.loading = false;
+            state.user = { ...state.user, ...action.payload };
+            localStorage.setItem("user", JSON.stringify(state.user));
+        })
+        .addCase(fetchProfile.rejected, (state, action) => {
+            state.loading = false;
+            state.error = action.payload;
+        });
   },
 });
 

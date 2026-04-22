@@ -19,5 +19,6 @@ export const signupUser = (data) => API.post("/auth/register", data);
 export const loginUser = (data) => API.post("/auth/login", data);
 export const verifyOTP = (data) => API.post("/auth/verify-otp", data);
 export const updateProfile = (data) => API.patch("/auth/update", data);
+export const getProfile = () => API.get("/auth/me");
 
 export default API;

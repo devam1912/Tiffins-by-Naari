@@ -4,11 +4,44 @@ import { useSelector, useDispatch } from "react-redux";
 import API from "../../api/auth";
 import { toast } from "sonner";
 import { addItemToCart, fetchCart } from "../../store/cartSlice";
+import { fetchProfile } from "../../store/authSlice";
+import { useDialog } from "../../context/DialogContext";
+import { 
+  PartyPopper, 
+  Wallet, 
+  ArrowRight, 
+  ArrowLeft, 
+  Leaf, 
+  MapPin, 
+  Star, 
+  IndianRupee, 
+  ChefHat, 
+  Phone, 
+  ClipboardList, 
+  UtensilsCrossed, 
+  Sun, 
+  Moon, 
+  Soup, 
+  Salad, 
+  Calendar, 
+  CalendarDays, 
+  CalendarRange, 
+  Check, 
+  AlertTriangle, 
+  Utensils,
+  ChevronDown,
+  Package,
+  RefreshCcw
+} from "lucide-react";
+import Sidebar from "../../components/Customer/Sidebar";
+import { logout } from "../../store/authSlice";
+
+
 
 /* ─────────────────────────────────────────
    SUCCESS OVERLAY
 ───────────────────────────────────────── */
-const SuccessOverlay = ({ name, plan, slot, onClose, onView }) => {
+const SuccessOverlay = ({ name, plan, slot, paymentMethod, onClose, onView }) => {
     useEffect(() => {
         const fn = e => { if (e.key === "Escape") onClose(); };
         document.addEventListener("keydown", fn);
@@ -19,17 +52,23 @@ const SuccessOverlay = ({ name, plan, slot, onClose, onView }) => {
             style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(10,18,10,0.72)", backdropFilter: "blur(20px)", padding: 24, animation: "oIn .2s ease" }}>
             <div style={{ background: "#fff", borderRadius: 32, padding: "56px 48px 44px", maxWidth: 420, width: "100%", textAlign: "center", boxShadow: "0 64px 120px rgba(10,30,10,0.35)", animation: "mIn .42s cubic-bezier(.22,.68,0,1.2)", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(90deg,#8FAE8E,#8FA873,#D9D9A8)", borderRadius: "32px 32px 0 0" }} />
-                <div style={{ width: 96, height: 96, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", fontSize: 44, boxShadow: "0 20px 56px rgba(143,174,142,0.5)", animation: "bIn .6s cubic-bezier(.34,1.56,.64,1) .12s both" }}>
-                    🎉
+                <div style={{ width: 96, height: 96, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", color: '#fff', boxShadow: "0 20px 56px rgba(143,174,142,0.5)", animation: "bIn .6s cubic-bezier(.34,1.56,.64,1) .12s both" }}>
+                    <PartyPopper size={44} />
                 </div>
                 <p style={{ fontSize: 10, fontWeight: 900, letterSpacing: 4, textTransform: "uppercase", color: "#8FA873", marginBottom: 10 }}>Subscribed!</p>
                 <h2 style={{ fontFamily: "'Lora',serif", fontSize: 28, fontWeight: 700, color: "#1a2a1a", marginBottom: 8, lineHeight: 1.2 }}>Meals are on the way!</h2>
                 <p style={{ color: "#999", fontSize: 13, marginBottom: 4, fontWeight: 600 }}>{name}</p>
-                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 32, textTransform: "capitalize" }}>{plan} plan · {slot} delivery</p>
+                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 16, textTransform: "capitalize" }}>{plan} plan · {slot} delivery</p>
+                {paymentMethod === "wallet" && (
+                    <div style={{ background: "rgba(143,174,142,0.1)", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 12, padding: "8px 14px", marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Wallet size={14} color="#4a7040" />
+                        <span style={{ fontSize: 12, fontWeight: 700, color: "#4a7040" }}>Paid using Wallet Balance</span>
+                    </div>
+                )}
                 <button onClick={onView}
-                    style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 8px 24px rgba(143,174,142,0.45)", marginBottom: 10, transition: "opacity .2s" }}
+                    style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 8px 24px rgba(143,174,142,0.45)", marginBottom: 10, transition: "opacity .2s", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                     onMouseEnter={e => e.currentTarget.style.opacity = ".85"} onMouseLeave={e => e.currentTarget.style.opacity = "1"}>
-                    View My Subscriptions →
+                    View My Subscriptions <ArrowRight size={18} />
                 </button>
                 <button onClick={onClose}
                     style={{ width: "100%", padding: "12px", background: "transparent", border: "2px solid #ebebdf", borderRadius: 16, fontSize: 13, fontWeight: 700, cursor: "pointer", color: "#bbb", fontFamily: "'Nunito',sans-serif", transition: "all .2s" }}
@@ -50,17 +89,24 @@ const ProviderDetailPage = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const tiffin = location.state?.tiffin;
-    const { token, user } = useSelector(s => s.auth);
+    const { token, user, location: userLocation } = useSelector(s => s.auth);
     const { items: cartItems, timeSlot: cartSlot, isLoading: cartLoading } = useSelector(s => s.cart);
+    const { showConfirm } = useDialog();
+
+    const [collapsed, setCollapsed] = useState(false);
+    const [activeNav, setActiveNav] = useState("tiffins");
 
     const [planType, setPlanType] = useState("");
     const [timeSlot, setTimeSlot] = useState("");
     const [loading, setLoading] = useState(false);
-    const [addingToCart, setAddingToCart] = useState(null); // stores item name being added
+    const [addingToCart, setAddingToCart] = useState(null);
+    const [paymentMethod, setPaymentMethod] = useState("");
 
     const [menuData, setMenuData] = useState(null);
     const [menuLoading, setMenuLoading] = useState(true);
     const [menuExpanded, setMenuExpanded] = useState(false);
+
+    const [feedbacks, setFeedbacks] = useState([]);
 
     // Current day for ordering restrictions
     const currentDay = new Date().toLocaleDateString("en-US", { weekday: "long" });
@@ -77,6 +123,14 @@ const ProviderDetailPage = () => {
                     setMenuLoading(false);
                 });
             
+            API.get(`/feedback/provider/${tiffin._id}`)
+                .then(res => {
+                    setFeedbacks(res.data.feedbacks || []);
+                })
+                .catch(err => {
+                    console.error("Error fetching feedback:", err);
+                });
+            
             if (token) {
                 dispatch(fetchCart());
             }
@@ -87,6 +141,11 @@ const ProviderDetailPage = () => {
     const [success, setSuccess] = useState(false);
     const [subError, setSubError] = useState("");
     const [vis, setVis] = useState(false);
+
+    const handleLogout = () => {
+        dispatch(logout());
+        navigate("/login");
+    };
 
     useEffect(() => {
         const link = document.createElement("link");
@@ -120,7 +179,9 @@ const ProviderDetailPage = () => {
 
             // CASE 1: Activated via Wallet balance (Fully covered)
             if (!razorpayOrderId) {
+                setPaymentMethod("wallet");
                 setSuccess(true);
+                dispatch(fetchProfile()); // refresh wallet balance
                 return;
             }
 
@@ -141,7 +202,9 @@ const ProviderDetailPage = () => {
                             razorpay_signature: response.razorpay_signature
                         });
 
+                        setPaymentMethod("gateway");
                         setSuccess(true);
+                        dispatch(fetchProfile()); // refresh wallet balance
                     } catch (err) {
                         setSubError("Payment verification failed. Please contact support.");
                     } finally {
@@ -175,9 +238,11 @@ const ProviderDetailPage = () => {
 
         // Logic check: if cart already has items from another slot
         if (cartItems.length > 0 && cartSlot !== slot) {
-            if (!window.confirm(`Your cart contains ${cartSlot} items. Adding this will clear your current cart. Continue?`)) {
-                return;
-            }
+            const confirmed = await showConfirm(
+                "Clear Cart?",
+                `Your cart contains ${cartSlot} items. Adding this will clear your current cart. Continue?`
+            );
+            if (!confirmed) return;
         }
 
         try {
@@ -216,18 +281,36 @@ const ProviderDetailPage = () => {
         <div style={{ minHeight: "100vh", background: "#E7E6B6", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Nunito',sans-serif" }}>
             <style>{`*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}`}</style>
             <div style={{ textAlign: "center", background: "rgba(255,255,255,0.85)", borderRadius: 28, padding: "52px 44px", maxWidth: 400, border: "1.5px solid rgba(143,174,142,0.2)" }}>
-                <div style={{ fontSize: 52, marginBottom: 16 }}>🍽</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, color: '#8FAE8E' }}>
+                    <Utensils size={52} strokeWidth={1} />
+                </div>
                 <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 10 }}>No provider data</h2>
                 <p style={{ color: "#aaa", fontSize: 14, marginBottom: 24, lineHeight: 1.7 }}>Go back and select a tiffin provider from the browse page.</p>
-                <button onClick={() => navigate("/browse")} style={{ background: "linear-gradient(135deg,#8FAE8E,#8FA873)", border: "none", borderRadius: 14, padding: "13px 28px", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif" }}>
-                    Browse Providers →
+                <button onClick={() => navigate("/tiffins")} style={{ background: "linear-gradient(135deg,#8FAE8E,#8FA873)", border: "none", borderRadius: 14, padding: "13px 28px", fontSize: 14, fontWeight: 800, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    Browse Providers <ArrowRight size={18} />
                 </button>
             </div>
         </div>
     );
 
     return (
-        <div style={{ minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
+        <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
+            <Sidebar 
+                collapsed={collapsed} 
+                setCollapsed={setCollapsed} 
+                activeNav={activeNav} 
+                setActiveNav={setActiveNav}
+                user={user}
+                location={userLocation || { address: "..." }}
+                logout={handleLogout}
+            />
+            
+            <div style={{ 
+                flex: 1, 
+                marginLeft: collapsed ? 72 : 260, 
+                transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
+                minWidth: 0 
+            }}>
             <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         ::-webkit-scrollbar{width:4px}
@@ -253,7 +336,7 @@ const ProviderDetailPage = () => {
         }
       `}</style>
 
-            {success && <SuccessOverlay name={tiffin.businessName} plan={planType} slot={timeSlot} onClose={() => setSuccess(false)} onView={() => navigate("/subscriptions")} />}
+            {success && <SuccessOverlay name={tiffin.businessName} plan={planType} slot={timeSlot} paymentMethod={paymentMethod} onClose={() => setSuccess(false)} onView={() => navigate("/subscriptions")} />}
 
             {/* ══════════ HERO ══════════ */}
             <div style={{ background: "linear-gradient(158deg,#7da368 0%,#5d7f52 45%,#3f5939 100%)", position: "relative", overflow: "hidden" }}>
@@ -265,7 +348,7 @@ const ProviderDetailPage = () => {
                 <div style={{ maxWidth: 1060, margin: "0 auto", padding: "36px 40px 0", position: "relative", zIndex: 1 }}>
                     <button className="back-btn" onClick={() => navigate(-1)}
                         style={{ background: "rgba(255,255,255,0.12)", border: "1.5px solid rgba(255,255,255,0.2)", borderRadius: 10, padding: "7px 14px", color: "rgba(255,255,255,0.9)", fontSize: 12, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", transition: "all .2s", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                        ← Back
+                        <ArrowLeft size={14} /> Back
                     </button>
                 </div>
 
@@ -277,7 +360,7 @@ const ProviderDetailPage = () => {
                             <span style={{ fontSize: 10, fontWeight: 900, letterSpacing: 4, textTransform: "uppercase", color: "rgba(255,255,255,0.5)" }}>Home Kitchen</span>
                             <span style={{ width: 1, height: 12, background: "rgba(255,255,255,0.2)" }} />
                             <div style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 20, padding: "4px 12px" }}>
-                                <span style={{ fontSize: 12 }}>🌱</span>
+                                <Leaf size={12} color="#d4edda" />
                                 <span style={{ color: "#d4edda", fontSize: 11, fontWeight: 800 }}>Pure Veg</span>
                             </div>
                         </div>
@@ -290,14 +373,14 @@ const ProviderDetailPage = () => {
                         {/* meta strip */}
                         <div style={{ display: "flex", alignItems: "center", gap: 0, flexWrap: "wrap" }}>
                             {[
-                                addr && { icon: "📍", text: addr },
-                                tiffin.rating > 0 && { icon: "⭐", text: `${Number(tiffin.rating).toFixed(1)} rating` },
-                                tiffin.pricePerMeal && { icon: "💰", text: `₹${tiffin.pricePerMeal}/meal` },
-                                tiffin.distanceKm && { icon: "📏", text: `${tiffin.distanceKm} km away` },
+                                addr && { icon: <MapPin size={14} />, text: addr },
+                                tiffin.rating > 0 && { icon: <Star size={14} fill="white" />, text: `${Number(tiffin.rating).toFixed(1)} rating` },
+                                tiffin.pricePerMeal && { icon: <IndianRupee size={14} />, text: `${tiffin.pricePerMeal}/meal` },
+                                tiffin.distanceKm && { icon: <MapPin size={14} />, text: `${tiffin.distanceKm} km away` },
                             ].filter(Boolean).map((m, i, arr) => (
                                 <React.Fragment key={i}>
                                     <span style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(255,255,255,0.78)", fontSize: 13, fontWeight: 600, padding: "0 16px 0 (i===0?0:0)" }}>
-                                        <span style={{ fontSize: 14 }}>{m.icon}</span>{m.text}
+                                        {m.icon}{m.text}
                                     </span>
                                     {i < arr.length - 1 && <span style={{ width: 1, height: 14, background: "rgba(255,255,255,0.2)", margin: "0 4px" }} />}
                                 </React.Fragment>
@@ -315,21 +398,21 @@ const ProviderDetailPage = () => {
                 <div className="info-bar" style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", gap: 12, flexWrap: "wrap", flex: 1 }}>
                         <div className="info-pill">
-                            <span style={{ fontSize: 18 }}>👩‍🍳</span>
+                            <ChefHat size={18} color="#8FAE8E" />
                             <div>
                                 <p style={{ fontSize: 9, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1 }}>Chef</p>
                                 <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>{tiffin.ownerName}</p>
                             </div>
                         </div>
                         <div className="info-pill">
-                            <span style={{ fontSize: 18 }}>📞</span>
+                            <Phone size={18} color="#8FAE8E" />
                             <div>
                                 <p style={{ fontSize: 9, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1 }}>Contact</p>
                                 <a href={`tel:${tiffin.phone || tiffin.contact}`} style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d", textDecoration: "none" }}>{tiffin.phone || tiffin.contact}</a>
                             </div>
                         </div>
                         <div className="info-pill">
-                            <span style={{ fontSize: 18 }}>📋</span>
+                            <ClipboardList size={18} color="#8FAE8E" />
                             <div>
                                 <p style={{ fontSize: 9, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1 }}>FSSAI</p>
                                 <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d" }}>{tiffin.fssaiNumber}</p>
@@ -361,21 +444,26 @@ const ProviderDetailPage = () => {
                                 style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "28px 32px", cursor: "pointer", background: menuExpanded ? "rgba(143,174,142,0.04)" : "transparent", transition: "all .3s" }}
                             >
                                 <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(143,174,142,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>🍱</div>
+                                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(143,174,142,0.12)", display: "flex", alignItems: "center", justifyContent: "center", color: '#8FAE8E' }}>
+                                        <Package size={24} />
+                                    </div>
+
                                     <div>
                                         <h2 style={{ fontFamily: "'Lora',serif", fontSize: 19, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Discover the Weekly Menu</h2>
                                         <p style={{ fontSize: 11, color: "#8FAE8E", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, marginTop: 2 }}>{menuExpanded ? "Showing all 7 days" : "Tap to reveal the full menu"}</p>
                                     </div>
                                 </div>
-                                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#fdfdf6", border: "1px solid #f0f0e0", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform .3s", transform: menuExpanded ? "rotate(180deg)" : "rotate(0deg)" }}>
-                                    ▼
+                                <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#fdfdf6", border: "1px solid #f0f0e0", display: "flex", alignItems: "center", justifyContent: "center", transition: "transform .3s", transform: menuExpanded ? "rotate(180deg)" : "rotate(0deg)", color: '#8FAE8E' }}>
+                                    <ChevronDown size={16} />
                                 </div>
                             </div>
 
                             <div style={{ maxHeight: menuExpanded ? "2000px" : "0px", opacity: menuExpanded ? 1 : 0, transition: "all .5s cubic-bezier(0.4, 0, 0.2, 1)", overflow: "hidden" }}>
                                 <div style={{ padding: "0 32px 32px" }}>
                                     {menuLoading ? (
-                                        <div style={{ padding: "40px", textAlign: "center", color: "#8FAE8E", fontWeight: 700, fontSize: 14 }}>✨ Preparing the menu...</div>
+                                        <div style={{ padding: "40px", textAlign: "center", color: "#8FAE8E", fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                                            <RefreshCcw size={16} className="spin-anim" /> Preparing the menu...
+                                        </div>
                                     ) : menuData && menuData.weekMenu && menuData.weekMenu.length > 0 ? (
                                         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "24px" }}>
                                             {menuData.weekMenu.map((dayMenu, idx) => {
@@ -411,7 +499,7 @@ const ProviderDetailPage = () => {
                                                                 <div style={{ background: "rgba(255,255,255,0.4)", borderRadius: 16, padding: 12, border: "1px solid rgba(143,174,142,0.05)" }}>
                                                                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                                                                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                                            <span style={{ fontSize: 14 }}>🌞</span>
+                                                                            <Sun size={14} color="#8FA873" />
                                                                             <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#8FA873" }}>Lunch Menu</span>
                                                                         </div>
                                                                         <button 
@@ -440,7 +528,8 @@ const ProviderDetailPage = () => {
                                                                                 <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, overflow: "hidden" }}>
                                                                                     {item.image ? (
                                                                                         <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                                                    ) : "🥗"}
+                                                                                    ) : <Salad size={14} />}
+
                                                                                 </div>
                                                                                 <span style={{ flex: 1, paddingRight: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
                                                                                 {item.price > 0 && <span style={{ fontSize: 9, color: "#8FAE8E", fontWeight: 800, marginRight: isToday ? 20 : 0 }}>₹{item.price}</span>}
@@ -469,7 +558,7 @@ const ProviderDetailPage = () => {
                                                                 <div style={{ background: "rgba(255,255,255,0.4)", borderRadius: 16, padding: 12, border: "1px solid rgba(143,174,142,0.05)" }}>
                                                                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                                                                         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                                                                            <span style={{ fontSize: 14 }}>🌙</span>
+                                                                            <Moon size={14} color="#6b8a5e" />
                                                                             <span style={{ fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1, color: "#6b8a5e" }}>Dinner Menu</span>
                                                                         </div>
                                                                         <button 
@@ -498,7 +587,8 @@ const ProviderDetailPage = () => {
                                                                                 <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, overflow: "hidden" }}>
                                                                                     {item.image ? (
                                                                                         <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                                                    ) : "🍲"}
+                                                                                    ) : <Soup size={14} />}
+
                                                                                 </div>
                                                                                 <span style={{ flex: 1, paddingRight: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
                                                                                 {item.price > 0 && <span style={{ fontSize: 9, color: "#6b8a5e", fontWeight: 800, marginRight: isToday ? 20 : 0 }}>₹{item.price}</span>}
@@ -540,19 +630,63 @@ const ProviderDetailPage = () => {
                             <h2 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 18 }}>Provider Info</h2>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 28px" }}>
                                 {[
-                                    { icon: "👩‍🍳", label: "Owner", value: tiffin.ownerName },
-                                    { icon: "📞", label: "Phone", value: tiffin.phone || tiffin.contact },
-                                    { icon: "📍", label: "Location", value: addr },
-                                    { icon: "📋", label: "FSSAI", value: tiffin.fssaiNumber },
-                                    { icon: "💰", label: "Per Meal", value: tiffin.pricePerMeal ? `₹${tiffin.pricePerMeal}` : null },
-                                    { icon: "⭐", label: "Rating", value: tiffin.rating ? `${Number(tiffin.rating).toFixed(1)} / 5` : "New" },
+                                    { icon: <ChefHat size={14} />, label: "Owner", value: tiffin.ownerName },
+                                    { icon: <Phone size={14} />, label: "Phone", value: tiffin.phone || tiffin.contact },
+                                    { icon: <MapPin size={14} />, label: "Location", value: addr },
+                                    { icon: <ClipboardList size={14} />, label: "FSSAI", value: tiffin.fssaiNumber },
+                                    { icon: <IndianRupee size={14} />, label: "Per Meal", value: tiffin.pricePerMeal ? `₹${tiffin.pricePerMeal}` : null },
+                                    { icon: <Star size={14} fill="#f59e0b" color="#f59e0b" />, label: "Rating", value: tiffin.rating ? `${Number(tiffin.rating).toFixed(1)} / 5` : "New" },
                                 ].filter(d => d.value).map(({ icon, label, value }) => (
                                     <div key={label}>
-                                        <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#c8c8b4", marginBottom: 5 }}>{icon} {label}</p>
+                                        <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2, textTransform: "uppercase", color: "#c8c8b4", marginBottom: 5, display: 'flex', alignItems: 'center', gap: 6 }}>{icon} {label}</p>
                                         <p style={{ fontSize: 13, fontWeight: 700, color: "#2d3b2d", lineHeight: 1.4 }}>{value}</p>
                                     </div>
                                 ))}
                             </div>
+                        </div>
+
+                        {/* ── Customer Reviews ── */}
+                        <div style={{ background: "rgba(255,255,255,0.8)", backdropFilter: "blur(20px)", borderRadius: 22, border: "1.5px solid rgba(143,174,142,0.18)", boxShadow: "0 2px 20px rgba(90,120,70,0.07)", padding: "26px 28px", ...a(240) }}>
+                            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+                                <h2 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", margin: 0 }}>Customer Reviews</h2>
+                                <span style={{ fontSize: 12, fontWeight: 800, color: "#5a7a50", background: "rgba(143,174,142,0.15)", padding: "4px 10px", borderRadius: 12 }}>
+                                    {feedbacks.length} {feedbacks.length === 1 ? "Review" : "Reviews"}
+                                </span>
+                            </div>
+                            
+                            {feedbacks.length > 0 ? (
+                                <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                                    {feedbacks.map((fb, i) => (
+                                        <div key={fb._id || i} style={{ paddingBottom: i < feedbacks.length - 1 ? 18 : 0, borderBottom: i < feedbacks.length - 1 ? "1.5px solid rgba(0,0,0,0.04)" : "none" }}>
+                                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                                    <div style={{ width: 34, height: 34, borderRadius: "50%", background: "linear-gradient(135deg,#e8e8d8,#d4d4b8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 800, color: "#5a7a50" }}>
+                                                        {(fb.user?.name || "C")[0].toUpperCase()}
+                                                    </div>
+                                                    <div>
+                                                        <p style={{ fontSize: 14, fontWeight: 800, color: "#2d3b2d", lineHeight: 1.2 }}>{fb.user?.name || "Happy Customer"}</p>
+                                                        <p style={{ fontSize: 10, color: "#aaa", fontWeight: 600 }}>{new Date(fb.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</p>
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: "flex", gap: 2, background: "#fff", border: "1px solid #f0f0e0", padding: "4px 8px", borderRadius: 12 }}>
+                                                    {[1, 2, 3, 4, 5].map(star => (
+                                                        <Star key={star} size={11} fill={star <= fb.rating ? "#f59e0b" : "transparent"} color={star <= fb.rating ? "#f59e0b" : "#e5e7eb"} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            {fb.comment && (
+                                                <div style={{ background: "rgba(255,255,255,0.5)", border: "1px solid rgba(0,0,0,0.03)", padding: "12px 14px", borderRadius: 12, marginTop: 10 }}>
+                                                    <p style={{ fontSize: 13, color: "#5a5a4a", lineHeight: 1.6 }}>"{fb.comment}"</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div style={{ padding: "24px", textAlign: "center", background: "rgba(143,174,142,0.05)", borderRadius: 16, border: "1px dashed rgba(143,174,142,0.3)" }}>
+                                    <p style={{ fontSize: 13, color: "#8FAE8E", fontWeight: 700 }}>No reviews yet. Be the first to try!</p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -571,13 +705,27 @@ const ProviderDetailPage = () => {
 
                             <div style={{ padding: "22px 22px 24px" }}>
 
+                                {/* Wallet Chip */}
+                                {user?.walletBalance > 0 && (
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", background: "linear-gradient(135deg,rgba(143,174,142,0.12),rgba(143,168,115,0.06))", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 14, padding: "10px 14px", marginBottom: 18 }}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                            <Wallet size={20} color="#8FA873" />
+                                            <div>
+                                                <p style={{ fontSize: 9, fontWeight: 900, color: "#8FA873", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>Wallet Balance</p>
+                                                <p style={{ fontSize: 14, fontWeight: 900, color: "#2d3b2d" }}>₹{user.walletBalance}</p>
+                                            </div>
+                                        </div>
+                                        <span style={{ fontSize: 10, fontWeight: 700, color: "#8FA873", background: "rgba(143,174,142,0.15)", padding: "3px 8px", borderRadius: 8 }}>Auto-applied</span>
+                                    </div>
+                                )}
+
                                 {/* ── Plan ── */}
                                 <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2.5, textTransform: "uppercase", color: "#b8b8a4", marginBottom: 10 }}>Plan Duration</p>
                                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 8, marginBottom: 20 }}>
                                     {[
-                                        { val: "weekly", icon: "📅", label: "Weekly", sub: "7 days" },
-                                        { val: "monthly", icon: "📆", label: "Monthly", sub: "30 days" },
-                                        { val: "yearly", icon: "🗓", label: "Yearly", sub: "365 days" },
+                                        { val: "weekly", icon: <Calendar size={20} />, label: "Weekly", sub: "7 days" },
+                                        { val: "monthly", icon: <CalendarDays size={20} />, label: "Monthly", sub: "30 days" },
+                                        { val: "yearly", icon: <CalendarRange size={20} />, label: "Yearly", sub: "365 days" },
                                     ].map(({ val, icon, label, sub }) => {
                                         const sel = planType === val;
                                         return (
@@ -585,8 +733,8 @@ const ProviderDetailPage = () => {
                                                 style={{ padding: "14px 6px 12px", border: `2px solid ${sel ? "#8FA873" : "rgba(143,174,142,0.22)"}`, borderRadius: 14, background: sel ? "linear-gradient(135deg,rgba(143,174,142,0.18),rgba(143,168,115,0.1))" : "rgba(248,248,244,0.8)", cursor: loading ? "not-allowed" : "pointer", transition: "all .2s", fontFamily: "'Nunito',sans-serif", display: "flex", flexDirection: "column", alignItems: "center", gap: 4, position: "relative" }}
                                                 onMouseEnter={e => { if (!sel && !loading) { e.currentTarget.style.borderColor = "#8FAE8E"; e.currentTarget.style.background = "rgba(143,174,142,0.08)"; } }}
                                                 onMouseLeave={e => { if (!sel) { e.currentTarget.style.borderColor = "rgba(143,174,142,0.22)"; e.currentTarget.style.background = "rgba(248,248,244,0.8)"; } }}>
-                                                {sel && <span style={{ position: "absolute", top: 6, right: 6, width: 14, height: 14, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 900 }}>✓</span>}
-                                                <span style={{ fontSize: 20 }}>{icon}</span>
+                                                {sel && <span style={{ position: "absolute", top: 6, right: 6, width: 14, height: 14, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><Check size={8} strokeWidth={4} /></span>}
+                                                <div style={{ color: sel ? "#8FA873" : "#555", marginBottom: 4 }}>{icon}</div>
                                                 <span style={{ fontSize: 12, fontWeight: 800, color: sel ? "#2d4a22" : "#555" }}>{label}</span>
                                                 <span style={{ fontSize: 10, fontWeight: 600, color: sel ? "#5a7a50" : "#bbb" }}>{sub}</span>
                                             </button>
@@ -598,8 +746,8 @@ const ProviderDetailPage = () => {
                                 <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2.5, textTransform: "uppercase", color: "#b8b8a4", marginBottom: 10 }}>Delivery Slot</p>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
                                     {[
-                                        { val: "lunch", icon: "🌞", label: "Lunch", sub: "12–2 PM" },
-                                        { val: "dinner", icon: "🌙", label: "Dinner", sub: "7–9 PM" },
+                                        { val: "lunch", icon: <Sun size={26} />, label: "Lunch", sub: "12–2 PM" },
+                                        { val: "dinner", icon: <Moon size={26} />, label: "Dinner", sub: "7–9 PM" },
                                     ].map(({ val, icon, label, sub }) => {
                                         const sel = timeSlot === val;
                                         return (
@@ -607,8 +755,8 @@ const ProviderDetailPage = () => {
                                                 style={{ padding: "16px 10px", border: `2px solid ${sel ? "#8FA873" : "rgba(143,174,142,0.22)"}`, borderRadius: 14, background: sel ? "linear-gradient(135deg,rgba(143,174,142,0.18),rgba(143,168,115,0.1))" : "rgba(248,248,244,0.8)", cursor: loading ? "not-allowed" : "pointer", transition: "all .2s", fontFamily: "'Nunito',sans-serif", display: "flex", flexDirection: "column", alignItems: "center", gap: 5, position: "relative" }}
                                                 onMouseEnter={e => { if (!sel && !loading) { e.currentTarget.style.borderColor = "#8FAE8E"; e.currentTarget.style.background = "rgba(143,174,142,0.08)"; } }}
                                                 onMouseLeave={e => { if (!sel) { e.currentTarget.style.borderColor = "rgba(143,174,142,0.22)"; e.currentTarget.style.background = "rgba(248,248,244,0.8)"; } }}>
-                                                {sel && <span style={{ position: "absolute", top: 8, right: 8, width: 14, height: 14, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: "#fff", fontWeight: 900 }}>✓</span>}
-                                                <span style={{ fontSize: 26 }}>{icon}</span>
+                                                {sel && <span style={{ position: "absolute", top: 8, right: 8, width: 14, height: 14, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><Check size={8} strokeWidth={4} /></span>}
+                                                <div style={{ color: sel ? "#8FA873" : "#555", marginBottom: 5 }}>{icon}</div>
                                                 <span style={{ fontSize: 13, fontWeight: 800, color: sel ? "#2d4a22" : "#555" }}>{label}</span>
                                                 <span style={{ fontSize: 11, fontWeight: 600, color: sel ? "#5a7a50" : "#bbb" }}>{sub}</span>
                                             </button>
@@ -630,8 +778,9 @@ const ProviderDetailPage = () => {
 
                                 {/* error */}
                                 {subError && (
-                                    <div style={{ background: "rgba(239,83,80,0.07)", border: "1px solid rgba(239,83,80,0.2)", borderRadius: 12, padding: "10px 14px", marginBottom: 14, animation: "oIn .2s ease" }}>
-                                        <p style={{ fontSize: 12, fontWeight: 700, color: "#c62828" }}>⚠ {subError}</p>
+                                    <div style={{ background: "rgba(239,83,80,0.07)", border: "1px solid rgba(239,83,80,0.2)", borderRadius: 12, padding: "10px 14px", marginBottom: 14, animation: "oIn .2s ease", display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        <AlertTriangle size={14} color="#c62828" />
+                                        <p style={{ fontSize: 12, fontWeight: 700, color: "#c62828" }}>{subError}</p>
                                     </div>
                                 )}
 
@@ -642,7 +791,7 @@ const ProviderDetailPage = () => {
                                     {loading ? (
                                         <><span style={{ width: 16, height: 16, borderRadius: "50%", border: "2.5px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", display: "inline-block", animation: "spin .7s linear infinite" }} />Subscribing...</>
                                     ) : (!planType || !timeSlot) ? "Select plan & slot to continue"
-                                        : "🍱 Subscribe Now →"}
+                                        : <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><UtensilsCrossed size={18} /> Subscribe Now <ArrowRight size={18} /></span>}
                                 </button>
 
                                 <p style={{ fontSize: 11, color: "#c8c8b4", textAlign: "center", marginTop: 14, fontWeight: 600 }}>Cancel or pause anytime · No hidden charges</p>
@@ -653,7 +802,8 @@ const ProviderDetailPage = () => {
                 </div>
             </div>
         </div>
-    );
+    </div>
+  );
 };
 
 export default ProviderDetailPage;

@@ -3,6 +3,20 @@ import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/auth";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/authSlice";
+import { 
+  Utensils, 
+  Home, 
+  Leaf, 
+  Truck, 
+  ArrowLeft, 
+  ArrowRight, 
+  Mail, 
+  Lock, 
+  Eye, 
+  EyeOff, 
+  AlertTriangle 
+} from "lucide-react";
+
 export default function Login() {
     const [loaded, setLoaded] = useState(false);
     const [form, setForm] = useState({ email: "", password: "" });
@@ -140,14 +154,19 @@ export default function Login() {
                 <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
                     {/* Logo */}
                     <div style={{
-                        width: 72, height: 72, borderRadius: 22,
-                        background: "rgba(255,255,255,0.18)",
-                        border: "1px solid rgba(255,255,255,0.25)",
                         display: "flex", alignItems: "center", justifyContent: "center",
                         fontSize: 32, margin: "0 auto 28px",
                         backdropFilter: "blur(8px)",
                         animation: "floatY 5s ease-in-out infinite",
+<<<<<<< HEAD
+                        color: "#fff",
+                    }}>
+                        <Utensils size={40} />
+                    </div>
+
+=======
                     }}><img src="/logo.png" alt="Logo" style={{ width: "90%", height: "90%", objectFit: "contain", borderRadius: 12 }} /></div>
+>>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
 
                     <h2 style={{
                         fontFamily: "'Lora', serif",
@@ -168,9 +187,9 @@ export default function Login() {
 
                     {/* Feature pills */}
                     {[
-                        { icon: "🏠", text: "Authentic home kitchens" },
-                        { icon: "🥗", text: "Healthy, wholesome meals" },
-                        { icon: "🚴", text: "Fresh daily delivery" },
+                        { icon: <Home size={22} />, text: "Authentic home kitchens" },
+                        { icon: <Leaf size={22} />, text: "Healthy, wholesome meals" },
+                        { icon: <Truck size={22} />, text: "Fresh daily delivery" },
                     ].map(({ icon, text }, i) => (
                         <div key={text} style={{
                             display: "flex", alignItems: "center", gap: 12,
@@ -181,8 +200,9 @@ export default function Login() {
                             backdropFilter: "blur(6px)",
                             ...anim(300 + i * 100),
                         }}>
-                            <span style={{ fontSize: 20 }}>{icon}</span>
+                            <span style={{ color: "#fff", display: 'flex', alignItems: 'center' }}>{icon}</span>
                             <span style={{ color: "#fff", fontWeight: 600, fontSize: 14 }}>{text}</span>
+
                         </div>
                     ))}
                 </div>
@@ -213,17 +233,19 @@ export default function Login() {
                         textDecoration: "none", marginBottom: 36,
                         ...anim(0),
                     }}>
-                        ← Back to home
+                        <ArrowLeft size={16} /> Back to home
                     </Link>
+
 
                     <div style={{ ...anim(100) }}>
                         <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 8 }}>Welcome Back</p>
                         <h1 style={{ fontFamily: "'Lora', serif", fontSize: 38, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>Log In</h1>
                         <p style={{ color: "#888", fontSize: 15, marginBottom: 36 }}>
                             Don't have an account?{" "}
-                            <Link to="/signup" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }} className="link-hover">
-                                Sign up free →
+                            <Link to="/signup" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none", display: 'inline-flex', alignItems: 'center', gap: 4 }} className="link-hover">
+                                Sign up free <ArrowRight size={14} />
                             </Link>
+
                         </p>
                     </div>
 
@@ -267,9 +289,10 @@ export default function Login() {
                             marginBottom: 18,
                             display: "flex", alignItems: "center", gap: 10,
                         }}>
-                            <span style={{ fontSize: 18 }}>⚠️</span>
+                            <AlertTriangle size={18} color="#c62828" />
                             <span style={{ color: "#c62828", fontSize: 14, fontWeight: 600 }}>{error}</span>
                         </div>
+
                     )}
 
                     {/* Form */}
@@ -278,7 +301,10 @@ export default function Login() {
 
                             {/* Email */}
                             <div style={{ position: "relative", ...anim(300) }}>
-                                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" }}>📧</span>
+                                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", display: 'flex', alignItems: 'center' }}>
+                                    <Mail size={18} />
+                                </span>
+
                                 <input
                                     type="email"
                                     placeholder="Email address"
@@ -292,7 +318,10 @@ export default function Login() {
 
                             {/* Password */}
                             <div style={{ position: "relative", ...anim(380) }}>
-                                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none" }}>🔒</span>
+                                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", display: 'flex', alignItems: 'center' }}>
+                                    <Lock size={18} />
+                                </span>
+
                                 <input
                                     type={showPass ? "text" : "password"}
                                     placeholder="Password"
@@ -305,10 +334,11 @@ export default function Login() {
                                 <button
                                     type="button"
                                     onClick={() => setShowPass(!showPass)}
-                                    style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", fontSize: 18, padding: 0, lineHeight: 1 }}
+                                    style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#8FA873", padding: 0, lineHeight: 1, display: 'flex', alignItems: 'center' }}
                                 >
-                                    {showPass ? "🙈" : "👁️"}
+                                    {showPass ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
+
                             </div>
 
                             {/* Forgot password */}
@@ -351,7 +381,12 @@ export default function Login() {
                                         }} />
                                         Logging in...
                                     </>
-                                ) : "Log In →"}
+                                ) : (
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                        Log In <ArrowRight size={18} />
+                                    </span>
+                                )}
+
                             </button>
                         </div>
                     </form>

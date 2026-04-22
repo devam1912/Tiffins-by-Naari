@@ -4,6 +4,19 @@ import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
+import { 
+  History, 
+  RefreshCcw, 
+  ShoppingBag, 
+  Sun, 
+  Moon, 
+  Calendar, 
+  Clock, 
+  Hash, 
+  ArrowRight,
+  AlertCircle
+} from "lucide-react";
+
 
 export default function OrderHistory() {
   const navigate = useNavigate();
@@ -122,6 +135,9 @@ export default function OrderHistory() {
         }
         .nav-btn:hover { background:rgba(255,255,255,0.14)!important; color:#fff!important; transform:translateX(3px); }
         .nav-btn.active { background:rgba(255,255,255,0.22)!important; color:#fff!important; box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+        
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin-anim { animation: spin 1s linear infinite; }
       `}</style>
 
       {/* ════ SIDEBAR ════ */}
@@ -144,8 +160,8 @@ export default function OrderHistory() {
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
           <div>
-            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3vw,34px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
-              Order History 📜
+            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3vw,34px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15, display: 'flex', alignItems: 'center', gap: 12 }}>
+              Order History <History size={32} />
             </h1>
             <p style={{ color: "#888", fontSize: 15, marginTop: 6 }}>
               Review your past orders and track their delivery status.
@@ -154,17 +170,18 @@ export default function OrderHistory() {
           <button
             onClick={fetchOrders}
             disabled={isLoading}
-            style={{ padding: "10px 18px", borderRadius: 14, border: "2px solid rgba(143,174,142,0.4)", background: "rgba(255,255,255,0.5)", fontWeight: 700, color: "#5a7a50", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s" }}
+            style={{ padding: "10px 18px", borderRadius: 14, border: "2px solid rgba(143,174,142,0.4)", background: "rgba(255,255,255,0.5)", fontWeight: 700, color: "#5a7a50", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }}
             onMouseOver={(e) => e.target.style.background = "#fff"}
             onMouseOut={(e) => e.target.style.background = "rgba(255,255,255,0.5)"}
           >
-            {isLoading ? "⏳ Loading..." : "🔄 Refresh"}
+            <RefreshCcw size={16} className={isLoading ? 'spin-anim' : ''} />
+            {isLoading ? "Loading..." : "Refresh"}
           </button>
         </div>
 
         {error && (
-          <div style={{ padding: "16px 20px", background: "#ffebee", color: "#c62828", borderRadius: 14, marginBottom: 24, fontWeight: 700, border: "1px solid #ffcdd2", ...anim(50) }}>
-            ⚠️ {error}
+          <div style={{ padding: "16px 20px", background: "#ffebee", color: "#c62828", borderRadius: 14, marginBottom: 24, fontWeight: 700, border: "1px solid #ffcdd2", ...anim(50), display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertCircle size={20} /> {error}
           </div>
         )}
 
@@ -174,11 +191,13 @@ export default function OrderHistory() {
           </div>
         ) : orders.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px 0", background: "rgba(255,255,255,0.4)", borderRadius: 24, border: "1px dashed rgba(143,174,142,0.5)", ...anim(100) }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🛍️</div>
+            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center', color: '#8FAE8E' }}>
+              <ShoppingBag size={48} strokeWidth={1} />
+            </div>
             <h2 style={{ fontFamily: "'Lora', serif", color: "#2d3b2d", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>No Orders Placed Yet</h2>
             <p style={{ color: "#777", fontSize: 15, marginBottom: 24 }}>You haven't ordered any meals yet. Hunger calling?</p>
-            <button onClick={() => navigate("/tiffins")} style={{ padding: "12px 24px", background: "#8FAE8E", color: "#fff", borderRadius: 14, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(143,174,142,0.4)" }}>
-              Browse Kitchens →
+            <button onClick={() => navigate("/tiffins")} style={{ padding: "12px 24px", background: "#8FAE8E", color: "#fff", borderRadius: 14, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(143,174,142,0.4)", display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              Browse Kitchens <ArrowRight size={18} />
             </button>
           </div>
         ) : (
@@ -193,8 +212,8 @@ export default function OrderHistory() {
                   display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap"
                 }}>
                   {/* Icon */}
-                  <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #f0f4f0, #e0e8e0)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, flexShrink: 0 }}>
-                    {order.timeSlot === "lunch" ? "🌞" : "🌙"}
+                  <div style={{ width: 56, height: 56, borderRadius: 16, background: "linear-gradient(135deg, #f0f4f0, #e0e8e0)", display: "flex", alignItems: "center", justifyContent: "center", color: '#8FA873', flexShrink: 0 }}>
+                    {order.timeSlot === "lunch" ? <Sun size={28} /> : <Moon size={28} />}
                   </div>
 
                   {/* Details */}
@@ -208,9 +227,9 @@ export default function OrderHistory() {
                       </span>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", color: "#888", fontSize: 13, fontWeight: 600 }}>
-                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>📅 {formatDate(order.date)}</span>
-                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>🕒 {order.timeSlot.toUpperCase()}</span>
-                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}>🆔 ORD-{order._id.slice(-6).toUpperCase()}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Calendar size={14} /> {formatDate(order.date)}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Clock size={14} /> {order.timeSlot.toUpperCase()}</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: 4 }}><Hash size={14} /> ORD-{order._id.slice(-6).toUpperCase()}</span>
                     </div>
                   </div>
 
@@ -232,9 +251,9 @@ export default function OrderHistory() {
                     <p style={{ fontSize: 20, fontWeight: 800, color: "#2d3b2d", margin: 0 }}>₹{order.totalPrice}</p>
                     <button 
                       onClick={() => navigate(`/orders/${order._id}`)}
-                      style={{ marginTop: 8, background: "none", border: "none", color: "#8FAE8E", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Nunito',sans-serif", padding: 0 }}
+                      style={{ marginTop: 8, background: "none", border: "none", color: "#8FAE8E", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "'Nunito',sans-serif", padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}
                     >
-                      View Details →
+                      View Details <ArrowRight size={14} />
                     </button>
                   </div>
                 </div>

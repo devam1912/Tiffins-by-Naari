@@ -2,7 +2,18 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { updateProfile } from "../../api/auth";
 import { useSelector, useDispatch } from "react-redux";
-import { loginSuccess } from "../../store/authSlice";
+import { loginSuccess, logout } from "../../store/authSlice";
+import Sidebar from "../../components/Customer/Sidebar";
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  AlertTriangle, 
+  ArrowRight, 
+  Check, 
+  ArrowLeft 
+} from "lucide-react";
+
 
 export default function EditProfile() {
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
@@ -11,6 +22,9 @@ export default function EditProfile() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [activeNav, setActiveNav] = useState("profile");
+  const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
   const navigate = useNavigate();
 
   // ✅ Redux se user aur token
@@ -18,11 +32,36 @@ export default function EditProfile() {
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate("/login");
+  };
+
   useEffect(() => {
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
     document.head.appendChild(link);
+
+    // Geolocation for sidebar
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}&zoom=18&addressdetails=1`);
+            const data = await response.json();
+            const city = data.address.city || data.address.town || data.address.village || "";
+            const suburb = data.address.suburb || data.address.neighbourhood || "";
+            setLocation({ address: suburb ? `${suburb}, ${city}` : city || "Location Found", loading: false });
+          } catch {
+            setLocation({ address: "Location unavailable", loading: false });
+          }
+        },
+        () => setLocation({ address: "Location access denied", loading: false })
+      );
+    } else {
+      setLocation({ address: "Geolocation not supported", loading: false });
+    }
 
     // ✅ localStorage ki jagah Redux store se user data
     if (user) {
@@ -81,17 +120,28 @@ export default function EditProfile() {
   });
 
   return (
-    <div style={{
-      minHeight: "100vh",
-      background: "#E7E6B6",
-      fontFamily: "'Nunito', sans-serif",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "48px 20px",
-      position: "relative",
-      overflow: "hidden",
-    }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+      <Sidebar
+        collapsed={collapsed}
+        setCollapsed={setCollapsed}
+        activeNav={activeNav}
+        setActiveNav={setActiveNav}
+        user={user}
+        location={location}
+        logout={handleLogout}
+      />
+      <main style={{
+        marginLeft: collapsed ? 72 : 260,
+        flex: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "48px 40px",
+        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
+        minHeight: "100vh",
+        position: "relative",
+        overflow: "hidden",
+      }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         input::placeholder { color: #bbb; }
@@ -165,10 +215,9 @@ export default function EditProfile() {
               margin: "0 auto 22px",
               boxShadow: "0 12px 36px rgba(143,174,142,0.45)",
               animation: "checkPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.2s both",
+              color: "#fff"
             }}>
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <path d="M8 18.5l7 7 13-14" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Check size={40} strokeWidth={3} />
             </div>
 
             <p style={{ fontSize:11, fontWeight:800, letterSpacing:3, textTransform:"uppercase", color:"#8FA873", marginBottom:10 }}>All Done!</p>
@@ -189,11 +238,12 @@ export default function EditProfile() {
                 fontFamily:"'Nunito',sans-serif",
                 boxShadow:"0 4px 20px rgba(143,174,142,0.4)",
                 transition:"all 0.25s ease", marginBottom:10,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
               }}
               onMouseEnter={e => { e.currentTarget.style.opacity="0.9"; e.currentTarget.style.transform="translateY(-1px)"; }}
               onMouseLeave={e => { e.currentTarget.style.opacity="1";   e.currentTarget.style.transform="translateY(0)"; }}
             >
-              Back to Dashboard →
+              Back to Dashboard <ArrowRight size={18} />
             </button>
 
             <button
@@ -249,7 +299,7 @@ export default function EditProfile() {
             display:"flex", alignItems:"center", gap:10,
             marginBottom:22, animation:"shakeX 0.4s ease",
           }}>
-            <span style={{ fontSize:18 }}>⚠️</span>
+            <AlertTriangle size={20} color="#c62828" />
             <span style={{ color:"#c62828", fontSize:14, fontWeight:600 }}>{error}</span>
           </div>
         )}
@@ -262,7 +312,7 @@ export default function EditProfile() {
             <div style={{ ...anim(120) }}>
               <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Full Name</label>
               <div style={{ position:"relative" }}>
-                <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:18, pointerEvents:"none" }}>👤</span>
+                <User size={18} color={focused === "name" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
                 <input
                   type="text"
                   name="name"
@@ -281,7 +331,7 @@ export default function EditProfile() {
             <div style={{ ...anim(200) }}>
               <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Email Address</label>
               <div style={{ position:"relative" }}>
-                <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:18, pointerEvents:"none" }}>📧</span>
+                <Mail size={18} color={focused === "email" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
                 <input
                   type="email"
                   name="email"
@@ -300,7 +350,7 @@ export default function EditProfile() {
             <div style={{ ...anim(280) }}>
               <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Phone Number</label>
               <div style={{ position:"relative" }}>
-                <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:18, pointerEvents:"none" }}>📱</span>
+                <Phone size={18} color={focused === "phone" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
                 <input
                   type="text"
                   name="phone"
@@ -363,7 +413,7 @@ export default function EditProfile() {
                     }} />
                     Updating...
                   </>
-                ) : "Save Changes →"}
+                ) : <span style={{display:'flex', alignItems:'center', gap:8}}>Save Changes <ArrowRight size={18} /></span>}
               </button>
             </div>
           </div>
@@ -375,6 +425,7 @@ export default function EditProfile() {
           <span style={{ fontSize:12, color:"#aaa", fontWeight:600 }}>Your data is safe and never shared</span>
         </div>
       </div>
+      </main>
     </div>
   );
 }

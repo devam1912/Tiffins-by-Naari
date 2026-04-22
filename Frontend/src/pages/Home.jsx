@@ -177,7 +177,7 @@ export default function Home() {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 19, ...h(0) }}>
           <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 12px rgba(143,174,142,0.4)", overflow: "hidden" }}>
-            <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+            <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
           </div>
           Tiffins-By-Naari
         </div>
@@ -442,7 +442,7 @@ export default function Home() {
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Lora', serif", fontSize: 21, fontWeight: 700, marginBottom: 14 }}>
                 <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, overflow: "hidden" }}>
-                    <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
                 </div>
                 Tiffins-By-Naari
               </div>

@@ -145,7 +145,7 @@ export const ProviderDashboard = () => {
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, justifyContent: collapsed ? "center" : "flex-start" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
-                        <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                        <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
                     </div>
                     {!collapsed && (
                         <div>

@@ -200,13 +200,9 @@ export default function Home() {
         transition: "all 0.4s ease",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 19, ...h(0) }}>
-<<<<<<< HEAD
-          <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", boxShadow: "0 4px 12px rgba(143,174,142,0.4)" }}>
-            <Utensils size={20} />
-=======
           <div style={{ width: 38, height: 38, borderRadius: 12, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, boxShadow: "0 4px 12px rgba(143,174,142,0.4)", overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
->>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
+          </div>
           </div>
           Tiffins-By-Naari
         </div>
@@ -472,13 +468,9 @@ export default function Home() {
             {/* Brand */}
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Lora', serif", fontSize: 21, fontWeight: 700, marginBottom: 14 }}>
-<<<<<<< HEAD
-                <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-                  <Utensils size={20} />
-=======
                 <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, overflow: "hidden" }}>
                     <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
->>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
+                </div>
                 </div>
                 Tiffins-By-Naari
               </div>

@@ -492,7 +492,6 @@ export default function AdminDashboard() {
           <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
           </div>
-          </div>
           {!collapsed && <div>
             <div style={{ fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.1 }}>Naari Admin</div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 4 }}>Command Center</div>

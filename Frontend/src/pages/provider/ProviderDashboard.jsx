@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import logoImg from "../../assets/logo.png";
 import {
     fetchProviderDashboard,
     fetchProviderProfile,
@@ -144,7 +145,7 @@ export const ProviderDashboard = () => {
                 boxShadow: "6px 0 44px rgba(50,80,40,0.15)",
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, justifyContent: collapsed ? "center" : "flex-start" }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>👩‍🍳</div>
+                    <img src={logoImg} alt="Logo" style={{ width: 44, height: 44, borderRadius: 14, objectFit: "cover", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
                     {!collapsed && (
                         <div>
                             <div style={{ fontFamily: "'Lora',serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.2 }}>{businessName}</div>

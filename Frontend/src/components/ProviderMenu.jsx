@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send } from "lucide-react";
+import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send, Camera, Loader2, UploadCloud } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderMenu, saveMenu, submitMenuForApproval } from "../store/providerSlice";
 import API from "../api/auth";
@@ -26,6 +26,8 @@ export const ProviderMenu = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [toast, setToast] = useState(null);
+    const [modalImage, setModalImage] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
     const nameRef = useRef();
     const typeRef = useRef();
     const priceRef = useRef();
@@ -109,9 +111,9 @@ export const ProviderMenu = () => {
             let newItems;
             if (item) {
                 const itemId = item.id || item._id;
-                newItems = meal.items.map(i => (i.id || i._id) === itemId ? { ...i, name, type, price } : i);
+                newItems = meal.items.map(i => (i.id || i._id) === itemId ? { ...i, name, type, price, image: modalImage } : i);
             } else {
-                newItems = [...meal.items, { id: Date.now().toString(), name, type, price, status: "pending" }];
+                newItems = [...meal.items, { id: Date.now().toString(), name, type, price, image: modalImage, status: "pending" }];
             }
             return { ...d, [mealType]: { ...meal, items: newItems } };
         }));
@@ -144,8 +146,12 @@ export const ProviderMenu = () => {
         return (
             <div key={item.id || item._id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <UtensilsCrossed size={16} color={item.status === "pending" ? "#f59e0b" : "#d1d5db"} />
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        {item.image ? (
+                            <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                            <UtensilsCrossed size={16} color={item.status === "pending" ? "#f59e0b" : "#d1d5db"} />
+                        )}
                     </div>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -163,7 +169,11 @@ export const ProviderMenu = () => {
                 <div style={{ display: "flex", gap: 6 }}>
                     {!isApproved && (
                         <>
-                            <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setIsModalOpen(true); }}
+                            <button onClick={() => { 
+                                setEditingItem({ day: selectedDay, mealType, item }); 
+                                setModalImage(item.image || "");
+                                setIsModalOpen(true); 
+                            }}
                                 style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
                                 <Edit3 size={16} />
                             </button>
@@ -258,7 +268,11 @@ export const ProviderMenu = () => {
                                             style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
                                         />
                                     </div>
-                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "lunch" }); setIsModalOpen(true); }}
+                                    <button onClick={() => { 
+                                        setEditingItem({ day: selectedDay, mealType: "lunch" }); 
+                                        setModalImage("");
+                                        setIsModalOpen(true); 
+                                    }}
                                         style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
                                         <Plus size={15} /> Add
                                     </button>
@@ -290,7 +304,11 @@ export const ProviderMenu = () => {
                                             style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
                                         />
                                     </div>
-                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "dinner" }); setIsModalOpen(true); }}
+                                    <button onClick={() => { 
+                                        setEditingItem({ day: selectedDay, mealType: "dinner" }); 
+                                        setModalImage("");
+                                        setIsModalOpen(true); 
+                                    }}
                                         style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
                                         <Plus size={15} /> Add
                                     </button>
@@ -390,13 +408,62 @@ export const ProviderMenu = () => {
                                     </div>
                                 </div>
                             </div>
-                            <div>
-                                <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
-                                <div style={{ padding: "12px 16px", border: "2px solid #d1fae5", borderRadius: 14, background: "#ecfdf5", display: "flex", alignItems: "center", gap: 8 }}>
-                                    <Leaf size={14} color="#16a34a" />
-                                    <span style={{ fontSize: 13, fontWeight: 800, color: "#065f46" }}>Veg Only</span>
-                                </div>
-                            </div>
+                             <div>
+                                 <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Image</label>
+                                 <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+                                     <div style={{ width: 80, height: 80, borderRadius: 14, background: "#f8f9fa", border: "2px dashed #e5e7eb", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", position: "relative" }}>
+                                         {modalImage ? (
+                                             <>
+                                                 <img src={modalImage} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                                 <button onClick={() => setModalImage("")} style={{ position: "absolute", top: 4, right: 4, padding: 4, background: "rgba(255,255,255,0.8)", border: "none", borderRadius: "50%", cursor: "pointer", display: "flex" }}>
+                                                     <X size={12} color="#ef4444" />
+                                                 </button>
+                                             </>
+                                         ) : isUploading ? (
+                                             <Loader2 size={24} className="animate-spin" color="#8FAE8E" />
+                                         ) : (
+                                             <Camera size={24} color="#d1d5db" />
+                                         )}
+                                     </div>
+                                     <div style={{ flex: 1 }}>
+                                         <label style={{ 
+                                             display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 16px", background: "rgba(143,174,142,0.1)", 
+                                             border: "1.5px solid #8FAE8E", borderRadius: 12, cursor: isUploading ? "not-allowed" : "pointer", 
+                                             fontSize: 13, fontWeight: 800, color: "#5a7a50" 
+                                         }}>
+                                             <UploadCloud size={16} />
+                                             {isUploading ? "Uploading..." : modalImage ? "Change Photo" : "Upload Photo"}
+                                             <input type="file" accept="image/*" style={{ display: "none" }} disabled={isUploading} onChange={async (e) => {
+                                                 const file = e.target.files[0];
+                                                 if (!file) return;
+                                                 setIsUploading(true);
+                                                 const formData = new FormData();
+                                                 formData.append("image", file);
+                                                 try {
+                                                     const res = await API.post("/tiffins/upload-image", formData, {
+                                                         headers: { "Content-Type": "multipart/form-data" }
+                                                     });
+                                                     setModalImage(res.data.imageUrl);
+                                                     showToast("Image uploaded to Cloudinary!");
+                                                 } catch (err) {
+                                                     showToast("Upload failed. Check Cloudinary settings.", "error");
+                                                 } finally {
+                                                     setIsUploading(false);
+                                                 }
+                                             }} />
+                                         </label>
+                                         <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 6, margin: 0 }}>Recommended: Square image, max 5MB</p>
+                                     </div>
+                                 </div>
+                             </div>
+
+                             <div>
+                                 <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
+                                 <div style={{ padding: "12px 16px", border: "2px solid #d1fae5", borderRadius: 14, background: "#ecfdf5", display: "flex", alignItems: "center", gap: 8 }}>
+                                     <Leaf size={14} color="#16a34a" />
+                                     <span style={{ fontSize: 13, fontWeight: 800, color: "#065f46" }}>Veg Only</span>
+                                 </div>
+                             </div>
                         </div>
 
                         <div style={{ display: "flex", gap: 12, marginTop: 8 }}>

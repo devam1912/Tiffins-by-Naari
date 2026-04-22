@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import logoImg from "../../assets/logo.png";
 
 export default function Sidebar({ 
   collapsed, 
@@ -63,7 +64,7 @@ export default function Sidebar({
       {/* Logo and Collapse Toggle */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", marginBottom: 36 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🍽️</div>
+          <img src={logoImg} alt="Logo" style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, objectFit: "cover", boxShadow: "0 4px 12px rgba(0,0,0,0.1)" }} />
           {!collapsed && <div style={{ fontFamily: "'Lora',serif", fontWeight: 700, fontSize: 14, color: "#fff" }}>Tiffins-By-Naari</div>}
         </div>
         {/* Toggle Button */}

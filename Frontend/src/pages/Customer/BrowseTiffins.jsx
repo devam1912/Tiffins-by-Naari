@@ -1,7 +1,20 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
 import { fetchNearbyTiffins } from "../../store/tiffinSlice";
+import { 
+  Search, 
+  MapPin, 
+  IndianRupee, 
+  Star, 
+  UtensilsCrossed, 
+  ChefHat, 
+  Leaf, 
+  ArrowLeft, 
+  ArrowRight,
+  ChevronDown,
+  X
+} from "lucide-react";
+
 
 // Cache to avoid re-fetching same coordinates
 const geocodeCache = {};
@@ -144,11 +157,16 @@ export default function BrowseTiffins() {
   });
 
   const StarRating = ({ rating = 0 }) => (
-    <span style={{ fontSize: 12, letterSpacing: 1 }}>
+    <div style={{ display: 'flex', gap: 2 }}>
       {[1, 2, 3, 4, 5].map((s) => (
-        <span key={s} style={{ color: s <= Math.round(rating) ? "#f59e0b" : "#d1d5db" }}>★</span>
+        <Star 
+          key={s} 
+          size={12} 
+          fill={s <= Math.round(rating) ? "#f59e0b" : "transparent"} 
+          color={s <= Math.round(rating) ? "#f59e0b" : "#d1d5db"} 
+        />
       ))}
-    </span>
+    </div>
   );
 
   return (
@@ -187,10 +205,10 @@ export default function BrowseTiffins() {
         <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.1)", bottom: "-60px", left: "10%", pointerEvents: "none", animation: "spinSlow 40s linear infinite" }} />
 
         <div style={{ maxWidth: 1100, margin: "0 auto", position: "relative", zIndex: 1 }}>
-          <button onClick={() => navigate(-1)} style={{ background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.25)", borderRadius: 12, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", marginBottom: 24, transition: "all 0.2s" }}
+          <button onClick={() => navigate(-1)} style={{ background: "rgba(255,255,255,0.15)", border: "1.5px solid rgba(255,255,255,0.25)", borderRadius: 12, padding: "8px 16px", color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Nunito',sans-serif", marginBottom: 24, transition: "all 0.2s", display: 'flex', alignItems: 'center', gap: 8 }}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.25)"}
             onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.15)"}>
-            ← Back
+            <ArrowLeft size={16} /> Back
           </button>
 
           <div style={{ ...anim(0) }}>
@@ -209,7 +227,7 @@ export default function BrowseTiffins() {
           {/* Search + filter bar */}
           <div style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap", ...anim(100) }}>
             <div className="search-wrap" style={{ flex: 1, minWidth: 240, display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.92)", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 16, padding: "12px 18px", transition: "all 0.2s" }}>
-              <span style={{ fontSize: 18 }}>🔍</span>
+              <Search size={18} color="#8FA873" />
               <input
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
@@ -217,12 +235,12 @@ export default function BrowseTiffins() {
                 style={{ border: "none", background: "none", outline: "none", fontSize: 15, fontFamily: "'Nunito',sans-serif", color: "#2d3b2d", flex: 1, fontWeight: 600 }}
               />
               {searchQuery && (
-                <button onClick={() => setSearchQuery("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#bbb", fontSize: 18, lineHeight: 1 }}>×</button>
+                <button onClick={() => setSearchQuery("")} style={{ background: "none", border: "none", cursor: "pointer", color: "#bbb", display: 'flex', alignItems: 'center' }}><X size={18} /></button>
               )}
             </div>
 
             <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-              <span style={{ position: "absolute", left: 14, fontSize: 16, pointerEvents: "none" }}>📏</span>
+              <MapPin size={16} color="#8FA873" style={{ position: "absolute", left: 14, pointerEvents: "none" }} />
               <select
                 value={radius}
                 onChange={e => setRadius(Number(e.target.value))}
@@ -230,7 +248,7 @@ export default function BrowseTiffins() {
               >
                 {[5, 10, 15, 20].map(r => <option key={r} value={r}>{r} km radius</option>)}
               </select>
-              <span style={{ position: "absolute", right: 14, fontSize: 12, color: "#8FA873", pointerEvents: "none" }}>▼</span>
+              <ChevronDown size={14} color="#8FA873" style={{ position: "absolute", right: 14, pointerEvents: "none" }} />
             </div>
           </div>
         </div>
@@ -250,12 +268,12 @@ export default function BrowseTiffins() {
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <span style={{ fontSize: 12, fontWeight: 700, color: "#aaa", marginRight: 4 }}>Sort:</span>
               {[
-                { key: "distance", label: "📏 Nearest" },
-                { key: "price", label: "💰 Price" },
-                { key: "rating", label: "⭐ Rating" },
+                { key: "distance", label: "Nearest", icon: <MapPin size={12} /> },
+                { key: "price", label: "Price", icon: <IndianRupee size={12} /> },
+                { key: "rating", label: "Rating", icon: <Star size={12} /> },
               ].map(s => (
-                <button key={s.key} className={`sort-btn ${sortBy === s.key ? "active" : ""}`} onClick={() => setSortBy(s.key)}>
-                  {s.label}
+                <button key={s.key} className={`sort-btn ${sortBy === s.key ? "active" : ""}`} onClick={() => setSortBy(s.key)} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {s.icon} {s.label}
                 </button>
               ))}
             </div>
@@ -286,7 +304,9 @@ export default function BrowseTiffins() {
         {/* Empty */}
         {!loading && filtered.length === 0 && (
           <div style={{ textAlign: "center", padding: "72px 40px", background: "rgba(255,255,255,0.7)", borderRadius: 28, border: "1.5px dashed rgba(143,174,142,0.35)", ...anim(0) }}>
-            <div style={{ fontSize: 64, marginBottom: 20, animation: "floatLeaf 3s ease-in-out infinite" }}>🍱</div>
+            <div style={{ marginBottom: 20, animation: "floatLeaf 3s ease-in-out infinite", display: 'flex', justifyContent: 'center', color: '#8FA873' }}>
+              <UtensilsCrossed size={64} strokeWidth={1} />
+            </div>
             <h3 style={{ fontFamily: "'Lora',serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", marginBottom: 10 }}>No tiffin providers found</h3>
             <p style={{ color: "#aaa", fontSize: 15, fontWeight: 600, marginBottom: 24 }}>
               {searchQuery ? `No results for "${searchQuery}". Try a different search.` : `No providers within ${radius} km. Try increasing the radius.`}
@@ -296,7 +316,7 @@ export default function BrowseTiffins() {
                 <button onClick={() => setSearchQuery("")} style={{ background: "rgba(143,174,142,0.15)", border: "1.5px solid rgba(143,174,142,0.3)", borderRadius: 14, padding: "11px 22px", fontSize: 14, fontWeight: 700, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif" }}>Clear search</button>
               )}
               {radius < 20 && (
-                <button onClick={() => setRadius(r => Math.min(r + 5, 20))} style={{ background: "linear-gradient(135deg,#8FAE8E,#8FA873)", border: "none", borderRadius: 14, padding: "11px 22px", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif" }}>Expand to {radius + 5} km →</button>
+                <button onClick={() => setRadius(r => Math.min(r + 5, 20))} style={{ background: "linear-gradient(135deg,#8FAE8E,#8FA873)", border: "none", borderRadius: 14, padding: "11px 22px", fontSize: 14, fontWeight: 700, color: "#fff", cursor: "pointer", fontFamily: "'Nunito',sans-serif", display: 'flex', alignItems: 'center', gap: 8 }}>Expand to {radius + 5} km <ArrowRight size={16} /></button>
               )}
             </div>
           </div>
@@ -315,19 +335,19 @@ export default function BrowseTiffins() {
                     {p.image ? (
                       <img src={p.image} alt={p.businessName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6 }}>
-                        <div style={{ fontSize: 44 }}>👩‍🍳</div>
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 6, color: '#fff' }}>
+                        <ChefHat size={44} />
                         <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>Home Kitchen</p>
                       </div>
                     )}
                     {p.distanceKm && (
                       <div style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)", borderRadius: 20, padding: "4px 12px", display: "flex", alignItems: "center", gap: 5 }}>
-                        <span style={{ fontSize: 11 }}>📍</span>
+                        <MapPin size={11} color="#fff" />
                         <span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>{p.distanceKm} km</span>
                       </div>
                     )}
                     <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(255,255,255,0.95)", borderRadius: 20, padding: "4px 12px", display: "flex", alignItems: "center", gap: 5, boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
-                      <span style={{ fontSize: 12 }}>🌱</span>
+                      <Leaf size={12} color="#388e3c" />
                       <span style={{ color: "#388e3c", fontSize: 11, fontWeight: 800, letterSpacing: 0.5 }}>Pure Veg</span>
                     </div>
                   </div>
@@ -339,7 +359,7 @@ export default function BrowseTiffins() {
                     </h3>
 
                     <p style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, display: "flex", alignItems: "center", gap: 5 }}>
-                      <span>📍</span>
+                      <MapPin size={14} color="#888" />
                       <span
                         className={area === undefined ? "area-loading" : ""}
                         style={{ color: area ? "#888" : "#ccc", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
@@ -357,16 +377,16 @@ export default function BrowseTiffins() {
                       </div>
                       <div style={{ width: 1, height: 14, background: "#e0e0d0" }} />
                       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ fontSize: 13 }}>💰</span>
+                        <IndianRupee size={13} color="#2d3b2d" />
                         <span style={{ fontSize: 13, fontWeight: 800, color: "#2d3b2d" }}>
-                          {p.pricePerMeal ? `₹${p.pricePerMeal}/meal` : "Price on inquiry"}
+                          {p.pricePerMeal ? `${p.pricePerMeal}/meal` : "Price on inquiry"}
                         </span>
                       </div>
                       {p.distanceKm && (
                         <>
                           <div style={{ width: 1, height: 14, background: "#e0e0d0" }} />
                           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                            <span style={{ fontSize: 13 }}>📏</span>
+                            <MapPin size={13} color="#8FA873" />
                             <span style={{ fontSize: 13, fontWeight: 700, color: "#8FA873" }}>{p.distanceKm} km away</span>
                           </div>
                         </>
@@ -375,8 +395,8 @@ export default function BrowseTiffins() {
 
                     <p style={{ fontSize: 12, color: "#bbb", fontWeight: 600, marginBottom: 16 }}>by {p.ownerName}</p>
 
-                    <button className="view-menu-btn" onClick={() => navigate(`/provider/${p._id}`, { state: { tiffin: p } })}>
-                      View Menu & Subscribe →
+                    <button className="view-menu-btn" onClick={() => navigate(`/provider/${p._id}`, { state: { tiffin: p } })} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      View Menu & Subscribe <ArrowRight size={16} />
                     </button>
                   </div>
                 </div>

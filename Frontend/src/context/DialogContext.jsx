@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
+import { HelpCircle, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+
 
 const DialogContext = createContext();
 
@@ -112,7 +114,8 @@ export const DialogProvider = ({ children }) => {
                   color: "#fff"
                 }}
               >
-                {dialog.type === 'confirm' ? "❔" : "⚠️"}
+                {dialog.type === 'confirm' ? <HelpCircle size={32} /> : <AlertTriangle size={32} />}
+
               </div>
 
               <h2 style={{ fontFamily: "'Lora', serif", fontSize: "24px", fontWeight: 700, color: "#2d3b2d", marginBottom: "12px" }}>

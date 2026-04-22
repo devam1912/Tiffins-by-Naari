@@ -5,6 +5,27 @@ import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
 import { toast } from "sonner";
+import { 
+  ArrowLeft, 
+  Package, 
+  CheckCircle2, 
+  Clock, 
+  ChefHat, 
+  Gift, 
+  Truck, 
+  XCircle, 
+  ClipboardList, 
+  Check, 
+  Leaf, 
+  Wallet, 
+  Home, 
+  Sun, 
+  Moon, 
+  Calendar, 
+  Star,
+  X
+} from "lucide-react";
+
 
 export default function OrderDetailPage() {
   const { id } = useParams();
@@ -112,14 +133,15 @@ export default function OrderDetailPage() {
 
   const getStatusBadge = (status) => {
     const map = {
-      pending:   { bg: "#fff8e1", color: "#e65100",  label: "Pending",   icon: "⏳" },
-      confirmed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Confirmed", icon: "✅" },
-      preparing: { bg: "#e3f2fd", color: "#1565c0",  label: "Preparing", icon: "👩‍🍳" },
-      ready:     { bg: "#f3e5f5", color: "#7b1fa2",  label: "Ready",     icon: "🎁" },
-      completed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Delivered", icon: "🚚" },
-      cancelled: { bg: "#ffebee", color: "#c62828",  label: "Cancelled", icon: "❌" },
+      pending:   { bg: "#fff8e1", color: "#e65100",  label: "Pending",   icon: <Clock size={28} /> },
+      confirmed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Confirmed", icon: <CheckCircle2 size={28} /> },
+      preparing: { bg: "#e3f2fd", color: "#1565c0",  label: "Preparing", icon: <ChefHat size={28} /> },
+      ready:     { bg: "#f3e5f5", color: "#7b1fa2",  label: "Ready",     icon: <Gift size={28} /> },
+      completed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Delivered", icon: <Truck size={28} /> },
+      cancelled: { bg: "#ffebee", color: "#c62828",  label: "Cancelled", icon: <XCircle size={28} /> },
     };
-    return map[status] || { bg: "#f5f5f5", color: "#616161", label: status, icon: "📋" };
+    return map[status] || { bg: "#f5f5f5", color: "#616161", label: status, icon: <ClipboardList size={28} /> };
+
   };
 
   const formatDate = (dateString) => {
@@ -184,11 +206,11 @@ export default function OrderDetailPage() {
             onClick={() => navigate("/order-history")}
             style={{ background: "rgba(255,255,255,0.6)", border: "1.5px solid rgba(143,174,142,0.25)", borderRadius: 12, padding: "9px 18px", fontWeight: 700, fontSize: 13, color: "#5a7a50", cursor: "pointer", fontFamily: "'Nunito',sans-serif", display: "flex", alignItems: "center", gap: 6 }}
           >
-            ← Back to Orders
+            <ArrowLeft size={16} /> Back to Orders
           </button>
           <div>
-            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(22px,2.8vw,32px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
-              Order Details 📦
+            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(22px,2.8vw,32px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15, display: 'flex', alignItems: 'center', gap: 12 }}>
+              Order Details <Package size={32} />
             </h1>
             {order && (
               <p style={{ color: "#888", fontSize: 13, marginTop: 4, fontWeight: 600 }}>
@@ -208,8 +230,8 @@ export default function OrderDetailPage() {
 
         {/* Error */}
         {error && !isLoading && (
-          <div style={{ padding: "16px 20px", background: "#ffebee", color: "#c62828", borderRadius: 14, marginBottom: 24, fontWeight: 700, border: "1px solid #ffcdd2", ...anim(50) }}>
-            ⚠️ {error}
+          <div style={{ padding: "16px 20px", background: "#ffebee", color: "#c62828", borderRadius: 14, marginBottom: 24, fontWeight: 700, border: "1px solid #ffcdd2", ...anim(50), display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle size={20} /> {error}
             <button onClick={() => navigate("/order-history")} style={{ marginLeft: 16, background: "none", border: "none", color: "#c62828", fontWeight: 800, cursor: "pointer", textDecoration: "underline" }}>
               Go back
             </button>
@@ -228,7 +250,7 @@ export default function OrderDetailPage() {
                 const badge = getStatusBadge(order.status);
                 return (
                   <div style={{ background: badge.bg, border: `1.5px solid ${badge.color}22`, borderRadius: 22, padding: "22px 26px", display: "flex", alignItems: "center", gap: 16 }}>
-                    <div style={{ width: 56, height: 56, borderRadius: 16, background: `${badge.color}18`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>
+                    <div style={{ width: 56, height: 56, borderRadius: 16, background: `${badge.color}18`, display: "flex", alignItems: "center", justifyContent: "center", color: badge.color }}>
                       {badge.icon}
                     </div>
                     <div>
@@ -260,7 +282,7 @@ export default function OrderDetailPage() {
                               border: isDone ? "none" : "1.5px solid #ddddc8",
                               transition: "all 0.3s ease",
                             }}>
-                              {isDone ? "✓" : stepBadge.icon}
+                              {isDone ? <Check size={20} /> : React.cloneElement(stepBadge.icon, { size: 20 })}
                             </div>
                             <span style={{ fontSize: 10, fontWeight: 700, color: isDone ? "#5a7a50" : "#bbb", textTransform: "uppercase", textAlign: "center", maxWidth: 55 }}>
                               {stepBadge.label}
@@ -288,8 +310,8 @@ export default function OrderDetailPage() {
                       padding: "14px 12px", borderRadius: 14,
                       borderBottom: idx < order.items.length - 1 ? "1px solid rgba(0,0,0,0.04)" : "none",
                     }}>
-                      <div style={{ width: 46, height: 46, borderRadius: 14, background: "linear-gradient(135deg,#f0f4f0,#e4ece4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>
-                        🌱
+                      <div style={{ width: 46, height: 46, borderRadius: 14, background: "linear-gradient(135deg,#f0f4f0,#e4ece4)", display: "flex", alignItems: "center", justifyContent: "center", color: '#8FAE8E', flexShrink: 0 }}>
+                        <Leaf size={24} />
                       </div>
                       <div style={{ flex: 1 }}>
                         <p style={{ fontSize: 15, fontWeight: 700, color: "#2d3b2d", marginBottom: 2 }}>{item.name}</p>
@@ -323,8 +345,8 @@ export default function OrderDetailPage() {
                     <span style={{ color: "#5a7a50", fontWeight: 700 }}>FREE</span>
                   </div>
                   {order.paymentMethod === "wallet" && (
-                    <div style={{ display: "flex", justifyContent: "space-between", color: "#8FA873", fontSize: 13, fontWeight: 700 }}>
-                      <span>👛 Paid via Wallet</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", color: "#8FA873", fontSize: 13, fontWeight: 700, alignItems: 'center' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}><Wallet size={14} /> Paid via Wallet</span>
                       <span>₹{order.totalPrice}</span>
                     </div>
                   )}
@@ -336,7 +358,7 @@ export default function OrderDetailPage() {
                 </div>
 
                 <div style={{ background: "rgba(143,174,142,0.08)", border: "1px solid rgba(143,174,142,0.2)", borderRadius: 12, padding: "10px 14px", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 14 }}>✅</span>
+                  <CheckCircle2 size={16} color="#5a7a50" />
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#5a7a50" }}>
                     Payment {order.paymentStatus === "paid" ? "Completed" : "Pending"}
                   </span>
@@ -347,14 +369,14 @@ export default function OrderDetailPage() {
               <div style={{ background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", borderRadius: 22, padding: "24px", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 4px 20px rgba(143,174,142,0.08)" }}>
                 <h3 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 16 }}>Delivery Info</h3>
                 {[
-                  { icon: "🏡", label: "Kitchen", value: order.provider?.businessName || "—" },
-                  { icon: "👩‍🍳", label: "Chef", value: order.provider?.ownerName || "—" },
-                  { icon: order.timeSlot === "lunch" ? "🌞" : "🌙", label: "Slot", value: order.timeSlot === "lunch" ? "Lunch (12–2 PM)" : "Dinner (7–9 PM)" },
-                  { icon: "📅", label: "Delivery Date", value: formatDate(order.date || order.createdAt) },
-                  { icon: "🕒", label: "Ordered At", value: formatTime(order.createdAt) },
+                  { icon: <Home size={18} />, label: "Kitchen", value: order.provider?.businessName || "—" },
+                  { icon: <ChefHat size={18} />, label: "Chef", value: order.provider?.ownerName || "—" },
+                  { icon: order.timeSlot === "lunch" ? <Sun size={18} /> : <Moon size={18} />, label: "Slot", value: order.timeSlot === "lunch" ? "Lunch (12–2 PM)" : "Dinner (7–9 PM)" },
+                  { icon: <Calendar size={18} />, label: "Delivery Date", value: formatDate(order.date || order.createdAt) },
+                  { icon: <Clock size={18} />, label: "Ordered At", value: formatTime(order.createdAt) },
                 ].map(({ icon, label, value }) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 12, background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 17, flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 12, background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", color: '#5a7a50', flexShrink: 0 }}>
                       {icon}
                     </div>
                     <div>
@@ -369,22 +391,22 @@ export default function OrderDetailPage() {
               {order.status === "completed" && (
                 <button
                   onClick={() => setIsReviewOpen(true)}
-                  style={{ width: "100%", padding: "14px", background: "#fff", color: "#5a7a50", border: "2px solid #8FAE8E", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", marginBottom: 12, transition: "all 0.2s" }}
+                  style={{ width: "100%", padding: "14px", background: "#fff", color: "#5a7a50", border: "2px solid #8FAE8E", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", marginBottom: 12, transition: "all 0.2s", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                   onMouseEnter={e => e.currentTarget.style.background = "rgba(143,174,142,0.1)"}
                   onMouseLeave={e => e.currentTarget.style.background = "#fff"}
                 >
-                  ⭐ Rate Your Meal
+                  <Star size={18} /> Rate Your Meal
                 </button>
               )}
 
               {/* Back button */}
               <button
                 onClick={() => navigate("/order-history")}
-                style={{ width: "100%", padding: "14px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 6px 20px rgba(143,174,142,0.4)", transition: "opacity 0.2s" }}
+                style={{ width: "100%", padding: "14px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontSize: 15, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito',sans-serif", boxShadow: "0 6px 20px rgba(143,174,142,0.4)", transition: "opacity 0.2s", display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
                 onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
                 onMouseLeave={e => e.currentTarget.style.opacity = "1"}
               >
-                ← Back to Order History
+                <ArrowLeft size={18} /> Back to Order History
               </button>
             </div>
 
@@ -400,8 +422,8 @@ export default function OrderDetailPage() {
               
               <div style={{ display: "flex", gap: 8, marginBottom: 24, justifyContent: "flex-start" }}>
                 {[1, 2, 3, 4, 5].map(star => (
-                  <button key={star} onClick={() => setRating(star)} style={{ background: "none", border: "none", fontSize: 36, cursor: "pointer", color: star <= rating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s", padding: 0 }}>
-                    ★
+                  <button key={star} onClick={() => setRating(star)} style={{ background: "none", border: "none", cursor: "pointer", color: star <= rating ? "#f59e0b" : "#e5e7eb", transition: "color 0.2s", padding: 0 }}>
+                    <Star size={36} fill={star <= rating ? "#f59e0b" : "transparent"} />
                   </button>
                 ))}
               </div>

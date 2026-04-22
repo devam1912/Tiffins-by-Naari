@@ -19,7 +19,10 @@ import CustomerSubscriptions from "./pages/Customer/CustomerSubscriptions";
 import OrderHistory from "./pages/Customer/OrderHistory";
 import CartPage from "./pages/Customer/CartPage";
 import OrderDetailPage from "./pages/Customer/OrderDetailPage";
+import NotificationPage from "./pages/Customer/NotificationPage";
 import { DialogProvider } from "./context/DialogContext";
+import GlobalCart from "./components/Customer/GlobalCart";
+
 
 export default function App() {
   const dispatch = useDispatch();
@@ -36,7 +39,9 @@ export default function App() {
     <DialogProvider>
       <BrowserRouter>
         <Toaster position="top-center" expand={false} richColors />
+        <GlobalCart />
         <Routes>
+
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
@@ -52,6 +57,7 @@ export default function App() {
           <Route path="/order-history" element={<OrderHistory />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/orders/:id" element={<OrderDetailPage />} />
+          <Route path="/notifications" element={<NotificationPage />} />
         </Routes>
       </BrowserRouter>
     </DialogProvider>

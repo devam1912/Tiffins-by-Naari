@@ -5,6 +5,19 @@ import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout, fetchProfile } from "../../store/authSlice";
 import { useDialog } from "../../context/DialogContext";
+import { 
+  Calendar, 
+  RefreshCcw, 
+  AlertTriangle, 
+  Utensils, 
+  Sun, 
+  Moon, 
+  PauseCircle, 
+  Trash2, 
+  ArrowRight,
+  X
+} from "lucide-react";
+
 
 export default function CustomerSubscriptions() {
   const navigate = useNavigate();
@@ -209,6 +222,9 @@ export default function CustomerSubscriptions() {
             color: #5a7a50 !important;
             border-style: solid !important;
         }
+        
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin-anim { animation: spin 1s linear infinite; }
       `}</style>
 
       {/* ════ SIDEBAR ════ */}
@@ -231,8 +247,8 @@ export default function CustomerSubscriptions() {
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
           <div>
-            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3vw,34px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
-              My Subscriptions 📅
+            <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3vw,34px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15, display: 'flex', alignItems: 'center', gap: 12 }}>
+              My Subscriptions <Calendar size={32} />
             </h1>
             <p style={{ color: "#888", fontSize: 15, marginTop: 6 }}>
               Manage your active plans, pause deliveries, or view your history.
@@ -241,17 +257,18 @@ export default function CustomerSubscriptions() {
           <button
             onClick={fetchSubscriptions}
             disabled={isLoading}
-            style={{ padding: "10px 18px", borderRadius: 14, border: "2px solid rgba(143,174,142,0.4)", background: "rgba(255,255,255,0.5)", fontWeight: 700, color: "#5a7a50", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, transition: "all 0.2s" }}
+            style={{ padding: "10px 18px", borderRadius: 14, border: "2px solid rgba(143,174,142,0.4)", background: "rgba(255,255,255,0.5)", fontWeight: 700, color: "#5a7a50", cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.2s" }}
             onMouseOver={(e) => e.target.style.background = "#fff"}
             onMouseOut={(e) => e.target.style.background = "rgba(255,255,255,0.5)"}
           >
-            {isLoading ? "⏳ Loading..." : "🔄 Refresh"}
+            <RefreshCcw size={16} className={isLoading ? 'spin-anim' : ''} />
+            {isLoading ? "Loading..." : "Refresh"}
           </button>
         </div>
 
         {error && (
-          <div style={{ padding: "16px 20px", background: "#ffebee", color: "#c62828", borderRadius: 14, marginBottom: 24, fontWeight: 700, border: "1px solid #ffcdd2", ...anim(50) }}>
-            ⚠️ {error}
+          <div style={{ padding: "16px 20px", background: "#ffebee", color: "#c62828", borderRadius: 14, marginBottom: 24, fontWeight: 700, border: "1px solid #ffcdd2", ...anim(50), display: 'flex', alignItems: 'center', gap: 10 }}>
+            <AlertTriangle size={20} /> {error}
           </div>
         )}
 
@@ -261,11 +278,13 @@ export default function CustomerSubscriptions() {
           </div>
         ) : subscriptions.length === 0 ? (
           <div style={{ textAlign: "center", padding: "80px 0", background: "rgba(255,255,255,0.4)", borderRadius: 24, border: "1px dashed rgba(143,174,142,0.5)", ...anim(100) }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🍽️</div>
+            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center', color: '#8FAE8E' }}>
+              <Utensils size={48} strokeWidth={1} />
+            </div>
             <h2 style={{ fontFamily: "'Lora', serif", color: "#2d3b2d", fontSize: 22, fontWeight: 700, marginBottom: 8 }}>No Active Plans Found</h2>
             <p style={{ color: "#777", fontSize: 15, marginBottom: 24 }}>You haven't subscribed to any kitchens yet.</p>
-            <button onClick={() => navigate("/tiffins")} style={{ padding: "12px 24px", background: "#8FAE8E", color: "#fff", borderRadius: 14, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(143,174,142,0.4)" }}>
-              Browse Kitchens →
+            <button onClick={() => navigate("/tiffins")} style={{ padding: "12px 24px", background: "#8FAE8E", color: "#fff", borderRadius: 14, border: "none", fontWeight: 800, fontSize: 15, cursor: "pointer", boxShadow: "0 4px 16px rgba(143,174,142,0.4)", display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+              Browse Kitchens <ArrowRight size={18} />
             </button>
           </div>
         ) : (
@@ -298,8 +317,8 @@ export default function CustomerSubscriptions() {
                       </h3>
                       <p style={{ fontSize: 13, color: "#777", marginTop: 2 }}>Order ID: SUB-{sub._id.slice(-6).toUpperCase()}</p>
                     </div>
-                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg, #c5d490, #9ab870)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
-                      {sub.timeSlot === "lunch" ? "🌞" : "🌙"}
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg, #c5d490, #9ab870)", display: "flex", alignItems: "center", justifyContent: "center", color: '#fff' }}>
+                      {sub.timeSlot === "lunch" ? <Sun size={24} /> : <Moon size={24} />}
                     </div>
                   </div>
 
@@ -333,8 +352,8 @@ export default function CustomerSubscriptions() {
                   {isActionable && (
                     <div style={{ display: "flex", gap: 10 }}>
                       {sub.status === "active" ? (
-                        <button className="action-btn btn-pause" style={{ flex: 1 }} onClick={() => { setSelectedSub(sub._id); setModalType('pause'); setPauseStart(""); setPauseEnd(""); }}>
-                          ⏸️ Pause Plan
+                        <button className="action-btn btn-pause" style={{ flex: 1, gap: 8 }} onClick={() => { setSelectedSub(sub._id); setModalType('pause'); setPauseStart(""); setPauseEnd(""); }}>
+                          <PauseCircle size={16} /> Pause Plan
                         </button>
                       ) : sub.status === "paused" ? (
                         <div style={{ flex: 1, padding: "10px", background: "#fff3e0", color: "#e65100", borderRadius: 12, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, border: "1px dashed #ffe0b2", textAlign: "center", lineHeight: 1.2 }}>
@@ -342,8 +361,8 @@ export default function CustomerSubscriptions() {
                         </div>
                       ) : null}
 
-                      <button className="action-btn btn-cancel" style={{ flex: 1 }} onClick={() => { setSelectedSub(sub._id); setModalType('cancel'); }}>
-                        🗑️ Cancel
+                      <button className="action-btn btn-cancel" style={{ flex: 1, gap: 8 }} onClick={() => { setSelectedSub(sub._id); setModalType('cancel'); }}>
+                        <Trash2 size={16} /> Cancel
                       </button>
                     </div>
                   )}
@@ -359,11 +378,11 @@ export default function CustomerSubscriptions() {
       {modalType && (
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: 20 }}>
           <div style={{ background: "#fff", borderRadius: 24, padding: "32px", width: "100%", maxWidth: 420, boxShadow: "0 20px 40px rgba(0,0,0,0.15)", position: "relative", animation: "slideIn 0.3s cubic-bezier(.22,.68,0,1.2)" }}>
-            <button onClick={() => setModalType(null)} style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", fontSize: 24, cursor: "pointer", color: "#aaa" }}>&times;</button>
+            <button onClick={() => setModalType(null)} style={{ position: "absolute", top: 20, right: 24, background: "none", border: "none", cursor: "pointer", color: "#aaa" }}><X size={24} /></button>
 
             {modalType === 'pause' && (
               <>
-                <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>Pause Subscription ⏸️</h3>
+                <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>Pause Subscription <PauseCircle size={24} /></h3>
                 <p style={{ fontSize: 14, color: "#777", marginBottom: 24, lineHeight: 1.5 }}>Select the dates you'll be away. We'll automatically extend your end date by the paused duration.</p>
 
                 <div style={{ marginBottom: 16 }}>
@@ -384,7 +403,9 @@ export default function CustomerSubscriptions() {
 
             {modalType === 'cancel' && (
               <>
-                <div style={{ fontSize: 44, marginBottom: 12, textAlign: "center" }}>⚠️</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12, color: '#c62828' }}>
+                  <AlertTriangle size={44} />
+                </div>
                 <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#c62828", marginBottom: 8, textAlign: "center" }}>Cancel Subscription?</h3>
                 <p style={{ fontSize: 14, color: "#777", marginBottom: 24, lineHeight: 1.5, textAlign: "center" }}>Are you absolutely sure you want to cancel this subscription? Any applicable refunds for remaining meals will be credited to your wallet.</p>
 

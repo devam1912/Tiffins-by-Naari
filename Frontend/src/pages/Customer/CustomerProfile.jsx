@@ -4,6 +4,16 @@ import { updateProfile } from "../../api/auth";
 import { useSelector, useDispatch } from "react-redux";
 import { loginSuccess, logout } from "../../store/authSlice";
 import Sidebar from "../../components/Customer/Sidebar";
+import { 
+  User, 
+  Mail, 
+  Phone, 
+  AlertTriangle, 
+  ArrowRight, 
+  Check, 
+  ArrowLeft 
+} from "lucide-react";
+
 
 export default function EditProfile() {
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
@@ -205,10 +215,9 @@ export default function EditProfile() {
               margin: "0 auto 22px",
               boxShadow: "0 12px 36px rgba(143,174,142,0.45)",
               animation: "checkPop 0.55s cubic-bezier(.34,1.56,.64,1) 0.2s both",
+              color: "#fff"
             }}>
-              <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
-                <path d="M8 18.5l7 7 13-14" stroke="#fff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <Check size={40} strokeWidth={3} />
             </div>
 
             <p style={{ fontSize:11, fontWeight:800, letterSpacing:3, textTransform:"uppercase", color:"#8FA873", marginBottom:10 }}>All Done!</p>
@@ -229,11 +238,12 @@ export default function EditProfile() {
                 fontFamily:"'Nunito',sans-serif",
                 boxShadow:"0 4px 20px rgba(143,174,142,0.4)",
                 transition:"all 0.25s ease", marginBottom:10,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
               }}
               onMouseEnter={e => { e.currentTarget.style.opacity="0.9"; e.currentTarget.style.transform="translateY(-1px)"; }}
               onMouseLeave={e => { e.currentTarget.style.opacity="1";   e.currentTarget.style.transform="translateY(0)"; }}
             >
-              Back to Dashboard →
+              Back to Dashboard <ArrowRight size={18} />
             </button>
 
             <button
@@ -289,7 +299,7 @@ export default function EditProfile() {
             display:"flex", alignItems:"center", gap:10,
             marginBottom:22, animation:"shakeX 0.4s ease",
           }}>
-            <span style={{ fontSize:18 }}>⚠️</span>
+            <AlertTriangle size={20} color="#c62828" />
             <span style={{ color:"#c62828", fontSize:14, fontWeight:600 }}>{error}</span>
           </div>
         )}
@@ -302,7 +312,7 @@ export default function EditProfile() {
             <div style={{ ...anim(120) }}>
               <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Full Name</label>
               <div style={{ position:"relative" }}>
-                <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:18, pointerEvents:"none" }}>👤</span>
+                <User size={18} color={focused === "name" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
                 <input
                   type="text"
                   name="name"
@@ -321,7 +331,7 @@ export default function EditProfile() {
             <div style={{ ...anim(200) }}>
               <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Email Address</label>
               <div style={{ position:"relative" }}>
-                <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:18, pointerEvents:"none" }}>📧</span>
+                <Mail size={18} color={focused === "email" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
                 <input
                   type="email"
                   name="email"
@@ -340,7 +350,7 @@ export default function EditProfile() {
             <div style={{ ...anim(280) }}>
               <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Phone Number</label>
               <div style={{ position:"relative" }}>
-                <span style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", fontSize:18, pointerEvents:"none" }}>📱</span>
+                <Phone size={18} color={focused === "phone" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
                 <input
                   type="text"
                   name="phone"
@@ -403,7 +413,7 @@ export default function EditProfile() {
                     }} />
                     Updating...
                   </>
-                ) : "Save Changes →"}
+                ) : <span style={{display:'flex', alignItems:'center', gap:8}}>Save Changes <ArrowRight size={18} /></span>}
               </button>
             </div>
           </div>

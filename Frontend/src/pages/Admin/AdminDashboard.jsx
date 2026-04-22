@@ -12,6 +12,27 @@ import {
 } from "../../store/adminSlice";
 import API from "../../api/auth";
 import { useDialog } from "../../context/DialogContext";
+import { 
+  Shield, 
+  LayoutDashboard, 
+  Users, 
+  ChefHat, 
+  UtensilsCrossed, 
+  ShoppingBag, 
+  IndianRupee, 
+  Calendar, 
+  MessageSquare, 
+  LogOut, 
+  Sun, 
+  Moon, 
+  X, 
+  FileText, 
+  Check, 
+  Plus, 
+  Minus, 
+  ArrowRight 
+} from "lucide-react";
+
 
 // Internal Components
 import { AdminUsers } from "../../components/AdminUsers";
@@ -29,7 +50,10 @@ function ApproveModal({ provider, onClose, onApprove, loading }) {
     >
       <div style={{ background: "#fff", borderRadius: 32, padding: "48px", maxWidth: 440, width: "100%", textAlign: "center", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(90deg,#8FAE8E,#D9D9A8)" }} />
-        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", fontSize: 36, color: "#fff" }}>👩‍🍳</div>
+        <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: "#fff" }}>
+          <ChefHat size={40} />
+        </div>
+
         <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 12 }}>Approve Kitchen?</h2>
         <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
           Authorize <strong>{provider?.businessName}</strong>. This will enable their menu and notify <strong>{provider?.ownerName}</strong>.
@@ -166,9 +190,10 @@ function HistoryModal({ provider, records, loading, onClose }) {
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <p style={{ fontSize: 15, fontWeight: 800, color: isCredit ? "#8FAE8E" : "#ef5350" }}>{isCredit ? "+" : "-"}₹{r.amount.toLocaleString()}</p>
-                      <p style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: isCredit ? "#8FAE8E" : "#ef5350", background: isCredit ? "rgba(143,174,142,0.1)" : "rgba(239,83,80,0.1)", padding: "3px 8px", borderRadius: 8, display: "inline-block", marginTop: 4 }}>
-                        {isCredit ? "Credit" : "Debit"}
+                      <p style={{ fontSize: 10, fontWeight: 800, textTransform: "uppercase", color: isCredit ? "#8FAE8E" : "#ef5350", background: isCredit ? "rgba(143,174,142,0.1)" : "rgba(239,83,80,0.1)", padding: "4px 10px", borderRadius: 8, display: "inline-flex", marginTop: 4, alignItems: 'center', gap: 4 }}>
+                        {isCredit ? <><Plus size={10} /> Credit</> : <><Minus size={10} /> Debit</>}
                       </p>
+
                     </div>
                   </div>
                 );
@@ -205,8 +230,11 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
       <div style={{ background: "#fff", borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.2)" }}>
         <div style={{ padding: "28px 36px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfdfc" }}>
           <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d" }}>Kitchen Application</h2>
-          <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", color: "#aaa" }}>✕</button>
+          <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", color: "#aaa", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={18} />
+          </button>
         </div>
+
 
         <div style={{ padding: "36px", overflowY: "auto", flex: 1 }}>
           <div style={{ display: "flex", flexWrap: "wrap", marginBottom: 32 }}>
@@ -222,7 +250,10 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
             <p style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 16 }}>Documentation</p>
             <div style={{ borderRadius: 16, border: "2px dashed #eee", background: "#f9faf9", padding: 16, textAlign: "center" }}>
               {provider?.fssaiCertificate ? (
-                isPdf ? <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer" style={{ color: "#8FAE8E", fontWeight: 700 }}>📄 Open Certificate</a> :
+                isPdf ? <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer" style={{ color: "#8FAE8E", fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <FileText size={18} /> Open Certificate
+                </a> :
+
                   <img src={provider.fssaiCertificate} alt="FSSAI" style={{ maxWidth: "100%", borderRadius: 8 }} />
               ) : <p style={{ color: "#ef5350", fontSize: 13 }}>Certificate missing.</p>}
             </div>
@@ -384,12 +415,13 @@ export default function AdminDashboard() {
   }
 
   const statCards = [
-    { label: "Platform Users", val: stats.totalUsers ?? users.length ?? 0, icon: "👥" },
-    { label: "Active Kitchens", val: stats.totalProviders ?? 0, icon: "👩‍🍳" },
-    { label: "Menus", val: menus.length, icon: "🍱" },
-    { label: "Orders", val: stats.totalOrders ?? 0, icon: "🛍️" },
-    { label: "Total Revenue", val: `₹${stats.totalRevenue?.toLocaleString() || 0}`, icon: "💰" }
+    { label: "Platform Users", val: stats.totalUsers ?? users.length ?? 0, icon: <Users size={32} /> },
+    { label: "Active Kitchens", val: stats.totalProviders ?? 0, icon: <ChefHat size={32} /> },
+    { label: "Menus", val: menus.length, icon: <UtensilsCrossed size={32} /> },
+    { label: "Orders", val: stats.totalOrders ?? 0, icon: <ShoppingBag size={32} /> },
+    { label: "Total Revenue", val: `₹${stats.totalRevenue?.toLocaleString() || 0}`, icon: <IndianRupee size={32} /> }
   ];
+
 
   const adminName = user?.name?.split(" ")[0] || "Admin";
 
@@ -454,35 +486,40 @@ export default function AdminDashboard() {
         boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>🛡️</div>
+          <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+            <Shield size={24} />
+          </div>
           {!collapsed && <div>
             <div style={{ fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.1 }}>Naari Admin</div>
             <div style={{ fontSize: 10, color: "rgba(255,255,255,0.4)", fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 4 }}>Command Center</div>
           </div>}
         </div>
 
+
         <nav style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
           {[
-            { id: "dashboard", icon: "⊞", label: "Overview" },
-            { id: "users", icon: "👥", label: "Users" },
-            { id: "providers", icon: "👩‍🍳", label: "Tiffin Providers" },
-            { id: "menu", icon: "🍱", label: "Menus" },
-            { id: "orders", icon: "🛍️", label: "Orders" },
-            { id: "subscriptions", icon: "📅", label: "Subscriptions" },
-            { id: "payouts", icon: "💰", label: "Payouts" },
-            { id: "feedback", icon: "💬", label: "Feedbacks" }
+            { id: "dashboard", icon: <LayoutDashboard size={20} />, label: "Overview" },
+            { id: "users", icon: <Users size={20} />, label: "Users" },
+            { id: "providers", icon: <ChefHat size={20} />, label: "Tiffin Providers" },
+            { id: "menu", icon: <UtensilsCrossed size={20} />, label: "Menus" },
+            { id: "orders", icon: <ShoppingBag size={20} />, label: "Orders" },
+            { id: "subscriptions", icon: <Calendar size={20} />, label: "Subscriptions" },
+            { id: "payouts", icon: <IndianRupee size={20} />, label: "Payouts" },
+            { id: "feedback", icon: <MessageSquare size={20} />, label: "Feedbacks" }
 
           ].map(item => (
             <button key={item.id} className={`nav-btn ${activeNav === item.id ? "active" : ""}`} onClick={() => setActiveNav(item.id)}>
-              <span style={{ fontSize: 22 }}>{item.icon}</span>
+              <span style={{ display: 'flex', alignItems: 'center' }}>{item.icon}</span>
               {!collapsed && <span>{item.label}</span>}
             </button>
           ))}
+
         </nav>
 
         <button onClick={handleLogout} style={{ marginTop: "auto", width: "100%", padding: "14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "rgba(255,255,255,0.6)", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
-          <span>🚪</span> {!collapsed && <span>Logout</span>}
+          <LogOut size={18} /> {!collapsed && <span>Logout</span>}
         </button>
+
       </aside>
 
       <main style={{ marginLeft: collapsed ? 80 : 280, flex: 1, padding: "44px", transition: "margin-left 0.35s ease" }}>
@@ -492,7 +529,10 @@ export default function AdminDashboard() {
             <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>Namaste, <em style={{ color: "#8FA873" }}>{adminName}!</em></h1>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <button id="theme-toggle" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, cursor: "pointer", transition: "all 0.3s ease" }}>{darkMode ? "☀️" : "🌙"}</button>
+            <button id="theme-toggle" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", color: T.text, cursor: "pointer", transition: "all 0.3s ease" }}>
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+
             <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff" }}>{adminName[0]}</div>
           </div>
         </div>
@@ -502,11 +542,12 @@ export default function AdminDashboard() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 24, marginBottom: 40 }}>
               {statCards.map((card, i) => (
                 <div key={i} style={{ background: T.card, padding: "32px", borderRadius: 28, boxShadow: darkMode ? "0 10px 30px rgba(0,0,0,0.2)" : "0 10px 30px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
-                  <div style={{ fontSize: 32, marginBottom: 16 }}>{card.icon}</div>
+                  <div style={{ color: "#8FAE8E", marginBottom: 16 }}>{card.icon}</div>
                   <p style={{ fontSize: 12, fontWeight: 800, color: T.textMuted, textTransform: "uppercase", marginBottom: 4 }}>{card.label}</p>
                   <h3 style={{ fontSize: 32, color: T.text, fontWeight: 800, fontFamily: "'Lora',serif" }}>{card.val}</h3>
                 </div>
               ))}
+
             </div>
 
             <div style={{ background: T.card, padding: "36px", borderRadius: 32, boxShadow: darkMode ? "0 20px 50px rgba(0,0,0,0.2)" : "0 20px 50px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>

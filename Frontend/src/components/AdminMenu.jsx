@@ -3,6 +3,18 @@ import { useDispatch } from "react-redux";
 import { approveMenu, rejectMenu } from "../store/adminSlice";
 import { useDialog } from "../context/DialogContext";
 import API from "../api/auth";
+import { 
+  Search, 
+  UtensilsCrossed, 
+  CheckCircle2, 
+  X, 
+  ChevronUp, 
+  ChevronDown, 
+  Sun, 
+  Moon, 
+  AlertCircle 
+} from "lucide-react";
+
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
@@ -95,7 +107,9 @@ export const AdminMenu = ({ menus = [] }) => {
                     <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{menus.length} menus from registered kitchen partners</p>
                 </div>
                 <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", fontSize: 16, color: "#aaa" }}>🔍</span>
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa", display: 'flex', alignItems: 'center' }}>
+                        <Search size={16} />
+                    </span>
                     <input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
@@ -103,14 +117,18 @@ export const AdminMenu = ({ menus = [] }) => {
                         style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240, background: "transparent", color: "inherit" }}
                     />
                 </div>
+
             </div>
 
             {/* Table */}
             {filtered.length === 0 ? (
                 <div style={{ padding: "80px 0", textAlign: "center" }}>
-                    <div style={{ fontSize: 48, marginBottom: 12 }}>🍱</div>
+                    <div style={{ color: "rgba(255,255,255,0.1)", marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+                        <UtensilsCrossed size={48} />
+                    </div>
                     <p style={{ color: "#ccc", fontSize: 16, fontStyle: "italic" }}>No menus found.</p>
                 </div>
+
             ) : (
                 <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                     {filtered.map(menu => {
@@ -123,7 +141,10 @@ export const AdminMenu = ({ menus = [] }) => {
                                 {/* Row */}
                                 <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, cursor: "pointer" }}
                                     onClick={() => setSelected(isExpanded ? null : menu._id)}>
-                                    <div style={{ width: 42, height: 42, borderRadius: 12, background: "#fff8f0", border: "1px solid #ffe0b2", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>🍱</div>
+                                    <div style={{ width: 42, height: 42, borderRadius: 12, background: "#fff8f0", border: "1px solid #ffe0b2", display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b", flexShrink: 0 }}>
+                                        <UtensilsCrossed size={20} />
+                                    </div>
+
 
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontWeight: 800, fontSize: 15, color: "inherit" }}>{menu.provider?.businessName || "Unknown Kitchen"}</div>
@@ -140,29 +161,35 @@ export const AdminMenu = ({ menus = [] }) => {
                                             <div style={{ display: "flex", gap: 8 }}>
                                                 {menu.submittedForApproval && !menu.isApproved && (
                                                     <button onClick={e => { e.stopPropagation(); handleApprove(menu._id); }}
-                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
-                                                        ✅ Approve
+                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        <CheckCircle2 size={14} /> Approve
                                                     </button>
                                                 )}
+
                                                 {menu.isApproved && (
                                                     <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
-                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
-                                                        ✕ Revoke
+                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        <X size={14} /> Revoke
                                                     </button>
                                                 )}
+
                                                 {!menu.isApproved && menu.submittedForApproval && (
                                                      <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
-                                                     style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer" }}>
-                                                     ✕ Reject
+                                                     style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                     <X size={14} /> Reject
                                                  </button>
                                                 )}
+
                                             </div>
                                         ) : (
                                             <span style={{ fontSize: 12, color: "#aaa" }}>Processing...</span>
                                         )}
 
-                                        <span style={{ color: "#ccc", fontSize: 18 }}>{isExpanded ? "▲" : "▼"}</span>
+                                        <span style={{ color: "#ccc", display: 'flex', alignItems: 'center' }}>
+                                            {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                        </span>
                                     </div>
+
                                 </div>
 
                                 {/* Expanded: weekly menu detail */}
@@ -205,12 +232,17 @@ export const AdminMenu = ({ menus = [] }) => {
                                                         )}
                                                         <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
                                                             {dayData?.lunch?.price > 0 && (
-                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", background: "#fff8e1", padding: "2px 8px", borderRadius: 8 }}>🌞 ₹{dayData.lunch.price}</span>
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", background: "#fff8e1", padding: "4px 10px", borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                                                    <Sun size={10} /> ₹{dayData.lunch.price}
+                                                                </span>
                                                             )}
                                                             {dayData?.dinner?.price > 0 && (
-                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#6366f1", background: "#eef2ff", padding: "2px 8px", borderRadius: 8 }}>🌙 ₹{dayData.dinner.price}</span>
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#6366f1", background: "#eef2ff", padding: "4px 10px", borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                                                    <Moon size={10} /> ₹{dayData.dinner.price}
+                                                                </span>
                                                             )}
                                                         </div>
+
                                                     </div>
                                                 );
                                             })}

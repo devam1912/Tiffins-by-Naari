@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { 
+  ChefHat, 
+  Store, 
+  User, 
+  ClipboardList, 
+  Camera, 
+  MapPin, 
+  Check, 
+  ArrowRight 
+} from "lucide-react";
+
 
 function Modal({ variant, title, message, onClose }) {
   useEffect(() => {
@@ -182,8 +193,11 @@ export default function RegisterProvider() {
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
           <div style={{ position: "relative", margin: "0 auto 32px", width: 96, height: 96 }}>
             <div style={{ position: "absolute", inset: -12, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.18)", animation: "pulseRing 2.5s ease-in-out infinite" }} />
-            <div style={{ width: 96, height: 96, borderRadius: 28, background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 42, backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite" }}>👩‍🍳</div>
+            <div style={{ width: 96, height: 96, borderRadius: 28, background: "rgba(255,255,255,0.18)", border: "1.5px solid rgba(255,255,255,0.28)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite" }}>
+              <ChefHat size={48} />
+            </div>
           </div>
+
           <h2 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 18, ...anim(100) }}>List Your<br /><em>Kitchen Today</em></h2>
           <p style={{ color: "rgba(255,255,255,0.78)", fontSize: 15, lineHeight: 1.8, marginBottom: 32, ...anim(180) }}>Reach subscribers who crave real, home-cooked food every day.</p>
         </div>
@@ -200,19 +214,28 @@ export default function RegisterProvider() {
           <form onSubmit={handleSubmit}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div style={{ position: "relative", ...anim(140) }}>
-                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>🏠</span>
+                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", zIndex: 1, display: 'flex', alignItems: 'center' }}>
+                  <Store size={18} />
+                </span>
                 <input name="businessName" placeholder="Business Name" value={form.businessName} onChange={handleChange} required onFocus={() => setFocused("businessName")} onBlur={() => setFocused("")} style={iStyle("businessName")} />
               </div>
 
+
               <div style={{ position: "relative", ...anim(165) }}>
-                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>👤</span>
+                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", zIndex: 1, display: 'flex', alignItems: 'center' }}>
+                  <User size={18} />
+                </span>
                 <input name="ownerName" placeholder="Owner Name" value={form.ownerName} onChange={handleChange} required onFocus={() => setFocused("ownerName")} onBlur={() => setFocused("")} style={iStyle("ownerName")} />
               </div>
 
+
               <div style={{ position: "relative", ...anim(190) }}>
-                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", fontSize: 18, pointerEvents: "none", zIndex: 1 }}>📋</span>
+                <span style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#8FA873", pointerEvents: "none", zIndex: 1, display: 'flex', alignItems: 'center' }}>
+                  <ClipboardList size={18} />
+                </span>
                 <input name="fssaiNumber" placeholder="FSSAI License Number" value={form.fssaiNumber} onChange={handleChange} required onFocus={() => setFocused("fssaiNumber")} onBlur={() => setFocused("")} style={iStyle("fssaiNumber")} />
               </div>
+
 
               {/* FSSAI Certificate Upload (IMAGE ONLY) */}
               <div style={{ ...anim(220) }}>
@@ -226,8 +249,11 @@ export default function RegisterProvider() {
                   {fssaiFile ? (
                     <img src={fssaiPreview} alt="cert" style={{ width: 44, height: 44, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
                   ) : (
-                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>📷</div>
+                    <div style={{ width: 44, height: 44, borderRadius: 10, background: "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: '#8FAE8E' }}>
+                      <Camera size={22} />
+                    </div>
                   )}
+
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 14, fontWeight: 800, color: "#5a7a50", margin: 0 }}>{fssaiFile ? fssaiFile.name : "Upload Image"}</p>
                     <p style={{ fontSize: 12, color: "#aaa", margin: 0 }}>PNG or JPG only · Max 5MB</p>
@@ -237,23 +263,30 @@ export default function RegisterProvider() {
               </div>
 
               <div style={{ position: "relative", ...anim(255) }}>
-                <span style={{ position: "absolute", left: 14, top: 15, fontSize: 18 }}>🗺️</span>
+                <span style={{ position: "absolute", left: 14, top: 15, color: "#8FA873", display: 'flex', alignItems: 'center' }}>
+                  <MapPin size={18} />
+                </span>
                 <textarea name="address" placeholder="Full kitchen address..." value={form.address} onChange={handleChange} required onFocus={() => setFocused("address")} onBlur={() => setFocused("")} style={{ ...iStyle("address"), padding: "14px 16px 14px 44px", minHeight: 90 }} />
               </div>
 
+
               <div style={{ ...anim(285), borderRadius: 14, border: "1.5px solid #ddddc8", background: "#fff", padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 800, color: "#2d3b2d", margin: 0 }}>{coords ? "GPS Captured ✓" : "Pin Location"}</p>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: "#2d3b2d", margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {coords ? <>GPS Captured <Check size={16} color="#4caf50" /></> : "Pin Location"}
+                  </p>
                   <p style={{ fontSize: 12, color: "#999", margin: 0 }}>Required for matching</p>
                 </div>
                 <button type="button" onClick={handleAutoLocate} disabled={locating} style={{ padding: "8px 16px", borderRadius: 10, border: "1.5px solid #8FAE8E", background: "rgba(143,174,142,0.1)", cursor: "pointer", fontSize: 13, fontWeight: 800, color: "#5a7a50" }}>
                   {locating ? "Locating..." : coords ? "Re-pin" : "Pin GPS"}
                 </button>
+
               </div>
 
-              <button type="submit" disabled={loading} className="btn-submit" style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", marginTop: 10 }}>
-                {loading ? "Processing..." : "Submit Application →"}
+              <button type="submit" disabled={loading} className="btn-submit" style={{ width: "100%", padding: "15px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 14, fontSize: 16, fontWeight: 700, cursor: "pointer", marginTop: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+                {loading ? "Processing..." : <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>Submit Application <ArrowRight size={18} /></span>}
               </button>
+
             </div>
           </form>
         </div>

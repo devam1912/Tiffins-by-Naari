@@ -135,7 +135,8 @@ export const ProviderMenu = () => {
             const meal = d[mealType];
             let newItems;
             if (item) {
-                newItems = meal.items.map(i => (i.id || i._id) === itemId ? { ...i, name, type, price, image } : i);
+                const targetId = item.id || item._id;
+                newItems = meal.items.map(i => (i.id || i._id) === targetId ? { ...i, name, type, price, image } : i);
             } else {
                 newItems = [...meal.items, { id: Date.now().toString(), name, type, price, image, status: "pending" }];
             }

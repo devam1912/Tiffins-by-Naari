@@ -147,7 +147,7 @@ export default function Login() {
                         fontSize: 32, margin: "0 auto 28px",
                         backdropFilter: "blur(8px)",
                         animation: "floatY 5s ease-in-out infinite",
-                    }}>🍽️</div>
+                    }}><img src="/logo.png" alt="Logo" style={{ width: "90%", height: "90%", objectFit: "contain" }} /></div>
 
                     <h2 style={{
                         fontFamily: "'Lora', serif",

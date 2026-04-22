@@ -63,7 +63,9 @@ export default function Sidebar({
       {/* Logo and Collapse Toggle */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", marginBottom: 36 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>🍽️</div>
+          <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, overflow: "hidden" }}>
+            <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          </div>
           {!collapsed && <div style={{ fontFamily: "'Lora',serif", fontWeight: 700, fontSize: 14, color: "#fff" }}>Tiffins-By-Naari</div>}
         </div>
         {/* Toggle Button */}

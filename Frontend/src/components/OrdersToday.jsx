@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderSubscriptions, markMealReady, fetchProviderOrders, updateOrderStatus } from "../store/providerSlice";
 import { X, ChevronRight, Info, Trash2, CheckCircle2, Clock, Package, Phone, User, ExternalLink } from "lucide-react";
@@ -132,7 +133,6 @@ export const OrdersToday = () => {
                                         <div style={{ fontSize: 10, fontWeight: 800, color: order.paymentStatus === "paid" ? "#2e7d32" : "#e65100", textTransform: "uppercase" }}>{order.paymentStatus}</div>
                                     </div>
                                     <div style={{ display: "flex", gap: 8 }}>
-                                        )}
                                         <button 
                                             onClick={() => setSelectedOrder(order)}
                                             style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "inherit", padding: "8px 12px", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 800 }}

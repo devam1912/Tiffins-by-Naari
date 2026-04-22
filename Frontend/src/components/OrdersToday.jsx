@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderSubscriptions, markMealReady, fetchProviderOrders, updateOrderStatus } from "../store/providerSlice";
+import { X, ChevronRight, Info, Trash2, CheckCircle2, Clock, Package, Phone, User, ExternalLink } from "lucide-react";
 
 export const OrdersToday = () => {
     const dispatch = useDispatch();
     const { subscriptions: allSubs, orders, loading, error } = useSelector((state) => state.provider);
     const [actionLoading, setActionLoading] = useState(null);
     const [activeSection, setActiveSection] = useState("all"); // all, subscription, onetime
+    const [selectedOrder, setSelectedOrder] = useState(null);
 
     useEffect(() => {
         dispatch(fetchProviderSubscriptions());
@@ -131,23 +132,19 @@ export const OrdersToday = () => {
                                         <div style={{ fontSize: 10, fontWeight: 800, color: order.paymentStatus === "paid" ? "#2e7d32" : "#e65100", textTransform: "uppercase" }}>{order.paymentStatus}</div>
                                     </div>
                                     <div style={{ display: "flex", gap: 8 }}>
-                                        {['preparing', 'ready', 'delivered'].includes(order.status) ? (
-                                             <select 
-                                                value={order.status}
-                                                onChange={(e) => handleUpdateStatus(order._id, e.target.value)}
-                                                disabled={actionLoading === order._id}
-                                                style={{ padding: "8px 12px", borderRadius: 10, border: "1px solid #eee", fontSize: 12, fontWeight: 700, background: "transparent", color: "inherit", outline: "none" }}
-                                            >
-                                                <option value="pending">Pending</option>
-                                                <option value="preparing">Preparing</option>
-                                                <option value="ready">Ready</option>
-                                                <option value="delivered">Delivered</option>
-                                                <option value="cancelled">Cancelled</option>
-                                            </select>
-                                        ) : (
-                                            <span style={{ padding: "6px 14px", borderRadius: 100, fontSize: 11, fontWeight: 800, background: "#f5f5f5", color: "#666", textTransform: "uppercase" }}>{order.status}</span>
                                         )}
-                                        {order.status === 'pending' && <button onClick={() => handleUpdateStatus(order._id, 'preparing')} style={{ background: "#8FAE8E", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer" }}>Accept Order</button>}
+                                        <button 
+                                            onClick={() => setSelectedOrder(order)}
+                                            style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)", color: "inherit", padding: "8px 12px", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 800 }}
+                                        >
+                                            <Info size={14} /> Details
+                                        </button>
+                                        {order.status === 'pending' && (
+                                            <>
+                                                <button onClick={() => handleUpdateStatus(order._id, 'preparing')} style={{ background: "#8FAE8E", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer" }}>Accept</button>
+                                                <button onClick={() => { if(window.confirm("Reject this order?")) handleUpdateStatus(order._id, 'cancelled'); }} style={{ background: "none", border: "1px solid #fecdd3", color: "#ef5350", padding: "8px 12px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer" }}><Trash2 size={14} /></button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -205,6 +202,77 @@ export const OrdersToday = () => {
                     </div>
                 )}
             </div>
+
+            {/* Order Details Modal */}
+            {selectedOrder && (
+                <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+                    <div onClick={() => setSelectedOrder(null)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)" }} />
+                    <div style={{ position: "relative", background: "#fff", width: "100%", maxWidth: 500, borderRadius: 28, padding: 36, boxShadow: "0 40px 80px rgba(0,0,0,0.2)", color: "#2d3b2d" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32 }}>
+                            <div>
+                                <h3 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, margin: 0 }}>Order Details</h3>
+                                <p style={{ fontSize: 12, color: "#9ca3af", marginTop: 4, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1 }}>ID: ORD-{selectedOrder._id.slice(-8).toUpperCase()}</p>
+                            </div>
+                            <button onClick={() => setSelectedOrder(null)} style={{ padding: 10, border: "none", background: "#f5f5f5", borderRadius: "50%", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+                            {/* Customer Info */}
+                            <div style={{ padding: "20px", background: "#f9fafb", borderRadius: 20, display: "flex", gap: 16 }}>
+                                <div style={{ width: 48, height: 48, borderRadius: 14, background: "#8FAE8E20", color: "#8FAE8E", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                                    <User size={24} />
+                                </div>
+                                <div>
+                                    <div style={{ fontWeight: 800, fontSize: 16 }}>{selectedOrder.user?.name}</div>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 4, color: "#6b7280", fontSize: 13 }}>
+                                        <Phone size={14} /> {selectedOrder.user?.phone || "N/A"}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Items */}
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 800, color: "#9ca3af", textTransform: "uppercase", letterSpacing: 1.5, display: "block", marginBottom: 16 }}>Order Items</label>
+                                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                                    {selectedOrder.items?.map((item, idx) => (
+                                        <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 12, borderBottom: "1px solid #f0f0f0" }}>
+                                            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                                                <div style={{ width: 36, height: 36, borderRadius: 10, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}>🍱</div>
+                                                <div>
+                                                    <div style={{ fontWeight: 700, fontSize: 14 }}>{item.name || "Menu Item"}</div>
+                                                    <div style={{ fontSize: 12, color: "#9ca3af" }}>Qty: {item.quantity || 1}</div>
+                                                </div>
+                                            </div>
+                                            <div style={{ fontWeight: 800, fontSize: 14 }}>₹{item.price * (item.quantity || 1)}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Total */}
+                            <div style={{ borderTop: "2px dashed #f0f0f0", paddingTop: 20, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <span style={{ fontWeight: 800, fontSize: 16 }}>Total Amount</span>
+                                <span style={{ fontWeight: 800, fontSize: 24, color: "#8FAE8E" }}>₹{selectedOrder.totalPrice}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 12, marginTop: 40 }}>
+                            <button onClick={() => setSelectedOrder(null)} 
+                                style={{ flex: 1, padding: 16, border: "2px solid #f0f0f0", borderRadius: 16, background: "none", fontWeight: 800, cursor: "pointer", color: "#6b7280" }}>
+                                Close
+                            </button>
+                            {selectedOrder.status === 'pending' && (
+                                <button onClick={() => { handleUpdateStatus(selectedOrder._id, 'preparing'); setSelectedOrder(null); }}
+                                    style={{ flex: 2, padding: 16, border: "none", borderRadius: 16, background: "#8FAE8E", color: "#fff", fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(143,174,142,0.3)" }}>
+                                    Accept & Start Preparing
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

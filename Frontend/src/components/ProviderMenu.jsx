@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send } from "lucide-react";
+import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderMenu, saveMenu, submitMenuForApproval } from "../store/providerSlice";
 import API from "../api/auth";
@@ -29,6 +29,10 @@ export const ProviderMenu = () => {
     const nameRef = useRef();
     const typeRef = useRef();
     const priceRef = useRef();
+    const fileInputRef = useRef();
+
+    const [isUploadingImage, setIsUploadingImage] = useState(false);
+    const [itemImage, setItemImage] = useState("");
 
     useEffect(() => {
         if (user) {
@@ -45,6 +49,28 @@ export const ProviderMenu = () => {
     const showToast = (msg, type = "success") => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
+    };
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append("image", file);
+
+        setIsUploadingImage(true);
+        try {
+            const res = await API.post("/tiffins/upload-image", formData, {
+                headers: { "Content-Type": "multipart/form-data" }
+            });
+            setItemImage(res.data.imageUrl);
+            showToast("Image uploaded successfully!");
+        } catch (err) {
+            console.error("Upload error:", err);
+            showToast(err.response?.data?.message || "Image upload failed", "error");
+        } finally {
+            setIsUploadingImage(false);
+        }
     };
 
     const currentDayData = weekMenu.find(d => d.day === selectedDay) || { ...EMPTY_DAY() };
@@ -100,6 +126,7 @@ export const ProviderMenu = () => {
         const name = nameRef.current?.value?.trim();
         const type = typeRef.current?.value || "Sabzi";
         const price = parseFloat(priceRef.current?.value) || 0;
+        const image = itemImage;
         if (!name) return;
 
         const { day, mealType, item } = editingItem;
@@ -108,16 +135,16 @@ export const ProviderMenu = () => {
             const meal = d[mealType];
             let newItems;
             if (item) {
-                const itemId = item.id || item._id;
-                newItems = meal.items.map(i => (i.id || i._id) === itemId ? { ...i, name, type, price } : i);
+                newItems = meal.items.map(i => (i.id || i._id) === itemId ? { ...i, name, type, price, image } : i);
             } else {
-                newItems = [...meal.items, { id: Date.now().toString(), name, type, price, status: "pending" }];
+                newItems = [...meal.items, { id: Date.now().toString(), name, type, price, image, status: "pending" }];
             }
             return { ...d, [mealType]: { ...meal, items: newItems } };
         }));
         showToast(item ? "Item updated locally" : "Item added locally — save to sync");
         setIsModalOpen(false);
         setEditingItem(null);
+        setItemImage("");
     };
 
     const menuStatus = {
@@ -144,8 +171,12 @@ export const ProviderMenu = () => {
         return (
             <div key={item.id || item._id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 40, height: 40, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <UtensilsCrossed size={16} color={item.status === "pending" ? "#f59e0b" : "#d1d5db"} />
+                    <div style={{ width: 60, height: 60, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                        {item.image ? (
+                            <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        ) : (
+                            <UtensilsCrossed size={18} color={item.status === "pending" ? "#f59e0b" : "#d1d5db"} />
+                        )}
                     </div>
                     <div>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -163,7 +194,7 @@ export const ProviderMenu = () => {
                 <div style={{ display: "flex", gap: 6 }}>
                     {!isApproved && (
                         <>
-                            <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setIsModalOpen(true); }}
+                            <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setItemImage(item.image || ""); setIsModalOpen(true); }}
                                 style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
                                 <Edit3 size={16} />
                             </button>
@@ -258,7 +289,7 @@ export const ProviderMenu = () => {
                                             style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
                                         />
                                     </div>
-                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "lunch" }); setIsModalOpen(true); }}
+                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "lunch" }); setItemImage(""); setIsModalOpen(true); }}
                                         style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
                                         <Plus size={15} /> Add
                                     </button>
@@ -290,7 +321,7 @@ export const ProviderMenu = () => {
                                             style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
                                         />
                                     </div>
-                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "dinner" }); setIsModalOpen(true); }}
+                                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "dinner" }); setItemImage(""); setIsModalOpen(true); }}
                                         style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 14px", border: "none", background: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 13 }}>
                                         <Plus size={15} /> Add
                                     </button>
@@ -359,7 +390,7 @@ export const ProviderMenu = () => {
                             <h3 style={{ fontFamily: "'Lora', serif", fontSize: 22, fontWeight: 700, color: "inherit", margin: 0 }}>
                                 {editingItem?.item ? "Edit Item" : "New Menu Item"}
                             </h3>
-                            <button onClick={() => setIsModalOpen(false)} style={{ padding: 8, border: "none", background: "#f5f5f5", borderRadius: "50%", cursor: "pointer" }}>
+                            <button onClick={() => { setIsModalOpen(false); setItemImage(""); }} style={{ padding: 8, border: "none", background: "#f5f5f5", borderRadius: "50%", cursor: "pointer" }}>
                                 <X size={18} />
                             </button>
                         </div>
@@ -390,6 +421,58 @@ export const ProviderMenu = () => {
                                     </div>
                                 </div>
                             </div>
+                            </div>
+                            
+                            <div>
+                                <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Image</label>
+                                <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
+                                    <div 
+                                        onClick={() => fileInputRef.current?.click()}
+                                        style={{ 
+                                            width: 100, height: 100, borderRadius: 16, border: "2px dashed #f0f0f0", 
+                                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", 
+                                            cursor: "pointer", position: "relative", overflow: "hidden", background: "#f9fafb",
+                                            transition: "all 0.2s"
+                                        }}
+                                        onMouseEnter={e => e.currentTarget.style.border = "2px dashed #8FAE8E"}
+                                        onMouseLeave={e => e.currentTarget.style.border = "2px dashed #f0f0f0"}
+                                    >
+                                        {isUploadingImage ? (
+                                            <Loader2 size={24} className="animate-spin" color="#8FAE8E" />
+                                        ) : itemImage ? (
+                                            <img src={itemImage} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                        ) : (
+                                            <>
+                                                <ImageIcon size={24} color="#d1d5db" />
+                                                <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, marginTop: 4 }}>Add Photo</span>
+                                            </>
+                                        )}
+                                        {itemImage && !isUploadingImage && (
+                                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
+                                                <Edit3 size={20} color="#fff" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 8px 0", lineHeight: 1.4 }}>Upload a clear photo of the meal. Max size 2MB. (JPG, PNG)</p>
+                                        <button 
+                                            type="button"
+                                            onClick={() => fileInputRef.current?.click()}
+                                            style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", color: "#374151" }}
+                                        >
+                                            {itemImage ? "Change Image" : "Choose File"}
+                                        </button>
+                                        <input 
+                                            type="file" 
+                                            ref={fileInputRef} 
+                                            onChange={handleImageUpload} 
+                                            accept="image/*" 
+                                            style={{ display: "none" }} 
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
                                 <div style={{ padding: "12px 16px", border: "2px solid #d1fae5", borderRadius: 14, background: "#ecfdf5", display: "flex", alignItems: "center", gap: 8 }}>
@@ -399,8 +482,8 @@ export const ProviderMenu = () => {
                             </div>
                         </div>
 
-                        <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
-                            <button onClick={() => setIsModalOpen(false)}
+                        <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
+                            <button onClick={() => { setIsModalOpen(false); setItemImage(""); }}
                                 style={{ flex: 1, padding: 14, border: "2px solid #e5e7eb", borderRadius: 14, background: "none", fontWeight: 800, cursor: "pointer", color: "#6b7280" }}>
                                 Cancel
                             </button>

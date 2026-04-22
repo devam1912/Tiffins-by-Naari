@@ -136,11 +136,11 @@ export const ProviderDashboard = () => {
             <aside style={{
                 width: collapsed ? 80 : 280,
                 minHeight: "100vh",
-                background: T.sidebarBg, transition: "background 0.4s ease",
                 display: "flex", flexDirection: "column",
                 padding: "36px 24px",
                 position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
-                transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
+                transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), background 0.4s ease",
+                background: T.sidebarBg,
                 boxShadow: "6px 0 44px rgba(50,80,40,0.15)",
             }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, justifyContent: collapsed ? "center" : "flex-start" }}>

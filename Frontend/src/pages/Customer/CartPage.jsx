@@ -5,13 +5,15 @@ import axios from "axios";
 import API from "../../api/auth";
 import { toast } from "sonner";
 import { fetchCart, removeItemFromCart, addItemToCart, clearCart } from "../../store/cartSlice";
-import { logout } from "../../store/authSlice";
+import { logout, fetchProfile } from "../../store/authSlice";
 import Sidebar from "../../components/Customer/Sidebar";
+import { useDialog } from "../../context/DialogContext";
 
 
 const CartPage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { showAlert, showConfirm } = useDialog();
   const { token, user } = useSelector((s) => s.auth);
   const { items, timeSlot, totalPrice, isLoading } = useSelector((s) => s.cart);
 
@@ -72,6 +74,7 @@ const CartPage = () => {
 
       if (!razorpayOrderId) {
         toast.success("Order placed successfully using wallet!");
+        dispatch(fetchProfile());
         dispatch(clearCart());
         navigate("/order-history");
         return;
@@ -93,6 +96,7 @@ const CartPage = () => {
             });
             
             toast.success("Payment successful! Order placed.");
+            dispatch(fetchProfile());
             dispatch(clearCart());
             navigate("/order-history");
           } catch (err) {
@@ -162,7 +166,14 @@ const CartPage = () => {
                   <span style={{ fontSize: 13, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5 }}>
                     {timeSlot?.toUpperCase()} DELIVERY
                   </span>
-                  <button onClick={() => dispatch(clearCart())} style={{ background: "none", border: "none", color: "#ba6666", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                  <button 
+                    onClick={async () => {
+                      if (await showConfirm("Clear Cart?", "Are you sure you want to remove all items from your cart?")) {
+                        dispatch(clearCart());
+                      }
+                    }} 
+                    style={{ background: "none", border: "none", color: "#ba6666", fontSize: 12, fontWeight: 700, cursor: "pointer" }}
+                  >
                     Clear All
                   </button>
                 </div>

@@ -103,8 +103,8 @@ export default function Signup() {
     const p = form.password;
     if (!p) return null;
     const score = [p.length >= 8, HAS_UPPER.test(p), HAS_NUM.test(p)].filter(Boolean).length;
-    if (score === 1) return { label: "Weak",   color: "#ef5350", width: "28%" };
-    if (score === 2) return { label: "Fair",   color: "#ff9800", width: "60%" };
+    if (score <= 1) return { label: "Weak",   color: "#ef5350", width: "33%" };
+    if (score === 2) return { label: "Fair",   color: "#ff9800", width: "66%" };
     return             { label: "Strong", color: "#4caf50", width: "100%" };
   })();
 
@@ -254,7 +254,28 @@ export default function Signup() {
                     <span style={{ fontSize: 12, color: strength.color, fontWeight: 700, marginTop: 4, display: "block" }}>{strength.label} password</span>
                   </div>
                 )}
-                <FieldHint show={touched.password && !passwordOk} message="Password must be 8+ chars, include an uppercase letter and a number" />
+                <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+                  {[
+                    { label: "At least 8 characters", met: form.password.length >= 8 },
+                    { label: "One uppercase letter", met: HAS_UPPER.test(form.password) },
+                    { label: "One number", met: HAS_NUM.test(form.password) },
+                  ].map((c, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{
+                        width: 14, height: 14, borderRadius: "50%",
+                        border: `1.5px solid ${c.met ? "#4caf50" : "#bbb"}`,
+                        background: c.met ? "#4caf50" : "transparent",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        transition: "all 0.3s ease"
+                      }}>
+                        {c.met && <svg width="8" height="8" viewBox="0 0 10 10" fill="none"><path d="M2 5l2 2 4-4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                      </div>
+                      <span style={{ fontSize: 12, color: c.met ? "#2d3b2d" : "#999", fontWeight: c.met ? 700 : 500, transition: "all 0.3s ease" }}>
+                        {c.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Confirm password */}

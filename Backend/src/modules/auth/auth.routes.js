@@ -1,5 +1,5 @@
 const express = require("express");
-const { registerUser, loginUser, sendOTP, verifyOTP, updateProfile } = require("./auth.controller");
+const { registerUser, loginUser, sendOTP, verifyOTP, updateProfile, getMe } = require("./auth.controller");
 const { protect, authorize } = require("../../middlewares/auth.middleware");
 
 
@@ -10,5 +10,6 @@ router.post("/login", loginUser);
 router.post("/send-otp", sendOTP);
 router.post("/verify-otp", verifyOTP);
 router.patch("/update", protect, updateProfile);
+router.get("/me", protect, getMe);
 
 module.exports = router;

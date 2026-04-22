@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { approveMenu, rejectMenu } from "../store/adminSlice";
+import { useDialog } from "../context/DialogContext";
 import API from "../api/auth";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -41,6 +42,7 @@ function RejectionModal({ menu, onClose, onReject, loading }) {
 
 export const AdminMenu = ({ menus = [] }) => {
     const dispatch = useDispatch();
+    const { showAlert } = useDialog();
     const [searchTerm, setSearchTerm] = useState("");
     const [actionLoading, setActionLoading] = useState({});
     const [selected, setSelected] = useState(null); // expanded menu
@@ -55,7 +57,7 @@ export const AdminMenu = ({ menus = [] }) => {
         setActionLoading(p => ({ ...p, [menuId]: true }));
         try {
             await dispatch(approveMenu(menuId)).unwrap();
-        } catch (e) { alert(e || "Approve failed"); }
+        } catch (e) { showAlert("Error", e || "Approve failed"); }
         finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
     };
 
@@ -66,7 +68,7 @@ export const AdminMenu = ({ menus = [] }) => {
         try {
             await dispatch(rejectMenu({ menuId, remark })).unwrap();
             setRejectTarget(null);
-        } catch (e) { alert(e || "Reject failed"); }
+        } catch (e) { showAlert("Error", e || "Reject failed"); }
         finally { setActionLoading(p => ({ ...p, [menuId]: false })); }
     };
 

@@ -3,11 +3,13 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
-import { logout } from "../../store/authSlice";
+import { logout, fetchProfile } from "../../store/authSlice";
+import { useDialog } from "../../context/DialogContext";
 
 export default function CustomerSubscriptions() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { showAlert } = useDialog();
 
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
@@ -91,7 +93,7 @@ export default function CustomerSubscriptions() {
       await axios.patch(`http://localhost:5000/api/subscriptions/${id}/resume`, {}, { headers });
       await fetchSubscriptions();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to resume subscription");
+      showAlert("Resume Error", err.response?.data?.message || "Failed to resume subscription");
     } finally {
       setActionLoading(false);
     }
@@ -99,7 +101,7 @@ export default function CustomerSubscriptions() {
 
   const handlePauseSubmit = async () => {
     if (!pauseStart || !pauseEnd) {
-      alert("Please select both start and end dates.");
+      showAlert("Incomplete Data", "Please select both start and end dates.");
       return;
     }
     try {
@@ -112,7 +114,7 @@ export default function CustomerSubscriptions() {
       setModalType(null);
       await fetchSubscriptions();
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to pause subscription");
+      showAlert("Pause Error", err.response?.data?.message || "Failed to pause subscription");
     } finally {
       setActionLoading(false);
     }
@@ -125,8 +127,9 @@ export default function CustomerSubscriptions() {
       await axios.patch(`http://localhost:5000/api/subscriptions/${selectedSub}/cancel`, {}, { headers });
       setModalType(null);
       await fetchSubscriptions();
+      dispatch(fetchProfile()); // Refresh wallet balance after refund
     } catch (err) {
-      alert(err.response?.data?.message || "Failed to cancel subscription");
+      showAlert("Cancel Error", err.response?.data?.message || "Failed to cancel subscription");
     } finally {
       setActionLoading(false);
     }

@@ -11,6 +11,7 @@ import {
   fetchProviderPayoutHistory
 } from "../../store/adminSlice";
 import API from "../../api/auth";
+import { useDialog } from "../../context/DialogContext";
 
 // Internal Components
 import { AdminUsers } from "../../components/AdminUsers";
@@ -245,6 +246,7 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { showAlert } = useDialog();
   
   // UI & Data State
   const [loaded, setLoaded] = useState(false);
@@ -299,7 +301,7 @@ export default function AdminDashboard() {
       await dispatch(approveProvider(approveTarget._id)).unwrap();
       setApproveTarget(null);
     } catch (err) {
-      alert(err || "Approval failed.");
+      showAlert("Error", err || "Approval failed.");
     } finally {
       setApproving(false);
     }
@@ -312,7 +314,7 @@ export default function AdminDashboard() {
       await dispatch(rejectProvider({ providerId: rejectTarget._id, reason })).unwrap();
       setRejectTarget(null);
     } catch (err) {
-      alert(err || "Rejection failed.");
+      showAlert("Error", err || "Rejection failed.");
     } finally {
       setRejecting(false);
     }
@@ -324,9 +326,9 @@ export default function AdminDashboard() {
     try {
       await dispatch(processPayout({ providerId: payoutTarget.providerId, amount, description })).unwrap();
       setPayoutTarget(null);
-      alert("Payout processed successfully!");
+      showAlert("Success", "Payout processed successfully!");
     } catch (err) {
-      alert(err || "Payout failed.");
+      showAlert("Error", err || "Payout failed.");
     } finally {
       setPayoutLoading(false);
     }
@@ -338,9 +340,9 @@ export default function AdminDashboard() {
     try {
       await dispatch(creditProviderWallet({ providerId: adjustmentTarget.providerId, amount, description })).unwrap();
       setAdjustmentTarget(null);
-      alert("Credit adjustment successful!");
+      showAlert("Success", "Credit adjustment successful!");
     } catch (err) {
-      alert(err || "Adjustment failed.");
+      showAlert("Error", err || "Adjustment failed.");
     } finally {
       setPayoutLoading(false);
     }
@@ -445,10 +447,10 @@ export default function AdminDashboard() {
 
       <aside style={{
         width: collapsed ? 80 : 280, minHeight: "100vh",
-        background: T.sidebarBg, transition: "background 0.4s ease",
         display: "flex", flexDirection: "column", padding: "36px 24px",
         position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
-        transition: "width 0.35s cubic-bezier(.22,.68,0,1.2)",
+        transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), background 0.4s ease",
+        background: T.sidebarBg,
         boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>

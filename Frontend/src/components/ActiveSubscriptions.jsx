@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderSubscriptions, markMealReady } from "../store/providerSlice";
+import { useDialog } from "../context/DialogContext";
 import API from "../api/auth";
 
 export const ActiveSubscriptions = () => {
     const dispatch = useDispatch();
+    const { showAlert } = useDialog();
     const { subscriptions, loading, error } = useSelector((state) => state.provider);
     const [searchQuery, setSearchQuery] = useState("");
     const [actionLoading, setActionLoading] = useState(null);
@@ -19,7 +21,7 @@ export const ActiveSubscriptions = () => {
         try {
             await dispatch(markMealReady(subId)).unwrap();
         } catch (err) {
-            alert(err || "Failed to mark meal ready");
+            showAlert("Error", err || "Failed to mark meal ready");
         } finally {
             setActionLoading(null);
         }

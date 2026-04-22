@@ -5,6 +5,7 @@ import API from "../../api/auth";
 import { toast } from "sonner";
 import { addItemToCart, fetchCart } from "../../store/cartSlice";
 import { fetchProfile } from "../../store/authSlice";
+import { useDialog } from "../../context/DialogContext";
 
 /* ─────────────────────────────────────────
    SUCCESS OVERLAY
@@ -59,6 +60,7 @@ const ProviderDetailPage = () => {
     const tiffin = location.state?.tiffin;
     const { token, user } = useSelector(s => s.auth);
     const { items: cartItems, timeSlot: cartSlot, isLoading: cartLoading } = useSelector(s => s.cart);
+    const { showConfirm } = useDialog();
 
     const [planType, setPlanType] = useState("");
     const [timeSlot, setTimeSlot] = useState("");
@@ -197,9 +199,11 @@ const ProviderDetailPage = () => {
 
         // Logic check: if cart already has items from another slot
         if (cartItems.length > 0 && cartSlot !== slot) {
-            if (!window.confirm(`Your cart contains ${cartSlot} items. Adding this will clear your current cart. Continue?`)) {
-                return;
-            }
+            const confirmed = await showConfirm(
+                "Clear Cart?",
+                `Your cart contains ${cartSlot} items. Adding this will clear your current cart. Continue?`
+            );
+            if (!confirmed) return;
         }
 
         try {

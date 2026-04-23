@@ -181,7 +181,7 @@ export default function Login() {
                     {[
                         { icon: <Home size={22} />, text: "Authentic home kitchens" },
                         { icon: <Leaf size={22} />, text: "Healthy, wholesome meals" },
-                        { icon: <Truck size={22} />, text: "Fresh daily delivery" },
+                        { icon: <Truck size={22} />, text: "Fresh daily pickup" },
                     ].map(({ icon, text }, i) => (
                         <div key={text} style={{
                             display: "flex", alignItems: "center", gap: 12,

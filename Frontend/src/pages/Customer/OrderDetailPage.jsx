@@ -137,7 +137,7 @@ export default function OrderDetailPage() {
       confirmed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Confirmed", icon: <CheckCircle2 size={28} /> },
       preparing: { bg: "#e3f2fd", color: "#1565c0",  label: "Preparing", icon: <ChefHat size={28} /> },
       ready:     { bg: "#f3e5f5", color: "#7b1fa2",  label: "Ready",     icon: <Gift size={28} /> },
-      completed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Delivered", icon: <Truck size={28} /> },
+      completed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Ready for Pickup", icon: <Truck size={28} /> },
       cancelled: { bg: "#ffebee", color: "#c62828",  label: "Cancelled", icon: <XCircle size={28} /> },
     };
     return map[status] || { bg: "#f5f5f5", color: "#616161", label: status, icon: <ClipboardList size={28} /> };
@@ -261,10 +261,10 @@ export default function OrderDetailPage() {
                 );
               })()}
 
-              {/* Delivery Progress (only for non-cancelled orders) */}
+              {/* Pickup Progress (only for non-cancelled orders) */}
               {order.status !== "cancelled" && (
                 <div style={{ background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", borderRadius: 22, padding: "24px 26px", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 4px 20px rgba(143,174,142,0.08)" }}>
-                  <h3 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 24 }}>Delivery Progress</h3>
+                  <h3 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 24 }}>Pickup Progress</h3>
                   <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
                     {statusSteps.map((step, idx) => {
                       const isDone = idx <= currentStepIndex;
@@ -341,7 +341,7 @@ export default function OrderDetailPage() {
                     <span>₹{order.totalPrice}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#888", fontSize: 14, fontWeight: 600 }}>
-                    <span>Delivery Fee</span>
+                    <span>Pickup Fee</span>
                     <span style={{ color: "#5a7a50", fontWeight: 700 }}>FREE</span>
                   </div>
                   {order.paymentMethod === "wallet" && (
@@ -365,14 +365,14 @@ export default function OrderDetailPage() {
                 </div>
               </div>
 
-              {/* Delivery Info */}
+              {/* Pickup Info */}
               <div style={{ background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", borderRadius: 22, padding: "24px", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 4px 20px rgba(143,174,142,0.08)" }}>
-                <h3 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 16 }}>Delivery Info</h3>
+                <h3 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 16 }}>Pickup Info</h3>
                 {[
                   { icon: <Home size={18} />, label: "Kitchen", value: order.provider?.businessName || "—" },
                   { icon: <ChefHat size={18} />, label: "Chef", value: order.provider?.ownerName || "—" },
                   { icon: order.timeSlot === "lunch" ? <Sun size={18} /> : <Moon size={18} />, label: "Slot", value: order.timeSlot === "lunch" ? "Lunch (12–2 PM)" : "Dinner (7–9 PM)" },
-                  { icon: <Calendar size={18} />, label: "Delivery Date", value: formatDate(order.date || order.createdAt) },
+                  { icon: <Calendar size={18} />, label: "Pickup Date", value: formatDate(order.date || order.createdAt) },
                   { icon: <Clock size={18} />, label: "Ordered At", value: formatTime(order.createdAt) },
                 ].map(({ icon, label, value }) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid rgba(0,0,0,0.04)" }}>

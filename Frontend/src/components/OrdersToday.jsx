@@ -179,7 +179,7 @@ export const OrdersToday = ({ theme }) => {
                                             <button onClick={() => handleUpdateStatus(order._id, 'ready')} style={{ background: "#6366f1", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.2)" }}>Mark Ready</button>
                                         )}
                                         {order.status === 'ready' && (
-                                            <button onClick={() => handleUpdateStatus(order._id, 'completed')} style={{ background: "#0ea5e9", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer", boxShadow: "0 4px 12px rgba(14,165,233,0.2)" }}>Mark Completed</button>
+                                            <button onClick={() => handleUpdateStatus(order._id, 'completed')} style={{ background: "#0ea5e9", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer", boxShadow: "0 4px 12px rgba(14,165,233,0.2)" }}>Mark Picked Up</button>
                                         )}
                                     </div>
                                 </div>
@@ -320,7 +320,7 @@ export const OrdersToday = ({ theme }) => {
                             {selectedOrder.status === 'ready' && (
                                 <button onClick={() => { handleUpdateStatus(selectedOrder._id, 'completed'); setSelectedOrder(null); }}
                                     style={{ flex: 2, minWidth: 150, padding: 16, border: "none", borderRadius: 16, background: "#0ea5e9", color: "#fff", fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(14,165,233,0.3)" }}>
-                                    Mark as Completed (Delivered)
+                                    Mark as Completed (Picked Up)
                                 </button>
                             )}
                         </div>

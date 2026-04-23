@@ -249,7 +249,7 @@ export default function BrowseTiffins() {
                 Find Tiffins <em>Near You</em>
               </h1>
               <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 16, fontWeight: 600 }}>
-                Home-cooked, pure veg meals delivered fresh to your door
+                Home-cooked, pure veg meals ready for pickup fresh from home kitchens
               </p>
             </div>
 

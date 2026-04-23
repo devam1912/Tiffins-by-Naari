@@ -436,7 +436,7 @@ Amount Paid: ₹${order.amountPaid}
 Payment Status: ${order.paymentStatus}
 Order Status: ${order.status}
 
-Your delicious tiffin will be delivered on time 🍱
+Your delicious tiffin will be ready for pickup on time 🍱
 
 Thank you for choosing us ❤️
     `

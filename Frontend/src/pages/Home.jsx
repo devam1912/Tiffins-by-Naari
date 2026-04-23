@@ -114,7 +114,7 @@ export default function Home() {
   const steps = [
     { number: "1", icon: <Search size={44} />, title: "Pick a Kitchen", desc: "Browse home chefs based on cuisine, distance, and reviews.", delay: 0 },
     { number: "2", icon: <ClipboardList size={44} />, title: "Choose a Plan", desc: "Select daily, weekly, or monthly meal plans that fit your life.", delay: 120 },
-    { number: "3", icon: <Utensils size={44} />, title: "Enjoy Daily", desc: "Fresh, home-cooked goodness delivered to your door every single day.", delay: 240 },
+    { number: "3", icon: <Utensils size={44} />, title: "Enjoy Daily", desc: "Fresh, home-cooked goodness ready for pickup every single day.", delay: 240 },
   ];
 
   const whyPoints = [
@@ -242,7 +242,7 @@ export default function Home() {
             ...h(100),
           }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.6s ease-in-out infinite" }} />
-            <HomeIcon size={14} style={{ marginRight: 4 }} /> Home-cooked &amp; fresh · Delivered daily in your city
+            <HomeIcon size={14} style={{ marginRight: 4 }} /> Home-cooked &amp; fresh · Ready for pickup daily in your city
           </div>
 
           <h1 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(44px, 6vw, 76px)", fontWeight: 700, lineHeight: 1.08, color: "#2d3b2d", marginBottom: 24, ...h(200) }}>
@@ -282,7 +282,7 @@ export default function Home() {
             style={{ width: 420, height: 480, borderRadius: 32, objectFit: "cover", boxShadow: "0 32px 80px rgba(100,130,80,0.22)" }}
           />
 
-          {/* Only one floating badge — delivery */}
+          {/* Only one floating badge — pickup */}
           <div className="hero-badge-float" style={{
             position: "absolute", bottom: "12%", left: "0%",
             background: "#fff", borderRadius: 18, padding: "12px 18px",
@@ -431,7 +431,7 @@ export default function Home() {
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 36 }}>
                   {[
-                    { icon: <ClipboardList size={18} />, text: "Set your own menu and delivery schedule" },
+                    { icon: <ClipboardList size={18} />, text: "Set your own menu and pickup schedule" },
                     { icon: <IndianRupee size={18} />, text: "Earn consistently through subscriptions" },
                     { icon: <Handshake size={18} />, text: "We handle discovery — you focus on cooking" },
                   ].map(({ icon, text }) => (

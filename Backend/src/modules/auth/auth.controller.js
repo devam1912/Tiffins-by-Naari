@@ -197,19 +197,7 @@ const updateProfile = async (req, res) => {
 
     res.status(200).json({
       message: "Profile updated successfully",
-<<<<<<< HEAD
       user: formatUserResponse(user)
-=======
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        address: user.address,
-        role: user.role,
-        walletBalance: user.walletBalance
-      }
->>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
     });
 
   } catch (err) {
@@ -217,27 +205,16 @@ const updateProfile = async (req, res) => {
   }
 };
 
-<<<<<<< HEAD
 const getMe = async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select("-password");
-    res.status(200).json(formatUserResponse(user));
-=======
-const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.status(200).json(user);
->>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
+    res.status(200).json(formatUserResponse(user));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-<<<<<<< HEAD
 module.exports = { registerUser, loginUser, generateOTP, sendOTP, verifyOTP, updateProfile, getMe };
-=======
-module.exports = { registerUser, loginUser, generateOTP, sendOTP, verifyOTP, updateProfile, getProfile };
->>>>>>> e64a4d2cf07645efe503643237541708e9a4380d

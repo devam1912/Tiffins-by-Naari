@@ -337,7 +337,7 @@ export default function CustomerDashboard() {
               Discover Fresh Home-Cooked<br /><em>Meals Near You</em>
             </h2>
             <p style={{ color: "rgba(255,255,255,0.75)", fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>
-              Browse from <strong style={{ color: "#fff" }}>{stats.tiffins}</strong> home kitchens in <strong>{location.address.split(',')[0]}</strong> — wholesome, authentic and delivered fresh.
+              Browse from <strong style={{ color: "#fff" }}>{stats.tiffins}</strong> home kitchens in <strong>{location.address.split(',')[0]}</strong> — wholesome, authentic and ready for pickup.
             </p>
             <button
               className="quick-btn"

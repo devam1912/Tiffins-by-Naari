@@ -75,7 +75,7 @@ const CartPage = () => {
 
   const handlePlaceOrder = async () => {
     if (!orderDate) {
-      toast.error("Please select a delivery date");
+      toast.error("Please select a pickup date");
       return;
     }
 
@@ -158,7 +158,7 @@ const CartPage = () => {
           <h1 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: "#2d3b2d", marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12 }}>
             Your Cart <ShoppingCart size={32} />
           </h1>
-          <p style={{ color: "#7a7a6a", marginBottom: 32 }}>Review your items and schedule your delivery.</p>
+          <p style={{ color: "#7a7a6a", marginBottom: 32 }}>Review your items and schedule your pickup.</p>
         </div>
 
         {items.length === 0 ? (
@@ -179,7 +179,7 @@ const CartPage = () => {
               <div style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(20px)", borderRadius: 28, padding: "24px", border: "1.5px solid rgba(143,174,142,0.15)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20, borderBottom: "1px solid rgba(0,0,0,0.05)", paddingBottom: 12 }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5 }}>
-                    {timeSlot?.toUpperCase()} DELIVERY
+                    {timeSlot?.toUpperCase()} PICKUP
                   </span>
                   <button 
                     onClick={async () => {
@@ -238,7 +238,7 @@ const CartPage = () => {
                 )}
 
                 <div style={{ marginBottom: 24 }}>
-                  <label style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Delivery Date</label>
+                  <label style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Pickup Date</label>
                   <input 
                     type="date" 
                     value={orderDate}
@@ -254,7 +254,7 @@ const CartPage = () => {
                     <span>₹{totalPrice}</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", color: "#8a8a7a", fontSize: 14 }}>
-                    <span>Delivery Fee</span>
+                    <span>Pickup Fee</span>
                     <span>FREE</span>
                   </div>
                   <div style={{ height: 1.5, background: "#f0f0e0", margin: "8px 0" }} />

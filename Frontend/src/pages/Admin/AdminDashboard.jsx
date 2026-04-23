@@ -599,7 +599,7 @@ export default function AdminDashboard() {
                         <td style={{ padding: "16px 12px", fontSize: 14 }}>{o.user?.name || "Anonymous"}</td>
                         <td style={{ padding: "16px 12px", fontSize: 14, fontWeight: 800 }}>₹{o.totalPrice}</td>
                         <td style={{ padding: "16px 12px", textAlign: "right" }}>
-                           <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: o.status === 'delivered' ? '#e8f5e9' : '#fff3e0', color: o.status === 'delivered' ? '#2e7d32' : '#ef6c00' }}>{o.status?.toUpperCase() || "PENDING"}</span>
+                           <span style={{ padding: "4px 10px", borderRadius: 8, fontSize: 10, fontWeight: 800, background: o.status === 'completed' ? '#e8f5e9' : '#fff3e0', color: o.status === 'completed' ? '#2e7d32' : '#ef6c00' }}>{o.status === 'completed' ? 'PICKED UP' : (o.status?.toUpperCase() || "PENDING")}</span>
                         </td>
                       </tr>
                     ))}

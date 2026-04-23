@@ -172,7 +172,7 @@ export default function Signup() {
             Join the<br /><em>Naari Family</em>
           </h2>
           <p style={{ color: "rgba(255,255,255,0.8)", fontSize: 15, lineHeight: 1.7, marginBottom: 36 }}>
-            Start your journey to authentic, home-cooked goodness. Fresh and wholesome, delivered with love every day.
+            Start your journey to authentic, home-cooked goodness. Fresh and wholesome, ready for pickup every day.
           </p>
           {["Create your free account", "Browse home kitchens near you", "Subscribe & enjoy daily meals"].map((text, i) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 14, textAlign: "left" }}>

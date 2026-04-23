@@ -58,7 +58,7 @@ export default function NotificationPage() {
           id: orderId,
           type: "order",
           status: "info",
-          title: o.status === "completed" ? "Order Delivered!" : "Order Placed",
+          title: o.status === "completed" ? "Ready for Pickup!" : "Order Placed",
           message: `Your order from '${o.provider?.businessName || "Kitchen"}' is ${o.status}.`,
           time: new Date(o.updatedAt || o.createdAt).getTime(),
           displayTime: new Date(o.updatedAt || o.createdAt).toLocaleString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),

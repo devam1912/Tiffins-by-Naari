@@ -65,7 +65,7 @@ export const OrdersToday = ({ theme }) => {
         return true;
     });
 
-    const pendingOrders = orders.filter(o => o.status !== "delivered" && o.status !== "cancelled");
+    const pendingOrders = orders.filter(o => o.status !== "completed" && o.status !== "cancelled");
 
     const lunchSubs = subscriptionMeals.filter(s => s.timeSlot === "lunch");
     const dinnerSubs = subscriptionMeals.filter(s => s.timeSlot === "dinner");
@@ -144,18 +144,42 @@ export const OrdersToday = ({ theme }) => {
                                         <div style={{ fontWeight: 800, fontSize: 16, color: T.text }}>₹{order.totalPrice}</div>
                                         <div style={{ fontSize: 10, fontWeight: 800, color: order.paymentStatus === "paid" ? "#2e7d32" : "#e65100", textTransform: "uppercase" }}>{order.paymentStatus}</div>
                                     </div>
-                                    <div style={{ display: "flex", gap: 8 }}>
+                                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
                                         <button 
                                             onClick={() => setSelectedOrder(order)}
                                             style={{ background: T.card || "rgba(255,255,255,0.08)", border: `1px solid ${T.border}`, color: T.text, padding: "8px 12px", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 800 }}
                                         >
                                             <Info size={14} /> Details
                                         </button>
-                                        {order.status === 'pending' && (
+
+                                        {/* Status Badge */}
+                                        <div style={{ 
+                                            padding: "6px 12px", borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1,
+                                            background: order.status === 'pending' ? 'rgba(245, 158, 11, 0.1)' : 
+                                                        order.status === 'confirmed' ? 'rgba(34, 197, 94, 0.1)' :
+                                                        order.status === 'preparing' ? 'rgba(99, 102, 241, 0.1)' :
+                                                        order.status === 'ready' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(156, 163, 175, 0.1)',
+                                            color: order.status === 'pending' ? '#f59e0b' : 
+                                                   order.status === 'confirmed' ? '#22c55e' :
+                                                   order.status === 'preparing' ? '#6366f1' :
+                                                   order.status === 'ready' ? '#0ea5e9' : '#9ca3af',
+                                            border: `1px solid ${order.status === 'preparing' ? 'rgba(99, 102, 241, 0.2)' : 'transparent'}`
+                                        }}>
+                                            {order.status}
+                                        </div>
+
+                                        {/* Action Buttons based on status */}
+                                        {(order.status === 'pending' || order.status === 'confirmed') && (
                                             <>
-                                                <button onClick={() => handleUpdateStatus(order._id, 'preparing')} style={{ background: "#8FAE8E", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer" }}>Accept</button>
+                                                <button onClick={() => handleUpdateStatus(order._id, 'preparing')} style={{ background: "#8FAE8E", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer", boxShadow: "0 4px 12px rgba(143,174,142,0.2)" }}>Accept</button>
                                                 <button onClick={() => { if(window.confirm("Reject this order?")) handleUpdateStatus(order._id, 'cancelled'); }} style={{ background: "none", border: "1px solid #fecdd3", color: "#ef5350", padding: "8px 12px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer" }}><Trash2 size={14} /></button>
                                             </>
+                                        )}
+                                        {order.status === 'preparing' && (
+                                            <button onClick={() => handleUpdateStatus(order._id, 'ready')} style={{ background: "#6366f1", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer", boxShadow: "0 4px 12px rgba(99,102,241,0.2)" }}>Mark Ready</button>
+                                        )}
+                                        {order.status === 'ready' && (
+                                            <button onClick={() => handleUpdateStatus(order._id, 'completed')} style={{ background: "#0ea5e9", color: "#fff", border: "none", padding: "8px 16px", borderRadius: 10, fontWeight: 800, fontSize: 11, cursor: "pointer", boxShadow: "0 4px 12px rgba(14,165,233,0.2)" }}>Mark Completed</button>
                                         )}
                                     </div>
                                 </div>
@@ -270,22 +294,34 @@ export const OrdersToday = ({ theme }) => {
                             </div>
                         </div>
 
-                        <div style={{ display: "flex", gap: 12, marginTop: 40 }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 40 }}>
                             <button onClick={() => setSelectedOrder(null)} 
-                                style={{ flex: 1, padding: 16, border: `2px solid ${T.border}`, borderRadius: 16, background: "none", fontWeight: 800, cursor: "pointer", color: T.textSec }}>
+                                style={{ flex: 1, minWidth: 80, padding: 16, border: `2px solid ${T.border}`, borderRadius: 16, background: "none", fontWeight: 800, cursor: "pointer", color: T.textSec }}>
                                 Close
                             </button>
-                            {selectedOrder.status === 'pending' && (
+                            {(selectedOrder.status === 'pending' || selectedOrder.status === 'confirmed') && (
                                 <>
                                     <button onClick={() => { if(window.confirm("Reject this order?")) { handleUpdateStatus(selectedOrder._id, 'cancelled'); setSelectedOrder(null); } }}
-                                        style={{ flex: 1, padding: 16, border: "2px solid #ef5350", borderRadius: 16, background: "none", color: "#ef5350", fontWeight: 800, cursor: "pointer" }}>
+                                        style={{ flex: 1, minWidth: 80, padding: 16, border: "2px solid #ef5350", borderRadius: 16, background: "none", color: "#ef5350", fontWeight: 800, cursor: "pointer" }}>
                                         Reject
                                     </button>
                                     <button onClick={() => { handleUpdateStatus(selectedOrder._id, 'preparing'); setSelectedOrder(null); }}
-                                        style={{ flex: 2, padding: 16, border: "none", borderRadius: 16, background: "#8FAE8E", color: "#fff", fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(143,174,142,0.3)" }}>
+                                        style={{ flex: 2, minWidth: 150, padding: 16, border: "none", borderRadius: 16, background: "#8FAE8E", color: "#fff", fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(143,174,142,0.3)" }}>
                                         Accept & Start Preparing
                                     </button>
                                 </>
+                            )}
+                            {selectedOrder.status === 'preparing' && (
+                                <button onClick={() => { handleUpdateStatus(selectedOrder._id, 'ready'); setSelectedOrder(null); }}
+                                    style={{ flex: 2, minWidth: 150, padding: 16, border: "none", borderRadius: 16, background: "#6366f1", color: "#fff", fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(99,102,241,0.3)" }}>
+                                    Mark as Ready
+                                </button>
+                            )}
+                            {selectedOrder.status === 'ready' && (
+                                <button onClick={() => { handleUpdateStatus(selectedOrder._id, 'completed'); setSelectedOrder(null); }}
+                                    style={{ flex: 2, minWidth: 150, padding: 16, border: "none", borderRadius: 16, background: "#0ea5e9", color: "#fff", fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 20px rgba(14,165,233,0.3)" }}>
+                                    Mark as Completed (Delivered)
+                                </button>
                             )}
                         </div>
                     </div>

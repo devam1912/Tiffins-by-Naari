@@ -13,21 +13,21 @@ import { ProviderMenu } from "../../components/ProviderMenu";
 import { ActiveSubscriptions } from "../../components/ActiveSubscriptions";
 import { OrdersToday } from "../../components/OrdersToday";
 import { ProfileSettings } from "../../components/ProfileSettings";
-import { 
-  LayoutDashboard, 
-  UtensilsCrossed, 
-  Users, 
-  ShoppingBag, 
-  Settings, 
-  ChefHat, 
-  Bell, 
-  LogOut, 
-  Sun, 
-  Moon, 
-  Banknote, 
-  CookingPot,
-  Coffee,
-  CloudMoon
+import {
+    LayoutDashboard,
+    UtensilsCrossed,
+    Users,
+    ShoppingBag,
+    Settings,
+    ChefHat,
+    Bell,
+    LogOut,
+    Sun,
+    Moon,
+    Banknote,
+    CookingPot,
+    Coffee,
+    CloudMoon
 } from "lucide-react";
 
 
@@ -107,7 +107,7 @@ export const ProviderDashboard = () => {
         { name: "Dashboard", icon: <LayoutDashboard size={20} /> },
         { name: "Menu Management", icon: <UtensilsCrossed size={20} /> },
         { name: "Active Subscriptions", icon: <Users size={20} /> },
-        { name: "Orders Today", icon: <ShoppingBag size={20} /> },
+        { name: "My Orders", icon: <ShoppingBag size={20} /> },
         { name: "Profile Settings", icon: <Settings size={20} /> },
     ];
 
@@ -235,17 +235,17 @@ export const ProviderDashboard = () => {
 
                     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                         <button id="theme-toggle-provider" onClick={() => setDarkMode(!darkMode)} title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"} style={{ width: 44, height: 44, borderRadius: 14, background: darkMode ? "rgba(255,255,255,0.08)" : "#f5f5f0", border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid #e8e8e0", display: "flex", alignItems: "center", justifyContent: "center", color: darkMode ? T.accent : "#555", cursor: "pointer", transition: "all 0.3s ease" }}>{darkMode ? <Sun size={20} /> : <Moon size={20} />}</button>
-                        <div 
-                          onClick={() => toast.info("No new notifications", { description: "We'll let you know when something happens." })}
-                          style={{ width: 44, height: 44, borderRadius: 14, background: T.card, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: T.accent, boxShadow: "0 4px 12px rgba(0,0,0,0.05)", cursor: "pointer" }}
+                        <div
+                            onClick={() => toast.info("No new notifications", { description: "We'll let you know when something happens." })}
+                            style={{ width: 44, height: 44, borderRadius: 14, background: T.card, border: `1px solid ${T.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: T.accent, boxShadow: "0 4px 12px rgba(0,0,0,0.05)", cursor: "pointer" }}
                         >
-                          <Bell size={20} />
+                            <Bell size={20} />
                         </div>
-                        <div 
-                          onClick={() => setActiveTab("Profile Settings")}
-                          style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", cursor: "pointer" }}
+                        <div
+                            onClick={() => setActiveTab("Profile Settings")}
+                            style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Lora',serif", fontWeight: 700, color: "#fff", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", cursor: "pointer" }}
                         >
-                          {firstName[0]}
+                            {firstName[0]}
                         </div>
                     </div>
                 </div>
@@ -259,7 +259,7 @@ export const ProviderDashboard = () => {
                                 {[
                                     { label: "Monthly Revenue", value: `₹${stats?.monthlyRevenue?.toLocaleString() || 0}`, icon: <Banknote size={28} />, bg: T.card, textColor: T.text },
                                     { label: "Active Subscribers", value: stats?.activeSubscribers || 0, icon: <Users size={28} />, bg: "linear-gradient(135deg, #8FAE8E, #8FA873)", textColor: "#fff" },
-                                    { label: "Today's Meals", value: stats?.todaysMeals || 0, subValue: <span><Coffee size={12} style={{verticalAlign:'middle'}} /> {stats?.lunchCount || 0} | <CloudMoon size={12} style={{verticalAlign:'middle'}} /> {stats?.dinnerCount || 0}</span>, icon: <UtensilsCrossed size={28} />, bg: T.card, textColor: T.text },
+                                    { label: "Today's Meals", value: stats?.todaysMeals || 0, subValue: <span><Coffee size={12} style={{ verticalAlign: 'middle' }} /> {stats?.lunchCount || 0} | <CloudMoon size={12} style={{ verticalAlign: 'middle' }} /> {stats?.dinnerCount || 0}</span>, icon: <UtensilsCrossed size={28} />, bg: T.card, textColor: T.text },
                                     { label: "Kitchen Status", value: isServiceActive ? "Active" : "Paused", icon: <CookingPot size={28} />, bg: T.card, textColor: isServiceActive ? "#8FAE8E" : "#ef5350" },
                                 ].map((stat, i) => (
                                     <div key={i} className="stat-card" style={{ background: stat.bg, padding: "32px", borderRadius: 24, boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchProviderMenu, saveMenu, submitMenuForApproval } from "../store/providerSlice";
+import { fetchProviderMenu, saveMenu, submitMenuForApproval, deleteMenu, deleteMenuItem } from "../store/providerSlice";
 import { useDialog } from "../context/DialogContext";
 import API from "../api/auth";
 
@@ -116,7 +116,42 @@ export const ProviderMenu = ({ theme }) => {
         }
     };
 
-    const handleDelete = (dayName, mealType, itemId) => {
+    const handleDeleteMenu = async () => {
+        const confirmed = await showConfirm(
+            "Delete Entire Menu",
+            "Are you sure you want to delete your entire menu? This will cancel all active subscriptions and issue refunds. This action cannot be undone."
+        );
+        if (!confirmed) return;
+
+        try {
+            await dispatch(deleteMenu()).unwrap();
+            setWeekMenu(DAYS.map(day => ({ day, ...EMPTY_DAY() })));
+            showToast("Menu deleted completely.");
+        } catch (err) {
+            showToast(err || "Failed to delete menu.", "error");
+        }
+    };
+
+    const handleDelete = async (dayName, mealType, itemId) => {
+        const item = weekMenu.find(d => d.day === dayName)?.[mealType]?.items.find(i => (i.id || i._id) === itemId);
+        const isSavedInDB = !!item?._id;
+
+        if (isSavedInDB) {
+            const confirmed = await showConfirm(
+                "Delete Item",
+                "Are you sure you want to remove this item? This will notify your active subscribers."
+            );
+            if (!confirmed) return;
+
+            try {
+                await dispatch(deleteMenuItem({ day: dayName, meal: mealType, itemId })).unwrap();
+                showToast("Item deleted from backend.");
+            } catch (err) {
+                showToast(err || "Failed to delete item.", "error");
+                return;
+            }
+        }
+
         setWeekMenu(prev => prev.map(d => {
             if (d.day !== dayName) return d;
             return {
@@ -127,7 +162,10 @@ export const ProviderMenu = ({ theme }) => {
                 }
             };
         }));
-        showToast("Item removed locally — save to sync", "info");
+        
+        if (!isSavedInDB) {
+            showToast("Item removed locally — save to sync", "info");
+        }
     };
 
     const handleMealPriceChange = (dayName, mealType, newPrice) => {
@@ -215,7 +253,7 @@ export const ProviderMenu = ({ theme }) => {
                                 style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
                                 <Edit3 size={16} />
                             </button>
-                            <button onClick={() => handleDelete(selectedDay, mealType, item.id)}
+                            <button onClick={() => handleDelete(selectedDay, mealType, item._id || item.id)}
                                 style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
                                 <Trash2 size={16} />
                             </button>
@@ -250,6 +288,12 @@ export const ProviderMenu = ({ theme }) => {
                     </p>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
+                    {menu && (
+                         <button onClick={handleDeleteMenu}
+                            style={{ padding: "11px 22px", borderRadius: 12, border: `1px solid ${T.border}`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                            <Trash2 size={14} /> Delete Menu
+                        </button>
+                    )}
                     <button onClick={handleSaveMenu} disabled={isSaving}
                         style={{ padding: "11px 22px", borderRadius: 12, border: "none", background: "#2d3b2d", color: "#fff", fontWeight: 800, fontSize: 14, cursor: isSaving ? "not-allowed" : "pointer" }}>
                         {isSaving ? "Saving..." : "💾 Save Menu"}

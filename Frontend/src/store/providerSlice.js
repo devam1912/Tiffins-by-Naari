@@ -130,6 +130,30 @@ export const markMealReady = createAsyncThunk(
   }
 );
 
+export const deleteMenu = createAsyncThunk(
+  "provider/deleteMenu",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await API.delete("/tiffins/menu");
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to delete menu");
+    }
+  }
+);
+
+export const deleteMenuItem = createAsyncThunk(
+  "provider/deleteMenuItem",
+  async ({ day, meal, itemId }, { rejectWithValue }) => {
+    try {
+      const res = await API.delete("/tiffins/menu/item", { data: { day, meal, itemId } });
+      return res.data;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || "Failed to delete menu item");
+    }
+  }
+);
+
 const providerSlice = createSlice({
   name: "provider",
   initialState: {

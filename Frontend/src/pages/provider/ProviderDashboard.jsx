@@ -310,7 +310,7 @@ export const ProviderDashboard = () => {
                         <div style={{ background: T.card, borderRadius: 32, padding: "40px", boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
                             {activeTab === "Menu Management" ? <ProviderMenu theme={T} /> :
                                 activeTab === "Active Subscriptions" ? <ActiveSubscriptions theme={T} /> :
-                                    activeTab === "Orders Today" ? <OrdersToday theme={T} /> :
+                                    activeTab === "My Orders" ? <OrdersToday theme={T} /> :
                                         activeTab === "Profile Settings" ? (
                                             <ProfileSettings
                                                 theme={T}

@@ -154,9 +154,10 @@ const createOrder = async (req, res) => {
     const groupedOrders = {};
     let totalCartPrice = 0;
 
-    const now = new Date();
+    const istStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const now = new Date(istStr);
     const currentHours = now.getHours() + now.getMinutes() / 60;
-    const isToday = new Date().toDateString() === orderDate.toDateString();
+    const isToday = now.toDateString() === orderDate.toDateString();
 
     const sharedTimeSlot = cart.timeSlot;
 

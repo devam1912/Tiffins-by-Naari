@@ -66,6 +66,7 @@ export const OrdersToday = ({ theme }) => {
     });
 
     const pendingOrders = orders.filter(o => o.status !== "completed" && o.status !== "cancelled");
+    const pastOrders = orders.filter(o => o.status === "completed" || o.status === "cancelled");
 
     const lunchSubs = subscriptionMeals.filter(s => s.timeSlot === "lunch");
     const dinnerSubs = subscriptionMeals.filter(s => s.timeSlot === "dinner");
@@ -88,9 +89,10 @@ export const OrdersToday = ({ theme }) => {
                         onChange={(e) => setActiveSection(e.target.value)}
                         style={{ padding: "10px", borderRadius: 12, border: `1px solid ${T.border}`, background: T.card || "transparent", color: T.text, fontWeight: 700, fontSize: 13, outline: "none" }}
                     >
-                        <option value="all">All Items</option>
+                        <option value="all">Active Tasks</option>
                         <option value="subscription">Subscriptions Only</option>
                         <option value="onetime">One-time Orders</option>
+                        <option value="past">Past Orders</option>
                     </select>
                     <button onClick={() => { dispatch(fetchProviderSubscriptions()); dispatch(fetchProviderOrders()); }}
                         style={{ padding: "10px 18px", borderRadius: 12, border: `1px solid ${T.border}`, background: "transparent", color: T.text, fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
@@ -231,10 +233,61 @@ export const OrdersToday = ({ theme }) => {
                     </>
                 )}
 
-                {subscriptionMeals.length === 0 && pendingOrders.length === 0 && (
+                {/* PAST ORDERS SECTION */}
+                {(activeSection === "past") && pastOrders.length > 0 && (
+                    <>
+                        <h3 style={{ fontSize: 14, fontWeight: 800, color: T.textSec, textTransform: "uppercase", letterSpacing: 1.5, marginTop: 10, marginBottom: 4 }}>Past Orders ({pastOrders.length})</h3>
+                        {pastOrders.map(order => (
+                            <div key={order._id} style={{
+                                border: `1px solid ${T.border}`, borderRadius: 20, background: T.rowBg || "rgba(255,255,255,0.05)", overflow: "hidden",
+                                borderLeft: `6px solid ${order.status === 'completed' ? '#22c55e' : '#ef4444'}`
+                            }}>
+                                <div style={{ display: "flex", alignItems: "center", padding: "20px 24px", gap: 20, flexWrap: "wrap" }}>
+                                    <div style={{ width: 44, height: 44, borderRadius: 14, background: order.status === 'completed' ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)", color: order.status === 'completed' ? "#22c55e" : "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20 }}>
+                                        {order.status === 'completed' ? "✅" : "❌"}
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 150 }}>
+                                        <div style={{ fontWeight: 800, fontSize: 15, color: T.text }}>{order.user?.name || "Customer"}</div>
+                                        <div style={{ fontSize: 12, color: T.textSec, marginTop: 2 }}>ORD-{order._id.slice(-6).toUpperCase()} &bull; {order.items?.length || 0} items</div>
+                                    </div>
+                                    <div style={{ textAlign: "right" }}>
+                                        <div style={{ fontWeight: 800, fontSize: 16, color: T.text }}>₹{order.totalPrice}</div>
+                                        <div style={{ fontSize: 10, fontWeight: 800, color: order.paymentStatus === "paid" ? "#2e7d32" : "#e65100", textTransform: "uppercase" }}>{order.paymentStatus}</div>
+                                    </div>
+                                    <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+                                        <button 
+                                            onClick={() => setSelectedOrder(order)}
+                                            style={{ background: T.card || "rgba(255,255,255,0.08)", border: `1px solid ${T.border}`, color: T.text, padding: "8px 12px", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 800 }}
+                                        >
+                                            <Info size={14} /> Details
+                                        </button>
+
+                                        {/* Status Badge */}
+                                        <div style={{ 
+                                            padding: "6px 12px", borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1,
+                                            background: order.status === 'completed' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                                            color: order.status === 'completed' ? '#22c55e' : '#ef4444'
+                                        }}>
+                                            {order.status}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </>
+                )}
+
+                {subscriptionMeals.length === 0 && pendingOrders.length === 0 && activeSection !== "past" && (
                     <div style={{ padding: "80px 0", textAlign: "center" }}>
                         <div style={{ fontSize: 48, marginBottom: 12 }}>🍱</div>
                         <p style={{ color: T.textMuted, fontSize: 16, fontStyle: "italic" }}>All caught up! No pending tasks for now.</p>
+                    </div>
+                )}
+
+                {activeSection === "past" && pastOrders.length === 0 && (
+                    <div style={{ padding: "80px 0", textAlign: "center" }}>
+                        <div style={{ fontSize: 48, marginBottom: 12 }}>📉</div>
+                        <p style={{ color: T.textMuted, fontSize: 16, fontStyle: "italic" }}>No past orders found.</p>
                     </div>
                 )}
             </div>

@@ -18,27 +18,27 @@ import {
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
-function RejectionModal({ menu, onClose, onReject, loading }) {
+function RejectionModal({ menu, onClose, onReject, loading, T }) {
     const [reason, setReason] = useState("");
     return (
         <div
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
             style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(30,10,10,0.6)", backdropFilter: "blur(12px)", padding: 20 }}
         >
-            <div style={{ background: "#fff", borderRadius: 32, padding: "44px", maxWidth: 480, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.25)", position: "relative" }}>
+            <div style={{ background: T.card, borderRadius: 32, padding: "44px", maxWidth: 480, width: "100%", boxShadow: T.cardShadow || "0 40px 80px rgba(0,0,0,0.25)", position: "relative", color: T.text }}>
                 <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "#ef5350" }} />
-                <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Decline Menu</h2>
-                <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Kitchen: <span style={{ color: "#ef5350", fontWeight: 700 }}>{menu?.provider?.businessName}</span></p>
+                <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: T.text, marginBottom: 6 }}>Decline Menu</h2>
+                <p style={{ color: T.textSec, fontSize: 13, marginBottom: 24 }}>Kitchen: <span style={{ color: "#ef5350", fontWeight: 700 }}>{menu?.provider?.businessName}</span></p>
 
                 <textarea
                     value={reason}
                     onChange={e => setReason(e.target.value)}
                     placeholder="Reason for rejection (sent to provider)..."
-                    style={{ width: "100%", padding: 18, borderRadius: 16, border: "2px solid #f0f0f0", fontSize: 14, minHeight: 120, marginBottom: 24, resize: "none", outline: "none", fontFamily: "'Nunito', sans-serif" }}
+                    style={{ width: "100%", padding: 18, borderRadius: 16, border: `2px solid ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : '#fff', color: T.text, fontSize: 14, minHeight: 120, marginBottom: 24, resize: "none", outline: "none", fontFamily: "'Nunito', sans-serif" }}
                 />
 
                 <div style={{ display: "flex", gap: 14 }}>
-                    <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "transparent", border: "2px solid #eee", borderRadius: 16, fontWeight: 700, color: "#999", cursor: "pointer" }}>Back</button>
+                    <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "transparent", border: `2px solid ${T.border}`, borderRadius: 16, fontWeight: 700, color: T.textSec, cursor: "pointer" }}>Back</button>
                     <button
                         onClick={() => onReject(reason)}
                         disabled={!reason.trim() || loading}
@@ -52,13 +52,22 @@ function RejectionModal({ menu, onClose, onReject, loading }) {
     );
 }
 
-export const AdminMenu = ({ menus = [] }) => {
+export const AdminMenu = ({ menus = [], theme }) => {
     const dispatch = useDispatch();
     const { showAlert } = useDialog();
     const [searchTerm, setSearchTerm] = useState("");
     const [actionLoading, setActionLoading] = useState({});
     const [selected, setSelected] = useState(null); // expanded menu
     const [rejectTarget, setRejectTarget] = useState(null);
+
+    const T = theme || {
+        text: 'inherit',
+        textSec: '#aaa',
+        textMuted: '#aaa',
+        card: '#fff',
+        border: 'rgba(0,0,0,0.1)',
+        bg: 'transparent'
+    };
 
     const filtered = menus.filter(m =>
         m.provider?.businessName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -91,30 +100,31 @@ export const AdminMenu = ({ menus = [] }) => {
     };
 
     return (
-        <div style={{ fontFamily: "'Nunito', sans-serif" }}>
+        <div style={{ fontFamily: "'Nunito', sans-serif", color: T.text }}>
             {rejectTarget && (
                 <RejectionModal
                     menu={rejectTarget}
                     onClose={() => setRejectTarget(null)}
                     onReject={handleReject}
                     loading={actionLoading[rejectTarget._id]}
+                    T={T}
                 />
             )}
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "inherit", margin: 0 }}>Menu Moderation</h2>
-                    <p style={{ color: "#aaa", fontSize: 13, marginTop: 4 }}>{menus.length} menus from registered kitchen partners</p>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: T.text, margin: 0 }}>Menu Moderation</h2>
+                    <p style={{ color: T.textSec, fontSize: 13, marginTop: 4 }}>{menus.length} menus from registered kitchen partners</p>
                 </div>
                 <div style={{ position: "relative" }}>
-                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#aaa", display: 'flex', alignItems: 'center' }}>
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.textSec, display: 'flex', alignItems: 'center' }}>
                         <Search size={16} />
                     </span>
                     <input
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Search by kitchen or chef..."
-                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240, background: "transparent", color: "inherit" }}
+                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : 'transparent', color: T.text }}
                     />
                 </div>
 
@@ -123,10 +133,10 @@ export const AdminMenu = ({ menus = [] }) => {
             {/* Table */}
             {filtered.length === 0 ? (
                 <div style={{ padding: "80px 0", textAlign: "center" }}>
-                    <div style={{ color: "rgba(255,255,255,0.1)", marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+                    <div style={{ color: T.border, marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
                         <UtensilsCrossed size={48} />
                     </div>
-                    <p style={{ color: "#ccc", fontSize: 16, fontStyle: "italic" }}>No menus found.</p>
+                    <p style={{ color: T.textMuted, fontSize: 16, fontStyle: "italic" }}>No menus found.</p>
                 </div>
 
             ) : (
@@ -137,18 +147,18 @@ export const AdminMenu = ({ menus = [] }) => {
                         const loading = actionLoading[menu._id];
 
                         return (
-                            <div key={menu._id} style={{ border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, overflow: "hidden", background: "rgba(255,255,255,0.03)" }}>
+                            <div key={menu._id} style={{ border: `1px solid ${T.border}`, borderRadius: 20, overflow: "hidden", background: T.bg === '#000000' ? 'rgba(255,255,255,0.02)' : "rgba(255,255,255,0.03)" }}>
                                 {/* Row */}
                                 <div style={{ display: "flex", alignItems: "center", padding: "18px 24px", gap: 16, cursor: "pointer" }}
                                     onClick={() => setSelected(isExpanded ? null : menu._id)}>
-                                    <div style={{ width: 42, height: 42, borderRadius: 12, background: "#fff8f0", border: "1px solid #ffe0b2", display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b", flexShrink: 0 }}>
+                                    <div style={{ width: 42, height: 42, borderRadius: 12, background: T.bg === '#000000' ? 'rgba(245, 158, 11, 0.1)' : "#fff8f0", border: `1px solid ${T.bg === '#000000' ? 'rgba(245, 158, 11, 0.2)' : "#ffe0b2"}`, display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b", flexShrink: 0 }}>
                                         <UtensilsCrossed size={20} />
                                     </div>
 
 
                                     <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: 800, fontSize: 15, color: "inherit" }}>{menu.provider?.businessName || "Unknown Kitchen"}</div>
-                                        <div style={{ fontSize: 12, color: "#aaa", marginTop: 2 }}>Chef: {menu.provider?.ownerName || "—"} &bull; {menu.weekMenu?.length || 0} days scheduled</div>
+                                        <div style={{ fontWeight: 800, fontSize: 15, color: T.text }}>{menu.provider?.businessName || "Unknown Kitchen"}</div>
+                                        <div style={{ fontSize: 12, color: T.textSec, marginTop: 2 }}>Chef: {menu.provider?.ownerName || "—"} &bull; {menu.weekMenu?.length || 0} days scheduled</div>
                                     </div>
 
                                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -168,24 +178,24 @@ export const AdminMenu = ({ menus = [] }) => {
 
                                                 {menu.isApproved && (
                                                     <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
-                                                        style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                        style={{ padding: "8px 16px", borderRadius: 10, border: `1px solid #ef5350`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
                                                         <X size={14} /> Revoke
                                                     </button>
                                                 )}
 
                                                 {!menu.isApproved && menu.submittedForApproval && (
                                                      <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
-                                                     style={{ padding: "8px 16px", borderRadius: 10, border: "1px solid #ef5350", background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
+                                                     style={{ padding: "8px 16px", borderRadius: 10, border: `1px solid #ef5350`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
                                                      <X size={14} /> Reject
                                                  </button>
                                                 )}
 
                                             </div>
                                         ) : (
-                                            <span style={{ fontSize: 12, color: "#aaa" }}>Processing...</span>
+                                            <span style={{ fontSize: 12, color: T.textSec }}>Processing...</span>
                                         )}
 
-                                        <span style={{ color: "#ccc", display: 'flex', alignItems: 'center' }}>
+                                        <span style={{ color: T.textSec, display: 'flex', alignItems: 'center' }}>
                                             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                         </span>
                                     </div>
@@ -194,7 +204,7 @@ export const AdminMenu = ({ menus = [] }) => {
 
                                 {/* Expanded: weekly menu detail */}
                                 {isExpanded && (
-                                    <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", padding: "20px 24px", background: "rgba(255,255,255,0.02)" }}>
+                                    <div style={{ borderTop: `1px solid ${T.border}`, padding: "20px 24px", background: "rgba(255,255,255,0.02)" }}>
                                         <p style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 2, marginBottom: 16 }}>Weekly Schedule</p>
                                         <div style={{ display: "flex", overflowX: "auto", gap: 12, paddingBottom: 8 }}>
                                             {DAYS.map(day => {
@@ -203,16 +213,16 @@ export const AdminMenu = ({ menus = [] }) => {
                                                 const dinnerItems = dayData?.dinner?.items || [];
                                                 const hasItems = lunchItems.length > 0 || dinnerItems.length > 0;
                                                 return (
-                                                    <div key={day} style={{ minWidth: 140, borderRadius: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", padding: 14, flexShrink: 0 }}>
+                                                    <div key={day} style={{ minWidth: 140, borderRadius: 14, background: "rgba(255,255,255,0.05)", border: `1px solid ${T.border}`, padding: 14, flexShrink: 0 }}>
                                                         <p style={{ fontWeight: 800, fontSize: 11, color: "#8FAE8E", textTransform: "uppercase", marginBottom: 10 }}>{day.slice(0, 3)}</p>
-                                                        {!hasItems && <p style={{ fontSize: 11, color: "#ddd", fontStyle: "italic" }}>No items</p>}
+                                                        {!hasItems && <p style={{ fontSize: 11, color: T.textMuted, fontStyle: "italic" }}>No items</p>}
                                                         {lunchItems.length > 0 && (
                                                             <div style={{ marginBottom: 8 }}>
                                                                 <p style={{ fontSize: 10, fontWeight: 800, color: "#f59e0b", marginBottom: 4 }}>LUNCH</p>
                                                                 {lunchItems.map((item, i) => (
                                                                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                                                                         <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#8FAE8E", flexShrink: 0, display: "inline-block" }} />
-                                                                        <span style={{ fontSize: 12, color: "inherit", flex: 1 }}>{item.name}</span>
+                                                                        <span style={{ fontSize: 12, color: T.text, flex: 1 }}>{item.name}</span>
                                                                         {item.price > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", whiteSpace: "nowrap" }}>₹{item.price}</span>}
                                                                     </div>
                                                                 ))}
@@ -224,7 +234,7 @@ export const AdminMenu = ({ menus = [] }) => {
                                                                 {dinnerItems.map((item, i) => (
                                                                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 3 }}>
                                                                         <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#6366f1", flexShrink: 0, display: "inline-block" }} />
-                                                                        <span style={{ fontSize: 12, color: "inherit", flex: 1 }}>{item.name}</span>
+                                                                        <span style={{ fontSize: 12, color: T.text, flex: 1 }}>{item.name}</span>
                                                                         {item.price > 0 && <span style={{ fontSize: 10, fontWeight: 800, color: "#6366f1", whiteSpace: "nowrap" }}>₹{item.price}</span>}
                                                                     </div>
                                                                 ))}
@@ -232,12 +242,12 @@ export const AdminMenu = ({ menus = [] }) => {
                                                         )}
                                                         <div style={{ marginTop: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
                                                             {dayData?.lunch?.price > 0 && (
-                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", background: "#fff8e1", padding: "4px 10px", borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#f59e0b", background: T.bg === '#000000' ? 'rgba(245, 158, 11, 0.1)' : "#fff8e1", padding: "4px 10px", borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                                                     <Sun size={10} /> ₹{dayData.lunch.price}
                                                                 </span>
                                                             )}
                                                             {dayData?.dinner?.price > 0 && (
-                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#6366f1", background: "#eef2ff", padding: "4px 10px", borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                                                <span style={{ fontSize: 11, fontWeight: 800, color: "#6366f1", background: T.bg === '#000000' ? 'rgba(99, 102, 241, 0.1)' : "#eef2ff", padding: "4px 10px", borderRadius: 10, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
                                                                     <Moon size={10} /> ₹{dayData.dinner.price}
                                                                 </span>
                                                             )}
@@ -248,7 +258,7 @@ export const AdminMenu = ({ menus = [] }) => {
                                             })}
                                         </div>
 
-                                        <p style={{ fontSize: 11, color: "#ccc", marginTop: 12 }}>
+                                        <p style={{ fontSize: 11, color: T.textMuted, marginTop: 12 }}>
                                             Last updated: {menu.updatedAt ? new Date(menu.updatedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—"}
                                         </p>
                                     </div>

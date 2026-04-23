@@ -42,24 +42,24 @@ import { AdminFeedback } from "../../components/AdminFeedback";
 // ══════════════════════════════════════════
 // 1. APPROVE MODAL
 // ══════════════════════════════════════════
-function ApproveModal({ provider, onClose, onApprove, loading }) {
+function ApproveModal({ provider, onClose, onApprove, loading, T }) {
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.6)", backdropFilter: "blur(12px)", padding: 20 }}
     >
-      <div style={{ background: "#fff", borderRadius: 32, padding: "48px", maxWidth: 440, width: "100%", textAlign: "center", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative", overflow: "hidden" }}>
+      <div style={{ background: T.card, borderRadius: 32, padding: "48px", maxWidth: 440, width: "100%", textAlign: "center", boxShadow: T.cardShadow || "0 40px 80px rgba(0,0,0,0.2)", position: "relative", overflow: "hidden", color: T.text }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(90deg,#8FAE8E,#D9D9A8)" }} />
         <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: "#fff" }}>
           <ChefHat size={40} />
         </div>
 
-        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 12 }}>Approve Kitchen?</h2>
-        <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: T.text, marginBottom: 12 }}>Approve Kitchen?</h2>
+        <p style={{ color: T.textSec, fontSize: 14, lineHeight: 1.6, marginBottom: 32 }}>
           Authorize <strong>{provider?.businessName}</strong>. This will enable their menu and notify <strong>{provider?.ownerName}</strong>.
         </p>
         <div style={{ display: "flex", gap: 14 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 700, cursor: "pointer", color: "#888" }}>Cancel</button>
+          <button onClick={onClose} style={{ flex: 1, padding: "14px", background: T.bg === '#000000' ? 'rgba(255,255,255,0.1)' : "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 700, cursor: "pointer", color: T.textSec }}>Cancel</button>
           <button onClick={onApprove} disabled={loading} style={{ flex: 2, padding: "14px", background: "linear-gradient(135deg,#8FAE8E,#8FA873)", color: "#fff", border: "none", borderRadius: 16, fontWeight: 700, cursor: loading ? "not-allowed" : "pointer" }}>
             {loading ? "Approving..." : "Confirm"}
           </button>
@@ -72,27 +72,27 @@ function ApproveModal({ provider, onClose, onApprove, loading }) {
 // ══════════════════════════════════════════
 // 2. REJECT MODAL
 // ══════════════════════════════════════════
-function RejectModal({ provider, onClose, onReject, loading }) {
+function RejectModal({ provider, onClose, onReject, loading, T }) {
   const [reason, setReason] = useState("");
   return (
     <div
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, zIndex: 10000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(30,10,10,0.6)", backdropFilter: "blur(12px)", padding: 20 }}
     >
-      <div style={{ background: "#fff", borderRadius: 32, padding: "44px", maxWidth: 480, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.25)", position: "relative" }}>
+      <div style={{ background: T.card, borderRadius: 32, padding: "44px", maxWidth: 480, width: "100%", boxShadow: T.cardShadow || "0 40px 80px rgba(0,0,0,0.25)", position: "relative", color: T.text }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "#ef5350" }} />
-        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Decline Kitchen</h2>
-        <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: "#ef5350", fontWeight: 700 }}>{provider?.businessName}</span></p>
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: T.text, marginBottom: 6 }}>Decline Kitchen</h2>
+        <p style={{ color: T.textSec, fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: "#ef5350", fontWeight: 700 }}>{provider?.businessName}</span></p>
 
         <textarea
           value={reason}
           onChange={e => setReason(e.target.value)}
           placeholder="Reason for rejection (sent to provider)..."
-          style={{ width: "100%", padding: 18, borderRadius: 16, border: "2px solid #f0f0f0", fontSize: 14, minHeight: 120, marginBottom: 24, resize: "none", outline: "none", fontFamily: "'Nunito', sans-serif" }}
+          style={{ width: "100%", padding: 18, borderRadius: 16, border: `2px solid ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : '#fff', color: T.text, fontSize: 14, minHeight: 120, marginBottom: 24, resize: "none", outline: "none", fontFamily: "'Nunito', sans-serif" }}
         />
 
         <div style={{ display: "flex", gap: 14 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "transparent", border: "2px solid #eee", borderRadius: 16, fontWeight: 700, color: "#999", cursor: "pointer" }}>Back</button>
+          <button onClick={onClose} style={{ flex: 1, padding: "14px", background: "transparent", border: `2px solid ${T.border}`, borderRadius: 16, fontWeight: 700, color: T.textSec, cursor: "pointer" }}>Back</button>
           <button
             onClick={() => onReject(reason)}
             disabled={!reason.trim() || loading}
@@ -167,26 +167,26 @@ function PayoutModal({ provider, type = "debit", onClose, onConfirm, loading }) 
 // ══════════════════════════════════════════
 // 3.5 HISTORY MODAL
 // ══════════════════════════════════════════
-function HistoryModal({ provider, records, loading, onClose }) {
+function HistoryModal({ provider, records, loading, onClose, T }) {
   return (
     <div onClick={(e) => { if (e.target === e.currentTarget) onClose(); }} style={{ position: "fixed", inset: 0, zIndex: 10001, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: 20 }}>
-      <div style={{ background: "#fff", borderRadius: 32, padding: "36px 40px", maxWidth: 560, width: "100%", boxShadow: "0 40px 80px rgba(0,0,0,0.2)", position: "relative", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+      <div style={{ background: T.card, borderRadius: 32, padding: "36px 40px", maxWidth: 560, width: "100%", boxShadow: T.cardShadow || "0 40px 80px rgba(0,0,0,0.2)", position: "relative", maxHeight: "85vh", display: "flex", flexDirection: "column", color: T.text }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: "linear-gradient(135deg,#8FAE8E,#8FA873)" }} />
-        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d", marginBottom: 6 }}>Transaction History</h2>
-        <p style={{ color: "#888", fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: "#8FAE8E", fontWeight: 700 }}>{provider?.businessName}</span></p>
+        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: T.text, marginBottom: 6 }}>Transaction History</h2>
+        <p style={{ color: T.textSec, fontSize: 13, marginBottom: 24 }}>Entity: <span style={{ color: "#8FAE8E", fontWeight: 700 }}>{provider?.businessName}</span></p>
 
         <div style={{ overflowY: "auto", flex: 1, paddingRight: 8, margin: "0 -8px 24px 0" }}>
           {loading ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "#888", fontWeight: 700, fontSize: 14 }}>Loading timeline...</div>
+            <div style={{ textAlign: "center", padding: "40px", color: T.textMuted, fontWeight: 700, fontSize: 14 }}>Loading timeline...</div>
           ) : records && records.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {records.map(r => {
                 const isCredit = r.type === "credit";
                 return (
-                  <div key={r._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderRadius: 16, border: "1px solid #f0f0f0", background: "#fcfdfc" }}>
+                  <div key={r._id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderRadius: 16, border: `1px solid ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.02)' : "#fcfdfc" }}>
                     <div>
-                      <p style={{ fontSize: 14, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{r.description || (isCredit ? "Wallet Addition" : "Payout Settled")}</p>
-                      <p style={{ fontSize: 11, color: "#aaa", fontWeight: 600 }}>{new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
+                      <p style={{ fontSize: 14, fontWeight: 700, color: T.text, marginBottom: 4 }}>{r.description || (isCredit ? "Wallet Addition" : "Payout Settled")}</p>
+                      <p style={{ fontSize: 11, color: T.textMuted, fontWeight: 600 }}>{new Date(r.createdAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}</p>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <p style={{ fontSize: 15, fontWeight: 800, color: isCredit ? "#8FAE8E" : "#ef5350" }}>{isCredit ? "+" : "-"}₹{r.amount.toLocaleString()}</p>
@@ -200,11 +200,11 @@ function HistoryModal({ provider, records, loading, onClose }) {
               })}
             </div>
           ) : (
-            <div style={{ textAlign: "center", padding: "40px", color: "#aaa", fontStyle: "italic", fontSize: 14 }}>No transactions logged.</div>
+            <div style={{ textAlign: "center", padding: "40px", color: T.textMuted, fontStyle: "italic", fontSize: 14 }}>No transactions logged.</div>
           )}
         </div>
 
-        <button onClick={onClose} style={{ width: "100%", padding: "14px", background: "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 800, cursor: "pointer", color: "#888", fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="#eee"} onMouseLeave={e=>e.currentTarget.style.background="#f5f5f0"}>Close Window</button>
+        <button onClick={onClose} style={{ width: "100%", padding: "14px", background: T.bg === '#000000' ? 'rgba(255,255,255,0.1)' : "#f5f5f0", border: "none", borderRadius: 16, fontWeight: 800, cursor: "pointer", color: T.textSec, fontFamily: "'Nunito',sans-serif", transition: "all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,0.15)"} onMouseLeave={e=>e.currentTarget.style.background=T.bg==='#000000'?'rgba(255,255,255,0.1)':'#f5f5f0'}>Close Window</button>
       </div>
     </div>
   );
@@ -213,12 +213,12 @@ function HistoryModal({ provider, records, loading, onClose }) {
 // ══════════════════════════════════════════
 // 4. VIEW APPLICATION MODAL
 // ══════════════════════════════════════════
-function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
+function ViewApplicationModal({ provider, onClose, onApprove, onReject, T }) {
   const isPdf = provider?.fssaiCertificate?.toLowerCase().includes(".pdf");
   const DataField = ({ label, value, fullWidth = false }) => (
-    <div style={{ padding: "14px 0", borderBottom: "1px solid #f4f7f4", width: fullWidth ? "100%" : "50%" }}>
+    <div style={{ padding: "14px 0", borderBottom: `1px solid ${T.border}`, width: fullWidth ? "100%" : "50%" }}>
       <p style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 4 }}>{label}</p>
-      <p style={{ fontSize: 14, color: "#2d3b2d", fontWeight: 600 }}>{value || "N/A"}</p>
+      <p style={{ fontSize: 14, color: T.text, fontWeight: 600 }}>{value || "N/A"}</p>
     </div>
   );
 
@@ -227,10 +227,10 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       style={{ position: "fixed", inset: 0, zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(20,30,20,0.6)", backdropFilter: "blur(18px)", padding: 20 }}
     >
-      <div style={{ background: "#fff", borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 40px 80px rgba(0,0,0,0.2)" }}>
-        <div style={{ padding: "28px 36px", borderBottom: "1px solid #eee", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fcfdfc" }}>
-          <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: "#2d3b2d" }}>Kitchen Application</h2>
-          <button onClick={onClose} style={{ background: "#f5f5f0", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", color: "#aaa", display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: T.card, borderRadius: 32, width: "100%", maxWidth: 600, maxHeight: "85vh", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: T.cardShadow || "0 40px 80px rgba(0,0,0,0.2)", color: T.text }}>
+        <div style={{ padding: "28px 36px", borderBottom: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: T.bg === '#000000' ? 'rgba(255,255,255,0.02)' : "#fcfdfc" }}>
+          <h2 style={{ fontFamily: "'Lora', serif", fontSize: 24, fontWeight: 700, color: T.text }}>Kitchen Application</h2>
+          <button onClick={onClose} style={{ background: T.bg === '#000000' ? 'rgba(255,255,255,0.1)' : "#f5f5f0", border: "none", width: 32, height: 32, borderRadius: "50%", cursor: "pointer", color: T.textSec, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <X size={18} />
           </button>
         </div>
@@ -248,7 +248,7 @@ function ViewApplicationModal({ provider, onClose, onApprove, onReject }) {
 
           <div style={{ marginBottom: 32 }}>
             <p style={{ fontSize: 10, fontWeight: 800, color: "#8FAE8E", textTransform: "uppercase", letterSpacing: 1.5, marginBottom: 16 }}>Documentation</p>
-            <div style={{ borderRadius: 16, border: "2px dashed #eee", background: "#f9faf9", padding: 16, textAlign: "center" }}>
+            <div style={{ borderRadius: 16, border: `2px dashed ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : "#f9faf9", padding: 16, textAlign: "center" }}>
               {provider?.fssaiCertificate ? (
                 isPdf ? <a href={provider.fssaiCertificate} target="_blank" rel="noreferrer" style={{ color: "#8FAE8E", fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <FileText size={18} /> Open Certificate
@@ -444,9 +444,9 @@ export default function AdminDashboard() {
         .nav-btn.active { background:rgba(255,255,255,0.25); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.12); }
       `}</style>
 
-      {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={approving} />}
-      {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={rejecting} />}
-      {viewTarget && <ViewApplicationModal provider={viewTarget} onClose={() => setViewTarget(null)} onApprove={setApproveTarget} onReject={setRejectTarget} />}
+      {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={approving} T={T} />}
+      {rejectTarget && <RejectModal provider={rejectTarget} onClose={() => setRejectTarget(null)} onReject={confirmReject} loading={rejecting} T={T} />}
+      {viewTarget && <ViewApplicationModal provider={viewTarget} onClose={() => setViewTarget(null)} onApprove={setApproveTarget} onReject={setRejectTarget} T={T} />}
       
       {payoutTarget && (
         <PayoutModal 
@@ -455,6 +455,7 @@ export default function AdminDashboard() {
           onClose={() => setPayoutTarget(null)} 
           onConfirm={handlePayout} 
           loading={payoutLoading} 
+          T={T}
         />
       )}
       
@@ -465,6 +466,7 @@ export default function AdminDashboard() {
           onClose={() => setAdjustmentTarget(null)} 
           onConfirm={handleAdjustment} 
           loading={payoutLoading} 
+          T={T}
         />
       )}
       
@@ -474,6 +476,7 @@ export default function AdminDashboard() {
           records={providerPayoutHistory}
           loading={historyLoading}
           onClose={() => setHistoryTarget(null)}
+          T={T}
         />
       )}
 
@@ -486,13 +489,8 @@ export default function AdminDashboard() {
         boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>
-<<<<<<< HEAD
-          <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-            <Shield size={24} />
-=======
           <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
->>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
           </div>
           {!collapsed && <div>
             <div style={{ fontFamily: "'Lora', serif", fontWeight: 800, fontSize: 16, color: "#fff", lineHeight: 1.1 }}>Naari Admin</div>
@@ -580,9 +578,9 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div style={{ ...anim(100), background: T.card, color: T.text, padding: "36px", borderRadius: 32, boxShadow: darkMode ? "0 20px 50px rgba(0,0,0,0.2)" : "0 20px 50px rgba(0,0,0,0.03)", border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
-            {activeNav === "users" && <AdminUsers users={users} />}
-            {activeNav === "feedback" && <AdminFeedback feedbacks={feedbacks} />}
-            {activeNav === "menu" && <AdminMenu menus={menus} />}
+            {activeNav === "users" && <AdminUsers users={users} theme={T} />}
+            {activeNav === "feedback" && <AdminFeedback feedbacks={feedbacks} theme={T} />}
+            {activeNav === "menu" && <AdminMenu menus={menus} theme={T} />}
             {activeNav === "orders" && (
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>

@@ -208,13 +208,140 @@ const updateProfile = async (req, res) => {
 const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
     res.status(200).json(formatUserResponse(user));
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
 
-module.exports = { registerUser, loginUser, generateOTP, sendOTP, verifyOTP, updateProfile, getMe };
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        message: "Current password and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "New password must be at least 6 characters",
+      });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = newPassword; // pre-save hook will hash it
+    await user.save();
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Sends OTP to user's email for password reset (no login required)
+const forgotPassword = async (req, res) => {
+  try {
+    const { email, phone } = req.body;
+
+    if (!email && !phone) {
+      return res.status(400).json({ message: "Email or phone is required" });
+    }
+
+    const user = await User.findOne({ $or: [{ email }, { phone }] });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const otp = generateOTP();
+    user.otp = otp;
+    user.otpExpiry = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    await user.save();
+
+    if (user.email) {
+      await sendEmail(
+        user.email,
+        "Password Reset OTP",
+        `Hi ${user.name || "there"},
+
+You requested to reset your password.
+
+Your OTP is: ${otp}
+
+This OTP is valid for 5 minutes. If you did not request this, please ignore this email.
+
+Team Tiffins by Naari`
+      );
+    }
+
+    res.status(200).json({ message: "Password reset OTP sent successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Verifies OTP and sets new password (no login required)
+const resetPassword = async (req, res) => {
+  try {
+    const { email, phone, otp, newPassword } = req.body;
+
+    if ((!email && !phone) || !otp || !newPassword) {
+      return res.status(400).json({
+        message: "Email/phone, OTP, and new password are required",
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "New password must be at least 6 characters",
+      });
+    }
+
+    const user = await User.findOne({ $or: [{ email }, { phone }] });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (
+      !user.otp ||
+      user.otp.toString() !== otp.toString() ||
+      user.otpExpiry < new Date()
+    ) {
+      return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
+
+    user.password = newPassword; // pre-save hook will hash it
+    user.otp = undefined;
+    user.otpExpiry = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Password reset successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  generateOTP,
+  sendOTP,
+  verifyOTP,
+  updateProfile,
+  getMe,
+  changePassword,
+  forgotPassword,
+  resetPassword,
+};

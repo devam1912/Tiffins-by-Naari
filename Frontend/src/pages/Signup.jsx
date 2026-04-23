@@ -164,13 +164,8 @@ export default function Signup() {
         <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.15)", top: "50%", left: "50%", transform: "translate(-50%,-50%)", animation: "spinSlow 25s linear infinite" }} />
 
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
-<<<<<<< HEAD
-          <div style={{ width: 72, height: 72, borderRadius: 22, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", margin: "0 auto 28px", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite" }}>
-            <Utensils size={40} />
-=======
           <div style={{ width: 72, height: 72, borderRadius: 22, background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, margin: "0 auto 28px", backdropFilter: "blur(8px)", animation: "floatY 5s ease-in-out infinite", overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "95%", height: "95%", objectFit: "contain", borderRadius: 12 }} />
->>>>>>> e64a4d2cf07645efe503643237541708e9a4380d
           </div>
 
           <h2 style={{ fontFamily: "'Lora',serif", fontSize: 34, fontWeight: 700, color: "#fff", lineHeight: 1.2, marginBottom: 16 }}>

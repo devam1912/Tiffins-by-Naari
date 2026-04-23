@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash2, Edit3, CheckCircle2, X, CircleDot, Leaf, UtensilsCrossed, Clock, Ban, ShieldCheck, Eye, Send, Image as ImageIcon, Loader2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchProviderMenu, saveMenu, submitMenuForApproval } from "../store/providerSlice";
+import { fetchProviderMenu, saveMenu, submitMenuForApproval, deleteMenu, deleteMenuItem } from "../store/providerSlice";
 import { useDialog } from "../context/DialogContext";
 import API from "../api/auth";
 
@@ -15,7 +15,17 @@ const buildWeekMenu = (serverWeekMenu = []) => {
     });
 };
 
-export const ProviderMenu = () => {
+export const ProviderMenu = ({ theme }) => {
+    const T = theme || {
+        text: 'inherit',
+        textSec: '#aaa',
+        textMuted: '#aaa',
+        card: 'rgba(255,255,255,0.05)',
+        border: 'rgba(255,255,255,0.1)',
+        cardShadow: 'none',
+        bg: 'transparent'
+    };
+
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
     const { menu, loading } = useSelector((state) => state.provider);
@@ -106,7 +116,42 @@ export const ProviderMenu = () => {
         }
     };
 
-    const handleDelete = (dayName, mealType, itemId) => {
+    const handleDeleteMenu = async () => {
+        const confirmed = await showConfirm(
+            "Delete Entire Menu",
+            "Are you sure you want to delete your entire menu? This will cancel all active subscriptions and issue refunds. This action cannot be undone."
+        );
+        if (!confirmed) return;
+
+        try {
+            await dispatch(deleteMenu()).unwrap();
+            setWeekMenu(DAYS.map(day => ({ day, ...EMPTY_DAY() })));
+            showToast("Menu deleted completely.");
+        } catch (err) {
+            showToast(err || "Failed to delete menu.", "error");
+        }
+    };
+
+    const handleDelete = async (dayName, mealType, itemId) => {
+        const item = weekMenu.find(d => d.day === dayName)?.[mealType]?.items.find(i => (i.id || i._id) === itemId);
+        const isSavedInDB = !!item?._id;
+
+        if (isSavedInDB) {
+            const confirmed = await showConfirm(
+                "Delete Item",
+                "Are you sure you want to remove this item? This will notify your active subscribers."
+            );
+            if (!confirmed) return;
+
+            try {
+                await dispatch(deleteMenuItem({ day: dayName, meal: mealType, itemId })).unwrap();
+                showToast("Item deleted from backend.");
+            } catch (err) {
+                showToast(err || "Failed to delete item.", "error");
+                return;
+            }
+        }
+
         setWeekMenu(prev => prev.map(d => {
             if (d.day !== dayName) return d;
             return {
@@ -117,7 +162,10 @@ export const ProviderMenu = () => {
                 }
             };
         }));
-        showToast("Item removed locally — save to sync", "info");
+        
+        if (!isSavedInDB) {
+            showToast("Item removed locally — save to sync", "info");
+        }
     };
 
     const handleMealPriceChange = (dayName, mealType, newPrice) => {
@@ -205,7 +253,7 @@ export const ProviderMenu = () => {
                                 style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
                                 <Edit3 size={16} />
                             </button>
-                            <button onClick={() => handleDelete(selectedDay, mealType, item.id)}
+                            <button onClick={() => handleDelete(selectedDay, mealType, item._id || item.id)}
                                 style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
                                 <Trash2 size={16} />
                             </button>
@@ -234,12 +282,18 @@ export const ProviderMenu = () => {
             {/* Header actions */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: "inherit", margin: 0 }}>Menu Manager</h2>
-                    <p style={{ fontSize: 13, color: "#999", marginTop: 4 }}>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: T.text, margin: 0 }}>Menu Manager</h2>
+                    <p style={{ fontSize: 13, color: T.textSec, marginTop: 4 }}>
                         {menuStatus.isApproved ? "✅ Menu is approved & live" : menuStatus.submittedForApproval ? "⏳ Awaiting admin approval" : "Draft — save and submit for approval"}
                     </p>
                 </div>
                 <div style={{ display: "flex", gap: 10 }}>
+                    {menu && (
+                         <button onClick={handleDeleteMenu}
+                            style={{ padding: "11px 22px", borderRadius: 12, border: `1px solid ${T.border}`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                            <Trash2 size={14} /> Delete Menu
+                        </button>
+                    )}
                     <button onClick={handleSaveMenu} disabled={isSaving}
                         style={{ padding: "11px 22px", borderRadius: 12, border: "none", background: "#2d3b2d", color: "#fff", fontWeight: 800, fontSize: 14, cursor: isSaving ? "not-allowed" : "pointer" }}>
                         {isSaving ? "Saving..." : "💾 Save Menu"}
@@ -256,7 +310,7 @@ export const ProviderMenu = () => {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 28 }}>
                 <div>
                     {/* Day Tabs — FIXED: explicit colors, always readable */}
-                    <div style={{ display: "flex", background: "rgba(255,255,255,0.03)", padding: 6, borderRadius: 18, border: "1px solid rgba(255,255,255,0.1)", overflowX: "auto", gap: 4, marginBottom: 28 }}>
+                    <div style={{ display: "flex", background: T.card, padding: 6, borderRadius: 18, border: `1px solid ${T.border}`, overflowX: "auto", gap: 4, marginBottom: 28 }}>
                         {DAYS.map(day => (
                             <button
                                 key={day}
@@ -266,11 +320,11 @@ export const ProviderMenu = () => {
                                     borderRadius: 12, border: "none", cursor: "pointer",
                                     fontWeight: 800, fontSize: 13, transition: "all 0.2s",
                                     background: selectedDay === day ? "#5a7a50" : "transparent",
-                                    color: selectedDay === day ? "#ffffff" : "#4b5563",
+                                    color: selectedDay === day ? "#ffffff" : T.textSec,
                                     boxShadow: selectedDay === day ? "0 4px 14px rgba(90,122,80,0.3)" : "none",
                                 }}
-                                onMouseEnter={e => { if (selectedDay !== day) { e.target.style.background = "#f0f4f0"; e.target.style.color = "#2d3b2d"; } }}
-                                onMouseLeave={e => { if (selectedDay !== day) { e.target.style.background = "transparent"; e.target.style.color = "#4b5563"; } }}
+                                onMouseEnter={e => { if (selectedDay !== day) { e.target.style.background = "rgba(255,255,255,0.05)"; e.target.style.color = T.text; } }}
+                                onMouseLeave={e => { if (selectedDay !== day) { e.target.style.background = "transparent"; e.target.style.color = T.textSec; } }}
                             >
                                 {day}
                             </button>
@@ -283,17 +337,17 @@ export const ProviderMenu = () => {
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                     <div style={{ width: 32, height: 32, borderRadius: 10, background: "#fffbeb", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#f59e0b" /></div>
-                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "inherit" }}>Lunch</span>
+                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: T.text }}>Lunch</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                                        <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: "#9ca3af" }}>₹</span>
+                                        <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: T.textSec }}>₹</span>
                                         <input
                                             type="number"
                                             value={currentDayData.lunch.price || ""}
                                             onChange={(e) => handleMealPriceChange(selectedDay, "lunch", e.target.value)}
                                             placeholder="Tiffin Price"
-                                            style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
+                                            style={{ width: 70, padding: "6px 8px 6px 18px", border: `1px solid ${T.border}`, background: T.card, color: T.text, borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
                                         />
                                     </div>
                                     <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "lunch" }); setItemImage(""); setIsModalOpen(true); }}
@@ -315,17 +369,17 @@ export const ProviderMenu = () => {
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                                     <div style={{ width: 32, height: 32, borderRadius: 10, background: "#eef2ff", display: "flex", alignItems: "center", justifyContent: "center" }}><CircleDot size={18} color="#6366f1" /></div>
-                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: "inherit" }}>Dinner</span>
+                                    <span style={{ fontFamily: "'Lora', serif", fontWeight: 700, fontSize: 18, color: T.text }}>Dinner</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                                        <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: "#9ca3af" }}>₹</span>
+                                        <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: T.textSec }}>₹</span>
                                         <input
                                             type="number"
                                             value={currentDayData.dinner.price || ""}
                                             onChange={(e) => handleMealPriceChange(selectedDay, "dinner", e.target.value)}
                                             placeholder="Tiffin Price"
-                                            style={{ width: 70, padding: "6px 8px 6px 18px", border: "1px solid #f0f0f0", borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
+                                            style={{ width: 70, padding: "6px 8px 6px 18px", border: `1px solid ${T.border}`, background: T.card, color: T.text, borderRadius: 10, fontSize: 12, fontWeight: 800, outline: "none" }}
                                         />
                                     </div>
                                     <button onClick={() => { setEditingItem({ day: selectedDay, mealType: "dinner" }); setItemImage(""); setIsModalOpen(true); }}
@@ -346,22 +400,22 @@ export const ProviderMenu = () => {
 
                 {/* Subscriber Preview */}
                 <div style={{ position: "sticky", top: 28 }}>
-                    <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 24px rgba(0,0,0,0.04)" }}>
+                    <div style={{ background: T.card, borderRadius: 24, overflow: "hidden", border: `1px solid ${T.border}`, boxShadow: T.cardShadow }}>
                         <div style={{ background: "#5a7a50", padding: "16px 20px", display: "flex", alignItems: "center", gap: 8 }}>
                             <Eye size={16} color="#fff" />
                             <span style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>Subscriber View</span>
                         </div>
                         <div style={{ padding: 20 }}>
-                            <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,0.08)" }}>
+                            <div style={{ background: "rgba(255,255,255,0.05)", borderRadius: 16, padding: 16, border: `1px solid ${T.border}` }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                                    <span style={{ fontWeight: 800, fontSize: 14, color: "inherit" }}>{selectedDay}'s Menu</span>
+                                    <span style={{ fontWeight: 800, fontSize: 14, color: T.text }}>{selectedDay}'s Menu</span>
                                     <Leaf size={14} color="#16a34a" />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                                     {[...currentDayData.lunch.items, ...currentDayData.dinner.items].filter(i => i.status === "approved").map((item, i) => (
                                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                                             <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8FAE8E", flexShrink: 0 }} />
-                                            <span style={{ fontSize: 13, color: "#374151" }}>{item.name}</span>
+                                            <span style={{ fontSize: 13, color: T.text }}>{item.name}</span>
                                         </div>
                                     ))}
                                     {[...currentDayData.lunch.items, ...currentDayData.dinner.items].filter(i => i.status === "approved").length === 0 && (
@@ -369,8 +423,8 @@ export const ProviderMenu = () => {
                                     )}
                                 </div>
                                 <div style={{ marginTop: 16 }}>
-                                    <p style={{ fontSize: 10, color: "#9ca3af", marginBottom: 6, fontWeight: 800, textTransform: "uppercase" }}>Tiffin Price</p>
-                                    <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 14px", fontWeight: 800, color: "inherit", gap: 6 }}>
+                                    <p style={{ fontSize: 10, color: T.textSec, marginBottom: 6, fontWeight: 800, textTransform: "uppercase" }}>Tiffin Price</p>
+                                    <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 14px", fontWeight: 800, color: T.text, gap: 6 }}>
                                         <span>₹</span><span>{currentDayData.lunch.price || 0}</span>
                                     </div>
                                 </div>
@@ -391,82 +445,77 @@ export const ProviderMenu = () => {
             {/* Add/Edit Modal */}
             {isModalOpen && (
                 <div style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-                    <div onClick={() => setIsModalOpen(false)} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(6px)" }} />
-                    <div style={{ position: "relative", background: "#fff", width: "100%", maxWidth: 440, borderRadius: 26, padding: 32, boxShadow: "0 40px 80px rgba(0,0,0,0.2)" }}>
+                    <div onClick={() => { setIsModalOpen(false); setItemImage(""); }} style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)" }} />
+                    <div style={{ position: "relative", background: T.bg === '#000000' ? '#1a1a1a' : '#fff', width: "100%", maxWidth: 440, borderRadius: 26, padding: 32, boxShadow: T.cardShadow || "0 20px 50px rgba(0,0,0,0.2)", color: T.text, border: `1px solid ${T.border}` }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
-                            <h3 style={{ fontFamily: "'Lora', serif", fontSize: 22, fontWeight: 700, color: "inherit", margin: 0 }}>
+                            <h3 style={{ fontFamily: "'Lora', serif", fontSize: 22, fontWeight: 700, color: T.text, margin: 0 }}>
                                 {editingItem?.item ? "Edit Item" : "New Menu Item"}
                             </h3>
-                            <button onClick={() => { setIsModalOpen(false); setItemImage(""); }} style={{ padding: 8, border: "none", background: "#f5f5f5", borderRadius: "50%", cursor: "pointer" }}>
+                            <button onClick={() => { setIsModalOpen(false); setItemImage(""); }} style={{ padding: 8, border: "none", background: T.bg === '#000000' ? 'rgba(255,255,255,0.1)' : "#f5f5f5", borderRadius: "50%", cursor: "pointer", color: T.text }}>
                                 <X size={18} />
                             </button>
                         </div>
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                             <div>
-                                <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Name</label>
+                                <label style={{ fontSize: 11, fontWeight: 800, color: T.textSec, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Name</label>
                                 <input ref={nameRef} defaultValue={editingItem?.item?.name || ""}
                                     placeholder="e.g. Paneer Bhurji"
-                                    style={{ width: "100%", padding: "12px 16px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box" }} />
+                                    style={{ width: "100%", padding: "12px 16px", border: `2px solid ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : '#fff', color: T.text, borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box" }} />
                             </div>
 
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                                 <div>
-                                    <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Type</label>
+                                    <label style={{ fontSize: 11, fontWeight: 800, color: T.textSec, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Type</label>
                                     <select ref={typeRef} defaultValue={editingItem?.item?.type || "Sabzi"}
-                                        style={{ width: "100%", padding: "12px 16px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", appearance: "none", background: "#f9fafb" }}>
+                                        style={{ width: "100%", padding: "12px 16px", border: `2px solid ${T.border}`, borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", appearance: "none", background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : "#f9fafb", color: T.text }}>
                                         {["Dal", "Sabzi", "Rice", "Bread", "Dessert"].map(t => <option key={t}>{t}</option>)}
                                     </select>
                                 </div>
                                 <div>
-                                    <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Price (Individual)</label>
+                                    <label style={{ fontSize: 11, fontWeight: 800, color: T.textSec, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Individual Price</label>
                                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
-                                        <span style={{ position: "absolute", left: 12, fontSize: 14, fontWeight: 800, color: "#9ca3af" }}>₹</span>
+                                        <span style={{ position: "absolute", left: 12, fontSize: 14, fontWeight: 800, color: T.textSec }}>₹</span>
                                         <input ref={priceRef} type="number" defaultValue={editingItem?.item?.price || 0}
                                             placeholder="0"
-                                            style={{ width: "100%", padding: "12px 16px 12px 28px", border: "2px solid #f0f0f0", borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box" }} />
+                                            style={{ width: "100%", padding: "12px 16px 12px 28px", border: `2px solid ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : '#fff', color: T.text, borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box" }} />
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div>
-                                <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Image</label>
+                                <label style={{ fontSize: 11, fontWeight: 800, color: T.textSec, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Item Image</label>
                                 <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
                                     <div 
                                         onClick={() => fileInputRef.current?.click()}
                                         style={{ 
-                                            width: 100, height: 100, borderRadius: 16, border: "2px dashed #f0f0f0", 
+                                            width: 100, height: 100, borderRadius: 16, border: `2px dashed ${T.border}`, 
                                             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", 
-                                            cursor: "pointer", position: "relative", overflow: "hidden", background: "#f9fafb",
+                                            cursor: "pointer", position: "relative", overflow: "hidden", background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : "#f9fafb",
                                             transition: "all 0.2s"
                                         }}
-                                        onMouseEnter={e => e.currentTarget.style.border = "2px dashed #8FAE8E"}
-                                        onMouseLeave={e => e.currentTarget.style.border = "2px dashed #f0f0f0"}
+                                        onMouseEnter={e => e.currentTarget.style.borderColor = "#8FAE8E"}
+                                        onMouseLeave={e => e.currentTarget.style.borderColor = T.border}
                                     >
                                         {isUploadingImage ? (
-                                            <Loader2 size={24} className="animate-spin" color="#8FAE8E" />
+                                            <Loader2 size={24} className="animate-spin" style={{ color: "#8FAE8E" }} />
                                         ) : itemImage ? (
                                             <img src={itemImage} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                                         ) : (
                                             <>
-                                                <ImageIcon size={24} color="#d1d5db" />
-                                                <span style={{ fontSize: 10, color: "#9ca3af", fontWeight: 700, marginTop: 4 }}>Add Photo</span>
+                                                <ImageIcon size={24} style={{ color: T.textMuted }} />
+                                                <span style={{ fontSize: 10, color: T.textMuted, fontWeight: 700, marginTop: 4 }}>Add Photo</span>
                                             </>
-                                        )}
-                                        {itemImage && !isUploadingImage && (
-                                            <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} onMouseEnter={e => e.currentTarget.style.opacity = 1} onMouseLeave={e => e.currentTarget.style.opacity = 0}>
-                                                <Edit3 size={20} color="#fff" />
-                                            </div>
                                         )}
                                     </div>
                                     <div style={{ flex: 1 }}>
-                                        <p style={{ fontSize: 12, color: "#9ca3af", margin: "0 0 8px 0", lineHeight: 1.4 }}>Upload a clear photo of the meal. Max size 2MB. (JPG, PNG)</p>
+                                        <p style={{ fontSize: 12, color: T.textMuted, margin: "0 0 8px 0", lineHeight: 1.4 }}>Clear photo of the meal. Max 2MB.</p>
                                         <button 
                                             type="button"
                                             onClick={() => fileInputRef.current?.click()}
-                                            style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #e5e7eb", background: "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", color: "#374151" }}
+                                            style={{ padding: "6px 12px", borderRadius: 8, border: `1px solid ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.1)' : "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer", color: T.text }}
                                         >
-                                            {itemImage ? "Change Image" : "Choose File"}
+                                            {itemImage ? "Change" : "Choose"}
                                         </button>
                                         <input 
                                             type="file" 
@@ -480,17 +529,17 @@ export const ProviderMenu = () => {
                             </div>
 
                             <div>
-                                <label style={{ fontSize: 11, fontWeight: 800, color: "#6b7280", textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
-                                <div style={{ padding: "12px 16px", border: "2px solid #d1fae5", borderRadius: 14, background: "#ecfdf5", display: "flex", alignItems: "center", gap: 8 }}>
-                                    <Leaf size={14} color="#16a34a" />
-                                    <span style={{ fontSize: 13, fontWeight: 800, color: "#065f46" }}>Veg Only</span>
+                                <label style={{ fontSize: 11, fontWeight: 800, color: T.textSec, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Dietary</label>
+                                <div style={{ padding: "12px 16px", border: "2px solid rgba(22, 163, 74, 0.2)", borderRadius: 14, background: "rgba(22, 163, 74, 0.1)", display: "flex", alignItems: "center", gap: 8 }}>
+                                    <Leaf size={14} style={{ color: "#16a34a" }} />
+                                    <span style={{ fontSize: 13, fontWeight: 800, color: "#16a34a" }}>Pure Veg</span>
                                 </div>
                             </div>
                         </div>
 
-                        <div style={{ display: "flex", gap: 12, marginTop: 12 }}>
+                        <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
                             <button onClick={() => { setIsModalOpen(false); setItemImage(""); }}
-                                style={{ flex: 1, padding: 14, border: "2px solid #e5e7eb", borderRadius: 14, background: "none", fontWeight: 800, cursor: "pointer", color: "#6b7280" }}>
+                                style={{ flex: 1, padding: 14, border: `2px solid ${T.border}`, borderRadius: 14, background: "none", fontWeight: 800, cursor: "pointer", color: T.textSec }}>
                                 Cancel
                             </button>
                             <button onClick={handleSaveItem}

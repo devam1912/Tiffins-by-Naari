@@ -2,10 +2,15 @@ const Cart = require("./cart.model");
 const cron = require("node-cron");
 
 
-const isTimeValidForSlot = (timeSlot) => {
+const getISTTime = () => {
     const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
+    const istStr = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const ist = new Date(istStr);
+    return { hours: ist.getHours(), minutes: ist.getMinutes(), date: ist };
+};
+
+const isTimeValidForSlot = (timeSlot) => {
+    const { hours, minutes } = getISTTime();
     const currentTime = hours + minutes / 60;
 
     if (timeSlot === "lunch") {
@@ -28,21 +33,21 @@ const isTimeValidForSlot = (timeSlot) => {
 cron.schedule("0 15 * * *", async () => {
     try {
         await Cart.updateMany({ timeSlot: "lunch" }, { $set: { items: [], totalPrice: 0 } });
-        console.log("CRON: Cleared all lunch carts at 3:00 PM");
+        console.log("CRON: Cleared all lunch carts at 3:00 PM IST");
     } catch (err) {
         console.error("Cron Error (Lunch Carts):", err);
     }
-});
+}, { timezone: "Asia/Kolkata" });
 
 
 cron.schedule("30 22 * * *", async () => {
     try {
         await Cart.updateMany({ timeSlot: "dinner" }, { $set: { items: [], totalPrice: 0 } });
-        console.log("CRON: Cleared all dinner carts at 10:30 PM");
+        console.log("CRON: Cleared all dinner carts at 10:30 PM IST");
     } catch (err) {
         console.error("Cron Error (Dinner Carts):", err);
     }
-});
+}, { timezone: "Asia/Kolkata" });
 
 
 

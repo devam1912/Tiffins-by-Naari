@@ -58,7 +58,7 @@ const SuccessOverlay = ({ name, plan, slot, paymentMethod, onClose, onView }) =>
                 <p style={{ fontSize: 10, fontWeight: 900, letterSpacing: 4, textTransform: "uppercase", color: "#8FA873", marginBottom: 10 }}>Subscribed!</p>
                 <h2 style={{ fontFamily: "'Lora',serif", fontSize: 28, fontWeight: 700, color: "#1a2a1a", marginBottom: 8, lineHeight: 1.2 }}>Meals are on the way!</h2>
                 <p style={{ color: "#999", fontSize: 13, marginBottom: 4, fontWeight: 600 }}>{name}</p>
-                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 16, textTransform: "capitalize" }}>{plan} plan · {slot} delivery</p>
+                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 16, textTransform: "capitalize" }}>{plan} plan · {slot} pickup</p>
                 {paymentMethod === "wallet" && (
                     <div style={{ background: "rgba(143,174,142,0.1)", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 12, padding: "8px 14px", marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
                         <Wallet size={14} color="#4a7040" />
@@ -325,6 +325,7 @@ const ProviderDetailPage = () => {
 
         .back-btn:hover{background:rgba(255,255,255,0.28)!important}
         .meal-row:hover{background:rgba(143,174,142,0.1)!important;border-color:rgba(143,174,142,0.35)!important}
+        .meal-item-card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(143,174,142,0.12)!important;border-color:rgba(143,174,142,0.3)!important}
         .sub-btn-active:hover{opacity:.88!important}
         .info-pill{background:#fff;padding:12px 20px;border-radius:20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 20px rgba(90,120,70,0.04);border:1.5px solid rgba(143,174,142,0.08);flex:1;min-width:200px}
 
@@ -458,7 +459,7 @@ const ProviderDetailPage = () => {
                                 </div>
                             </div>
 
-                            <div style={{ maxHeight: menuExpanded ? "2000px" : "0px", opacity: menuExpanded ? 1 : 0, transition: "all .5s cubic-bezier(0.4, 0, 0.2, 1)", overflow: "hidden" }}>
+                            <div style={{ maxHeight: menuExpanded ? "none" : "0px", opacity: menuExpanded ? 1 : 0, transition: "all .5s cubic-bezier(0.4, 0, 0.2, 1)", overflow: menuExpanded ? "visible" : "hidden" }}>
                                 <div style={{ padding: "0 32px 32px" }}>
                                     {menuLoading ? (
                                         <div style={{ padding: "40px", textAlign: "center", color: "#8FAE8E", fontWeight: 700, fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
@@ -516,35 +517,38 @@ const ProviderDetailPage = () => {
                                                                         </button>
                                                                     </div>
 
-                                                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                                                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                                                         {dayMenu.lunch.items.map((item, i) => (
                                                                             <div key={i} style={{
-                                                                                display: "flex", alignItems: "center", gap: 8,
-                                                                                padding: "4px 8px 4px 4px", background: "#fff",
-                                                                                border: "1.5px solid #f0f0e0", borderRadius: 20,
-                                                                                fontSize: 11, fontWeight: 700, color: "#4a4a3a",
-                                                                                position: "relative", minWidth: 100
-                                                                            }}>
-                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, overflow: "hidden" }}>
+                                                                                display: "flex", alignItems: "center", gap: 16,
+                                                                                padding: "10px", background: "#fff",
+                                                                                border: "1.5px solid #f0f0e0", borderRadius: 16,
+                                                                                fontSize: 14, fontWeight: 700, color: "#2d3b2d",
+                                                                                position: "relative", width: "100%",
+                                                                                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                                                                                transition: "all 0.2s"
+                                                                            }} className="meal-item-card">
+                                                                                <div style={{ width: 64, height: 64, borderRadius: 12, background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, overflow: "hidden", flexShrink: 0 }}>
                                                                                     {item.image ? (
                                                                                         <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                                                    ) : <Salad size={14} />}
-
+                                                                                    ) : <Salad size={32} color="#8FAE8E" />}
                                                                                 </div>
-                                                                                <span style={{ flex: 1, paddingRight: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
-                                                                                {item.price > 0 && <span style={{ fontSize: 9, color: "#8FAE8E", fontWeight: 800, marginRight: isToday ? 20 : 0 }}>₹{item.price}</span>}
+                                                                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                                                                    <span style={{ fontSize: 15, color: "#2d3b2d" }}>{item.name}</span>
+                                                                                    {item.price > 0 && <span style={{ fontSize: 13, color: "#8FAE8E", fontWeight: 800 }}>₹{item.price}</span>}
+                                                                                </div>
                                                                                 {isToday && (
                                                                                     <button 
                                                                                         onClick={() => handleAddToCart(item, "lunch", dayMenu.lunch.price)}
                                                                                         disabled={addingToCart === item.name}
                                                                                         style={{
-                                                                                            position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
-                                                                                            width: 18, height: 18, borderRadius: "50%", background: "#8FAE8E",
+                                                                                            width: 36, height: 36, borderRadius: 10, background: "#8FAE8E",
                                                                                             border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                                                                                            cursor: "pointer", fontSize: 12, fontWeight: 900
+                                                                                            cursor: "pointer", fontSize: 18, fontWeight: 900,
+                                                                                            boxShadow: "0 4px 10px rgba(143,174,142,0.3)"
                                                                                         }}
                                                                                     >
-                                                                                        +
+                                                                                        {addingToCart === item.name ? <RefreshCcw size={14} className="spin-anim" /> : "+"}
                                                                                     </button>
                                                                                 )}
                                                                             </div>
@@ -575,35 +579,38 @@ const ProviderDetailPage = () => {
                                                                         </button>
                                                                     </div>
 
-                                                                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                                                                    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                                                                         {dayMenu.dinner.items.map((item, i) => (
                                                                             <div key={i} style={{
-                                                                                display: "flex", alignItems: "center", gap: 8,
-                                                                                padding: "4px 8px 4px 4px", background: "#fff",
-                                                                                border: "1.5px solid #f0f0e0", borderRadius: 20,
-                                                                                fontSize: 11, fontWeight: 700, color: "#4a4a3a",
-                                                                                position: "relative", minWidth: 100
-                                                                            }}>
-                                                                                <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, overflow: "hidden" }}>
+                                                                                display: "flex", alignItems: "center", gap: 16,
+                                                                                padding: "10px", background: "#fff",
+                                                                                border: "1.5px solid #f0f0e0", borderRadius: 16,
+                                                                                fontSize: 14, fontWeight: 700, color: "#2d3b2d",
+                                                                                position: "relative", width: "100%",
+                                                                                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
+                                                                                transition: "all 0.2s"
+                                                                            }} className="meal-item-card">
+                                                                                <div style={{ width: 64, height: 64, borderRadius: 12, background: "#f5f5f0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24, overflow: "hidden", flexShrink: 0 }}>
                                                                                     {item.image ? (
                                                                                         <img src={item.image} alt={item.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                                                                    ) : <Soup size={14} />}
-
+                                                                                    ) : <Soup size={32} color="#6b8a5e" />}
                                                                                 </div>
-                                                                                <span style={{ flex: 1, paddingRight: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.name}</span>
-                                                                                {item.price > 0 && <span style={{ fontSize: 9, color: "#6b8a5e", fontWeight: 800, marginRight: isToday ? 20 : 0 }}>₹{item.price}</span>}
+                                                                                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                                                                    <span style={{ fontSize: 15, color: "#2d3b2d" }}>{item.name}</span>
+                                                                                    {item.price > 0 && <span style={{ fontSize: 13, color: "#6b8a5e", fontWeight: 800 }}>₹{item.price}</span>}
+                                                                                </div>
                                                                                 {isToday && (
                                                                                     <button 
                                                                                         onClick={() => handleAddToCart(item, "dinner", dayMenu.dinner.price)}
                                                                                         disabled={addingToCart === item.name}
                                                                                         style={{
-                                                                                            position: "absolute", right: 4, top: "50%", transform: "translateY(-50%)",
-                                                                                            width: 18, height: 18, borderRadius: "50%", background: "#6b8a5e",
+                                                                                            width: 36, height: 36, borderRadius: 10, background: "#6b8a5e",
                                                                                             border: "none", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
-                                                                                            cursor: "pointer", fontSize: 12, fontWeight: 900
+                                                                                            cursor: "pointer", fontSize: 18, fontWeight: 900,
+                                                                                            boxShadow: "0 4px 10px rgba(107,138,94,0.3)"
                                                                                         }}
                                                                                     >
-                                                                                        +
+                                                                                        {addingToCart === item.name ? <RefreshCcw size={14} className="spin-anim" /> : "+"}
                                                                                     </button>
                                                                                 )}
                                                                             </div>
@@ -743,7 +750,7 @@ const ProviderDetailPage = () => {
                                 </div>
 
                                 {/* ── Slot ── */}
-                                <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2.5, textTransform: "uppercase", color: "#b8b8a4", marginBottom: 10 }}>Delivery Slot</p>
+                                <p style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2.5, textTransform: "uppercase", color: "#b8b8a4", marginBottom: 10 }}>Pickup Slot</p>
                                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 20 }}>
                                     {[
                                         { val: "lunch", icon: <Sun size={26} />, label: "Lunch", sub: "12–2 PM" },

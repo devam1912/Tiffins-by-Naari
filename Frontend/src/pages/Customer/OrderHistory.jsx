@@ -101,7 +101,7 @@ export default function OrderHistory() {
       confirmed: { bg: "#e8f5e9", color: "#2e7d32", label: "Confirmed" },
       preparing: { bg: "#e3f2fd", color: "#1565c0", label: "Preparing" },
       ready: { bg: "#f3e5f5", color: "#7b1fa2", label: "Ready" },
-      completed: { bg: "#e8f5e9", color: "#2e7d32", label: "Delivered" },
+      completed: { bg: "#e8f5e9", color: "#2e7d32", label: "Picked Up" },
       cancelled: { bg: "#ffebee", color: "#c62828", label: "Cancelled" },
     };
     return map[status] || { bg: "#f5f5f5", color: "#616161", label: status };
@@ -164,7 +164,7 @@ export default function OrderHistory() {
               Order History <History size={32} />
             </h1>
             <p style={{ color: "#888", fontSize: 15, marginTop: 6 }}>
-              Review your past orders and track their delivery status.
+              Review your past orders and track their pickup status.
             </p>
           </div>
           <button

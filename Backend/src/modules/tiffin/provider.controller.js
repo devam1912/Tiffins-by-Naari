@@ -162,7 +162,7 @@ const reactivateTSP = async (req, res) => {
           sub.user.email,
           "Tiffin Service Resumed",
           `Good news! Your tiffin provider "${provider.businessName}" is back.
-Your subscription has resumed and deliveries will continue as scheduled.`
+Your subscription has resumed and pickups will continue as scheduled.`
         );
       }
     }

@@ -255,7 +255,7 @@ export default function CustomerSubscriptions() {
               My Subscriptions <Calendar size={32} />
             </h1>
             <p style={{ color: "#888", fontSize: 15, marginTop: 6 }}>
-              Manage your active plans, pause deliveries, or view your history.
+              Manage your active plans, pause pickups, or view your history.
             </p>
           </div>
           <button

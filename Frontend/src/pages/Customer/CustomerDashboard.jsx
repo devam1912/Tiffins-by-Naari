@@ -33,6 +33,9 @@ export default function CustomerDashboard() {
   const [stats, setStats] = useState({ tiffins: 0, subscriptions: 0, orders: 0 });
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
   const [recommendations, setRecommendations] = useState([]);
+  const [foodRecs, setFoodRecs] = useState([]);
+  const [recTitle, setRecTitle] = useState("✨ Top Picks Just For You");
+  const [recSubtitle, setRecSubtitle] = useState("Personalized kitchens based on your location and history");
 
   // ✅ Redux se user aur token
   const user = useSelector((state) => state.auth.user);
@@ -143,9 +146,10 @@ export default function CustomerDashboard() {
 
   // ✅ 3. Fetch Recommendations when location is available
   useEffect(() => {
-    if (location.lat && location.lng) {
+    if (location.lat && location.lng && (user?.id || user?._id)) {
       const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const headers = { Authorization: `Bearer ${token}` };
+      const userId = user?.id || user?._id;
 
       // 1. Fetch nearby tiffins count for stats
       axios.get(`${BASE_URL}/api/tiffins/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
@@ -154,12 +158,69 @@ export default function CustomerDashboard() {
         })
         .catch(err => console.error("Nearby tiffins fetch error:", err));
 
-      // 2. Fetch specific recommendations
-      axios.get(`${BASE_URL}/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
-        .then(res => setRecommendations(res.data.providers || []))
-        .catch(err => console.error("Recs fetch error:", err));
+      // 2. Fetch specific recommendations & Menus for cold start fallback
+      Promise.all([
+        axios.get(`${BASE_URL}/api/recommendations/nearby?lat=${location.lat}&lng=${location.lng}`, { headers }),
+        axios.get(`${BASE_URL}/api/recommendations/${userId}`, { headers }),
+        axios.get(`${BASE_URL}/api/tiffins/menu`, { headers })
+      ]).then(([nearbyRecsRes, mlRecsRes, menusRes]) => {
+          const providers = nearbyRecsRes.data.providers || [];
+          setRecommendations(providers);
+
+          let topPicks = [];
+          if (mlRecsRes.data && mlRecsRes.data.top_picks) {
+              topPicks = mlRecsRes.data.top_picks;
+          }
+          const allMenus = menusRes.data.menus || [];
+
+          if (topPicks.length > 0) {
+              setRecTitle("✨ Top Picks Just For You");
+              setRecSubtitle("Personalized food recommendations based on your taste");
+              
+              const matchedItems = [];
+              topPicks.forEach(pick => {
+                 matchedItems.push({
+                     name: pick,
+                     cuisineType: "Recommended"
+                 });
+              });
+              setFoodRecs(matchedItems);
+          } else {
+              setRecTitle("🔥 Trending Meals Today");
+              setRecSubtitle("Popular local meals right now");
+
+              const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+              const todayName = days[new Date().getDay()];
+
+              let fallbackItems = [];
+              const providerIds = new Set(providers.map(p => p.id || p._id));
+
+              allMenus.forEach(menu => {
+                  const pId = menu.provider?._id || menu.provider;
+                  if (providerIds.has(pId)) {
+                      const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
+                      if (todayMenu) {
+                          const items = [...(todayMenu.lunch?.items || []), ...(todayMenu.dinner?.items || [])];
+                          const providerDetails = providers.find(p => (p.id || p._id) === pId);
+                          items.forEach(item => {
+                              if (item.status === "approved" || menu.isApproved) {
+                                  fallbackItems.push({
+                                      ...item,
+                                      provider: providerDetails
+                                  });
+                              }
+                          });
+                      }
+                  }
+              });
+
+              // Shuffle and pick 5
+              fallbackItems = fallbackItems.sort(() => 0.5 - Math.random()).slice(0, 5);
+              setFoodRecs(fallbackItems);
+          }
+      }).catch(err => console.error("Recs fetch error:", err));
     }
-  }, [location.lat, location.lng, token]);
+  }, [location.lat, location.lng, token, user?.id, user?._id]);
 
   // ✅ Naya logout — Redux dispatch karta hai
   const handleLogout = () => {
@@ -393,24 +454,80 @@ export default function CustomerDashboard() {
           ))}
         </div>
 
-        {/* ── Recommendations ── */}
+        {/* ── RECOMMENDED FOOD CAROUSEL ── */}
         <div style={{ marginBottom: 44, ...anim(300) }}>
           <div style={{ marginBottom: 16 }}>
-            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>Recommended For You <Sparkles size={20} style={{ display: 'inline', verticalAlign: 'middle', color: '#8FA873' }} /></h2>
-            <p style={{ color: "#888", fontSize: 14 }}>Personalized kitchens based on your location and history</p>
+            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{recTitle}</h2>
+            <p style={{ color: "#888", fontSize: 14 }}>{recSubtitle}</p>
+          </div>
+
+          {foodRecs.length > 0 ? (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18 }}>
+              {foodRecs.map((food, idx) => (
+                <div key={idx} className="stat-card" style={{
+                  background: "rgba(255,255,255,0.72)", backdropFilter: "blur(14px)",
+                  border: "1px solid rgba(143,174,142,0.2)", borderRadius: 22, padding: "20px",
+                  boxShadow: "0 4px 20px rgba(143,174,142,0.1)", display: "flex", flexDirection: "column",
+                }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#fbbf24)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", overflow: "hidden" }}>
+                        {food.image ? <img src={food.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Soup size={22} />}
+                    </div>
+                    {food.price && <span style={{ fontSize: 13, fontWeight: 800, color: "#2d3b2d" }}>₹{food.price}</span>}
+                  </div>
+                  <h3 style={{ fontFamily: "'Lora',serif", fontSize: 16, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{food.name}</h3>
+                  {food.provider && (
+                    <p style={{ fontSize: 12, color: "#777", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
+                      <Home size={12} /> By {food.provider.businessName}
+                    </p>
+                  )}
+                  {food.provider ? (
+                      <button onClick={() => navigate(`/provider/${food.provider.id || food.provider._id}`, { state: { tiffin: food.provider } })} style={{
+                        marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
+                        borderRadius: 14, padding: "8px", fontWeight: 700, fontSize: 13, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
+                      }}>
+                        Order Here →
+                      </button>
+                  ) : (
+                      <button onClick={() => navigate("/tiffins")} style={{
+                        marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
+                        borderRadius: 14, padding: "8px", fontWeight: 700, fontSize: 13, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
+                      }}>
+                        Explore Kitchens →
+                      </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{
+              background: "rgba(255,255,255,0.5)", border: "1px dashed rgba(143,174,142,0.5)",
+              borderRadius: 22, padding: "30px", textAlign: "center", color: "#777",
+              fontFamily: "'Nunito',sans-serif", fontSize: 14
+            }}>
+              Discovering the best meals near you...
+            </div>
+          )}
+        </div>
+
+        {/* ── NEARBY PROVIDERS CAROUSEL ── */}
+        <div style={{ marginBottom: 44, ...anim(320) }}>
+          <div style={{ marginBottom: 16 }}>
+            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>👩‍🍳 Top Kitchens Near You</h2>
+            <p style={{ color: "#888", fontSize: 14 }}>The highest-rated home chefs in your neighbourhood</p>
           </div>
 
           {recommendations.length > 0 ? (
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
               {recommendations.slice(0, 4).map((rec) => (
-                <div key={rec.id} className="stat-card" style={{
+                <div key={rec.id || rec._id} className="stat-card" style={{
                   background: "rgba(255,255,255,0.72)", backdropFilter: "blur(14px)",
                   border: "1px solid rgba(143,174,142,0.2)", borderRadius: 22, padding: "24px",
                   boxShadow: "0 4px 20px rgba(143,174,142,0.1)", display: "flex", flexDirection: "column",
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c5d490,#9ab870)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
-                      <Soup size={22} />
+                      <Home size={22} />
                     </div>
                     <span style={{ fontSize: 10, fontWeight: 800, padding: "4px 10px", borderRadius: 12, background: "#e8f5e9", color: "#5a7a50", textTransform: "uppercase", letterSpacing: 1 }}>
                       {rec.cuisineType || "Mixed"}
@@ -420,7 +537,7 @@ export default function CustomerDashboard() {
                   <p style={{ fontSize: 13, color: "#777", marginBottom: 16, display: "flex", alignItems: "center", gap: 6 }}>
                     <User size={14} /> <strong>Owner:</strong> {rec.ownerName}
                   </p>
-                  <button onClick={() => navigate(`/provider/${rec._id}`, { state: { tiffin: rec } })} style={{
+                  <button onClick={() => navigate(`/provider/${rec.id || rec._id}`, { state: { tiffin: rec } })} style={{
                     marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
                     borderRadius: 14, padding: "10px", fontWeight: 700, fontSize: 14, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
                   }}>

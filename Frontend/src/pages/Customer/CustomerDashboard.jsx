@@ -175,36 +175,62 @@ export default function CustomerDashboard() {
           }
           const allMenus = menusRes.data.menus || [];
 
-          // Build a pool of all available items from nearby TSPS for 'today'
+          // Build a pool of available items from nearby TSPs for 'today'
           const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
           const todayName = days[new Date().getDay()];
 
+          // ✅ Determine current meal slot based on time of day
+          const currentHour = new Date().getHours();
+          const currentSlot = currentHour < 15 ? "lunch" : "dinner";
+          const slotLabel = currentSlot === "lunch" ? "Lunch" : "Dinner";
+
           let availableItemsToday = [];
-          const providerIds = new Set(providers.map(p => p.id || p._id));
+          // ✅ FIX: Convert all provider IDs to strings for reliable comparison
+          const providerIds = new Set(providers.map(p => String(p.id || p._id)));
 
           allMenus.forEach(menu => {
-              const pId = menu.provider?._id || menu.provider;
+              // ✅ Only include items from approved menus
+              if (!menu.isApproved) return;
+
+              const pId = String(menu.provider?._id || menu.provider);
               if (providerIds.has(pId)) {
                   const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
                   if (todayMenu) {
-                      const items = [...(todayMenu.lunch?.items || []), ...(todayMenu.dinner?.items || [])];
-                      const providerDetails = providers.find(p => (p.id || p._id) === pId);
-                      items.forEach(item => {
-                          if (item.status === "approved" || menu.isApproved) {
+                      // ✅ FIX: Pick items from current time-slot (lunch or dinner)
+                      const slotItems = todayMenu[currentSlot]?.items || [];
+                      const providerDetails = providers.find(p => String(p.id || p._id) === pId);
+                      slotItems.forEach(item => {
+                          if (item.name) {
                               availableItemsToday.push({
                                   ...item,
+                                  mealSlot: currentSlot,
                                   provider: providerDetails
                               });
                           }
                       });
+
+                      // If no items in current slot, fallback to the other slot
+                      if (slotItems.length === 0) {
+                          const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
+                          const otherItems = todayMenu[otherSlot]?.items || [];
+                          otherItems.forEach(item => {
+                              if (item.name) {
+                                  availableItemsToday.push({
+                                      ...item,
+                                      mealSlot: otherSlot,
+                                      provider: providerDetails
+                                  });
+                              }
+                          });
+                      }
                   }
               }
           });
           
-          // Remove exact duplicates by item name and provider ID to avoid showing "Roti" twice
+          // Remove exact duplicates by item name + provider ID
           const uniqueItemsMap = new Map();
           availableItemsToday.forEach(item => {
-              const key = `${item.name}-${item.provider?.id || item.provider?._id}`;
+              const key = `${item.name}-${String(item.provider?.id || item.provider?._id)}`;
               if (!uniqueItemsMap.has(key)) {
                   uniqueItemsMap.set(key, item);
               }
@@ -213,21 +239,25 @@ export default function CustomerDashboard() {
 
           if (topPicks.length > 0) {
               setRecTitle("✨ Top Picks Just For You");
-              setRecSubtitle("Personalized food recommendations based on your taste");
+              setRecSubtitle(`Personalized ${slotLabel.toLowerCase()} recommendations based on your taste`);
               
               const matchedItems = [];
               // 1. Map ML predictions to actual TSPs selling it today
               topPicks.forEach(pick => {
-                 let match = availableItemsToday.find(i => i.name.toLowerCase().includes(pick.toLowerCase()));
+                 const pickLower = pick.toLowerCase();
+                 let match = availableItemsToday.find(i => i.name.toLowerCase().includes(pickLower));
                  if (match) {
                      matchedItems.push(match);
                      availableItemsToday = availableItemsToday.filter(i => i !== match);
                  }
               });
 
-              // 2. Pad to 2 items, prioritizing 'Sabzi' (as requested)
+              // 2. Pad to 2 items, prioritizing 'Sabzi' / 'Paneer' / 'Aloo'
               while (matchedItems.length < 2 && availableItemsToday.length > 0) {
-                 let fallbackMatch = availableItemsToday.find(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer") || i.name.toLowerCase().includes("aloo"));
+                 let fallbackMatch = availableItemsToday.find(i => {
+                     const n = i.name.toLowerCase();
+                     return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
+                 });
                  if (!fallbackMatch) {
                      fallbackMatch = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
                  }
@@ -236,12 +266,15 @@ export default function CustomerDashboard() {
               }
               setFoodRecs(matchedItems.slice(0, 2));
           } else {
-              setRecTitle("🔥 Trending Meals Today");
-              setRecSubtitle("Popular local meals right now");
+              setRecTitle(`🔥 Trending ${slotLabel} Meals Today`);
+              setRecSubtitle(`Popular local ${slotLabel.toLowerCase()} meals right now`);
 
               let fallbackItems = [];
-              // 1. Prioritize exactly 1-2 sabzi out of all available
-              let sabzis = availableItemsToday.filter(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer") || i.name.toLowerCase().includes("aloo"));
+              // 1. Prioritize exactly 1-2 sabzi/paneer/aloo
+              let sabzis = availableItemsToday.filter(i => {
+                  const n = i.name.toLowerCase();
+                  return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
+              });
               
               if (sabzis.length > 0) {
                   fallbackItems.push(sabzis[0]);
@@ -511,7 +544,14 @@ export default function CustomerDashboard() {
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#fbbf24)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", overflow: "hidden" }}>
                         {food.image ? <img src={food.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Soup size={22} />}
                     </div>
-                    {food.price && <span style={{ fontSize: 13, fontWeight: 800, color: "#2d3b2d" }}>₹{food.price}</span>}
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      {food.mealSlot && (
+                        <span style={{ fontSize: 10, fontWeight: 800, padding: "3px 8px", borderRadius: 10, background: food.mealSlot === "lunch" ? "#fff3e0" : "#e8eaf6", color: food.mealSlot === "lunch" ? "#e65100" : "#283593", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                          {food.mealSlot === "lunch" ? "☀️ Lunch" : "🌙 Dinner"}
+                        </span>
+                      )}
+                      {food.price && <span style={{ fontSize: 13, fontWeight: 800, color: "#2d3b2d" }}>₹{food.price}</span>}
+                    </div>
                   </div>
                   <h3 style={{ fontFamily: "'Lora',serif", fontSize: 16, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>{food.name}</h3>
                   {food.provider && (

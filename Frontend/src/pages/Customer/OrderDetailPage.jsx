@@ -81,7 +81,8 @@ export default function OrderDetailPage() {
     const fetchOrder = async () => {
       try {
         setIsLoading(true);
-        const res = await axios.get(`http://localhost:5000/api/orders/${id}`, {
+        const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+        const res = await axios.get(`${BASE_URL}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setOrder(res.data);
@@ -115,7 +116,8 @@ export default function OrderDetailPage() {
     }
     setReviewSubmitting(true);
     try {
-      await axios.post("http://localhost:5000/api/feedback", {
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+      await axios.post(`${BASE_URL}/api/feedback`, {
         providerId: order.provider._id || order.provider,
         rating,
         comment

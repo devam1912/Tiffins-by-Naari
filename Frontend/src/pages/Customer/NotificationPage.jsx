@@ -42,9 +42,10 @@ export default function NotificationPage() {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
       
+      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const [ordersRes, subsRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/orders/my", { headers }),
-        axios.get("http://localhost:5000/api/subscriptions/my-subscriptions", { headers })
+        axios.get(`${BASE_URL}/api/orders/my`, { headers }),
+        axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers })
       ]);
 
       const rawOrders = ordersRes.data || [];

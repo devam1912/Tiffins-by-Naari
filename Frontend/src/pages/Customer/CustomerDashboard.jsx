@@ -118,9 +118,11 @@ export default function CustomerDashboard() {
     const getUnreadCount = async () => {
       try {
         const headers = { Authorization: `Bearer ${token}` };
+        const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+        
         const [ordersRes, subsRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/orders/my", { headers }),
-          axios.get("http://localhost:5000/api/subscriptions/my-subscriptions", { headers })
+          axios.get(`${BASE_URL}/api/orders/my`, { headers }),
+          axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers })
         ]);
 
         const rawOrders = ordersRes.data || [];
@@ -198,6 +200,16 @@ export default function CustomerDashboard() {
                   }
               }
           });
+          
+          // Remove exact duplicates by item name and provider ID to avoid showing "Roti" twice
+          const uniqueItemsMap = new Map();
+          availableItemsToday.forEach(item => {
+              const key = `${item.name}-${item.provider?.id || item.provider?._id}`;
+              if (!uniqueItemsMap.has(key)) {
+                  uniqueItemsMap.set(key, item);
+              }
+          });
+          availableItemsToday = Array.from(uniqueItemsMap.values());
 
           if (topPicks.length > 0) {
               setRecTitle("✨ Top Picks Just For You");
@@ -213,22 +225,35 @@ export default function CustomerDashboard() {
                  }
               });
 
-              // 2. Pad to 5 items, prioritizing 'Sabzi' (as requested)
-              while (matchedItems.length < 5 && availableItemsToday.length > 0) {
-                 let fallbackMatch = availableItemsToday.find(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer"));
+              // 2. Pad to 2 items, prioritizing 'Sabzi' (as requested)
+              while (matchedItems.length < 2 && availableItemsToday.length > 0) {
+                 let fallbackMatch = availableItemsToday.find(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer") || i.name.toLowerCase().includes("aloo"));
                  if (!fallbackMatch) {
                      fallbackMatch = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
                  }
                  matchedItems.push(fallbackMatch);
                  availableItemsToday = availableItemsToday.filter(i => i !== fallbackMatch);
               }
-              setFoodRecs(matchedItems);
+              setFoodRecs(matchedItems.slice(0, 2));
           } else {
               setRecTitle("🔥 Trending Meals Today");
               setRecSubtitle("Popular local meals right now");
 
-              // Shuffle and pick 5
-              let fallbackItems = availableItemsToday.sort(() => 0.5 - Math.random()).slice(0, 5);
+              let fallbackItems = [];
+              // 1. Prioritize exactly 1-2 sabzi out of all available
+              let sabzis = availableItemsToday.filter(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer") || i.name.toLowerCase().includes("aloo"));
+              
+              if (sabzis.length > 0) {
+                  fallbackItems.push(sabzis[0]);
+                  availableItemsToday = availableItemsToday.filter(i => i !== sabzis[0]);
+              }
+              
+              if (availableItemsToday.length > 0 && fallbackItems.length < 2) {
+                  // Pick one more random item to make it 2 max
+                  let randomItem = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
+                  fallbackItems.push(randomItem);
+              }
+
               setFoodRecs(fallbackItems);
           }
       }).catch(err => console.error("Recs fetch error:", err));

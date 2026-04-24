@@ -4,6 +4,7 @@ import axios from "axios";
 import Sidebar from "../../components/Customer/Sidebar";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { BASE_URL } from "../../api/auth";
 import { toast } from "sonner";
 import { 
   Bell, 
@@ -91,7 +92,6 @@ export default function CustomerDashboard() {
     document.head.appendChild(link);
 
     // ✅ Token ab Redux se aa raha hai, localStorage se nahi
-    const BASE_URL = import.meta.env.VITE_API_URL ?? "";
     const headers = { Authorization: `Bearer ${token}` };
 
     // Fetch Subscriptions and Orders (Non-location dependent)
@@ -146,10 +146,8 @@ export default function CustomerDashboard() {
     getUnreadCount();
   }, [token, user?.id]);
 
-  // ✅ 3. Fetch Recommendations when location is available
   useEffect(() => {
     if (location.lat && location.lng && (user?.id || user?._id)) {
-      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const headers = { Authorization: `Bearer ${token}` };
       const userId = user?.id || user?._id;
 

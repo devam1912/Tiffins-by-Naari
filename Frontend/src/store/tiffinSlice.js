@@ -1,13 +1,13 @@
 // src/store/tiffinSlice.js
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import { BASE_URL } from "../api/auth";
 
 export const fetchNearbyTiffins = createAsyncThunk(
     "tiffins/fetchNearby",
     async ({ lat, lng, radius, token }, { rejectWithValue }) => {
         try {
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
-            const BASE_URL = import.meta.env.VITE_API_URL ?? "";
             const response = await axios.get(`${BASE_URL}/api/tiffins/nearby`, {
                 params: { lat, lng, distance: radius },
                 headers,

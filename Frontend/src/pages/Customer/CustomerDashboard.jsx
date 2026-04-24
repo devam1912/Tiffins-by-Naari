@@ -173,49 +173,62 @@ export default function CustomerDashboard() {
           }
           const allMenus = menusRes.data.menus || [];
 
+          // Build a pool of all available items from nearby TSPS for 'today'
+          const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+          const todayName = days[new Date().getDay()];
+
+          let availableItemsToday = [];
+          const providerIds = new Set(providers.map(p => p.id || p._id));
+
+          allMenus.forEach(menu => {
+              const pId = menu.provider?._id || menu.provider;
+              if (providerIds.has(pId)) {
+                  const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
+                  if (todayMenu) {
+                      const items = [...(todayMenu.lunch?.items || []), ...(todayMenu.dinner?.items || [])];
+                      const providerDetails = providers.find(p => (p.id || p._id) === pId);
+                      items.forEach(item => {
+                          if (item.status === "approved" || menu.isApproved) {
+                              availableItemsToday.push({
+                                  ...item,
+                                  provider: providerDetails
+                              });
+                          }
+                      });
+                  }
+              }
+          });
+
           if (topPicks.length > 0) {
               setRecTitle("✨ Top Picks Just For You");
               setRecSubtitle("Personalized food recommendations based on your taste");
               
               const matchedItems = [];
+              // 1. Map ML predictions to actual TSPs selling it today
               topPicks.forEach(pick => {
-                 matchedItems.push({
-                     name: pick,
-                     cuisineType: "Recommended"
-                 });
+                 let match = availableItemsToday.find(i => i.name.toLowerCase().includes(pick.toLowerCase()));
+                 if (match) {
+                     matchedItems.push(match);
+                     availableItemsToday = availableItemsToday.filter(i => i !== match);
+                 }
               });
+
+              // 2. Pad to 5 items, prioritizing 'Sabzi' (as requested)
+              while (matchedItems.length < 5 && availableItemsToday.length > 0) {
+                 let fallbackMatch = availableItemsToday.find(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer"));
+                 if (!fallbackMatch) {
+                     fallbackMatch = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
+                 }
+                 matchedItems.push(fallbackMatch);
+                 availableItemsToday = availableItemsToday.filter(i => i !== fallbackMatch);
+              }
               setFoodRecs(matchedItems);
           } else {
               setRecTitle("🔥 Trending Meals Today");
               setRecSubtitle("Popular local meals right now");
 
-              const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-              const todayName = days[new Date().getDay()];
-
-              let fallbackItems = [];
-              const providerIds = new Set(providers.map(p => p.id || p._id));
-
-              allMenus.forEach(menu => {
-                  const pId = menu.provider?._id || menu.provider;
-                  if (providerIds.has(pId)) {
-                      const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
-                      if (todayMenu) {
-                          const items = [...(todayMenu.lunch?.items || []), ...(todayMenu.dinner?.items || [])];
-                          const providerDetails = providers.find(p => (p.id || p._id) === pId);
-                          items.forEach(item => {
-                              if (item.status === "approved" || menu.isApproved) {
-                                  fallbackItems.push({
-                                      ...item,
-                                      provider: providerDetails
-                                  });
-                              }
-                          });
-                      }
-                  }
-              });
-
               // Shuffle and pick 5
-              fallbackItems = fallbackItems.sort(() => 0.5 - Math.random()).slice(0, 5);
+              let fallbackItems = availableItemsToday.sort(() => 0.5 - Math.random()).slice(0, 5);
               setFoodRecs(fallbackItems);
           }
       }).catch(err => console.error("Recs fetch error:", err));

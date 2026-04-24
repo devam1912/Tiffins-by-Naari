@@ -20,6 +20,8 @@ import {
   Heart,
   ArrowRight,
   Instagram,
+  Menu,
+  X,
   Twitter,
   Linkedin
 } from "lucide-react";
@@ -96,6 +98,7 @@ function WhyPoint({ icon, title, desc, delay }) {
 export default function Home() {
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const link = document.createElement("link");
@@ -187,10 +190,51 @@ export default function Home() {
         .chef-card:hover img { transform: scale(1.04); }
         .footer-link:hover { color: #D9D9A8 !important; }
         .social-icon:hover { background: rgba(143,174,142,0.3) !important; }
+
+        /* Responsive Utilities */
+        @media (max-width: 900px) {
+          .desktop-nav-links { display: none !important; }
+          .mobile-menu-btn { display: flex !important; }
+          .hero-section { flex-direction: column !important; text-align: center; padding-top: 120px !important; }
+          .hero-text-block { align-items: center !important; }
+          .hero-title { font-size: clamp(36px, 8vw, 44px) !important; }
+          .hero-search { margin: 0 auto 28px !important; }
+          .hero-img-block { margin-top: 40px; }
+          .section-padding { padding: 60px 24px !important; }
+          .grid-2 { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .footer-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+          .hide-on-mobile { display: none !important; }
+        }
+        @media (max-width: 480px) {
+          .nav-container { padding: 0 20px !important; }
+          .hero-img-block img { width: 100% !important; height: auto !important; }
+          .why-us-img { max-width: 100% !important; height: auto !important; }
+          .for-chefs-img { max-width: 100% !important; height: auto !important; }
+        }
       `}</style>
 
+      {/* MOBILE MENU OVERLAY */}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 300,
+        background: "rgba(231,230,182,0.98)", backdropFilter: "blur(10px)",
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        opacity: isMobileMenuOpen ? 1 : 0, pointerEvents: isMobileMenuOpen ? "all" : "none",
+        transition: "all 0.3s ease",
+      }}>
+        <button onClick={() => setIsMobileMenuOpen(false)} style={{ position: "absolute", top: 24, right: 24, background: "transparent", border: "none", cursor: "pointer", color: "#2d3b2d" }}>
+          <X size={32} />
+        </button>
+        <div style={{ display: "flex", flexDirection: "column", gap: 32, fontSize: 24, fontWeight: 700, fontFamily: "'Nunito', sans-serif", textAlign: "center" }}>
+          <a href="#how-it-works" onClick={() => setIsMobileMenuOpen(false)} style={{ color: "#2d3b2d" }}>How it Works</a>
+          <a href="#why-us" onClick={() => setIsMobileMenuOpen(false)} style={{ color: "#2d3b2d" }}>Why Us</a>
+          <a href="#for-chefs" onClick={() => setIsMobileMenuOpen(false)} style={{ color: "#2d3b2d" }}>For Chefs</a>
+          <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} style={{ color: "#5a7a50", marginTop: 20 }}>Login</Link>
+          <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} style={{ background: "linear-gradient(135deg, #8FAE8E, #8FA873)", color: "#fff", padding: "12px 32px", borderRadius: 30 }}>Sign Up Free</Link>
+        </div>
+      </div>
+
       {/* ══ NAVBAR ══ */}
-      <nav style={{
+      <nav className="nav-container" style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 200,
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "0 48px", height: 70,
@@ -207,13 +251,13 @@ export default function Home() {
         </div>
 
         {/* Navbar links that scroll to sections */}
-        <div style={{ display: "flex", gap: 36, ...h(100) }}>
+        <div className="desktop-nav-links" style={{ display: "flex", gap: 36, ...h(100) }}>
           <a href="#how-it-works" className="nav-link">How it Works</a>
           <a href="#why-us" className="nav-link">Why Us</a>
           <a href="#for-chefs" className="nav-link">For Chefs</a>
         </div>
 
-        <div style={{ display: "flex", gap: 12, alignItems: "center", ...h(200) }}>
+        <div className="desktop-nav-links" style={{ display: "flex", gap: 12, alignItems: "center", ...h(200) }}>
           <Link to="/login" style={{ color: "#5a7a50", fontWeight: 700, fontSize: 15, fontFamily: "'Nunito', sans-serif" }}>Login</Link>
           <Link to="/signup">
             <button
@@ -223,17 +267,22 @@ export default function Home() {
             >Sign Up Free</button>
           </Link>
         </div>
+
+        {/* Mobile menu toggle */}
+        <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(true)} style={{ display: "none", background: "transparent", border: "none", color: "#2d3b2d", cursor: "pointer" }}>
+          <Menu size={28} />
+        </button>
       </nav>
 
       {/* ══ HERO ══ */}
-      <section style={{ minHeight: "100vh", padding: "0 48px", paddingTop: 90, display: "flex", alignItems: "center", background: "#E7E6B6", position: "relative", overflow: "hidden" }}>
+      <section className="hero-section nav-container" style={{ minHeight: "100vh", padding: "0 48px", paddingTop: 90, display: "flex", alignItems: "center", background: "#E7E6B6", position: "relative", overflow: "hidden" }}>
         {/* Background blobs */}
-        <div style={{ position: "absolute", width: 520, height: 520, borderRadius: "50%", background: "radial-gradient(circle, rgba(143,168,115,0.2) 0%, transparent 70%)", top: "5%", right: "-5%", pointerEvents: "none", transform: `translateY(${scrollY * 0.08}px)`, transition: "transform 0.1s linear" }} />
-        <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(217,217,168,0.5) 0%, transparent 70%)", bottom: "10%", left: "-5%", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", right: "8%", top: "18%", width: 380, height: 380, borderRadius: "50%", border: "1.5px dashed rgba(143,174,142,0.4)", animation: "spinSlow 30s linear infinite", pointerEvents: "none" }} />
+        <div className="hide-on-mobile" style={{ position: "absolute", width: 520, height: 520, borderRadius: "50%", background: "radial-gradient(circle, rgba(143,168,115,0.2) 0%, transparent 70%)", top: "5%", right: "-5%", pointerEvents: "none", transform: `translateY(${scrollY * 0.08}px)`, transition: "transform 0.1s linear" }} />
+        <div className="hide-on-mobile" style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(217,217,168,0.5) 0%, transparent 70%)", bottom: "10%", left: "-5%", pointerEvents: "none" }} />
+        <div className="hide-on-mobile" style={{ position: "absolute", right: "8%", top: "18%", width: 380, height: 380, borderRadius: "50%", border: "1.5px dashed rgba(143,174,142,0.4)", animation: "spinSlow 30s linear infinite", pointerEvents: "none" }} />
 
         {/* Left */}
-        <div style={{ flex: 1, maxWidth: 620, position: "relative", zIndex: 2 }}>
+        <div className="hero-text-block" style={{ flex: 1, maxWidth: 620, position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "flex-start" }}>
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 8,
             background: "rgba(255,255,255,0.7)", border: "1px solid rgba(143,174,142,0.35)",
@@ -242,22 +291,22 @@ export default function Home() {
             ...h(100),
           }}>
             <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.6s ease-in-out infinite" }} />
-            <HomeIcon size={14} style={{ marginRight: 4 }} /> Home-cooked &amp; fresh · Ready for pickup daily in your city
+            <HomeIcon size={14} style={{ marginRight: 4 }} /> Home-cooked &amp; fresh · Ready for pickup daily
           </div>
 
-          <h1 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(44px, 6vw, 76px)", fontWeight: 700, lineHeight: 1.08, color: "#2d3b2d", marginBottom: 24, ...h(200) }}>
+          <h1 className="hero-title" style={{ fontFamily: "'Lora', serif", fontSize: "clamp(44px, 6vw, 76px)", fontWeight: 700, lineHeight: 1.08, color: "#2d3b2d", marginBottom: 24, ...h(200) }}>
             Ghar Jaisa Khana,<br />
             <em style={{ background: "linear-gradient(135deg, #8FAE8E, #6b8f5e)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>Everywhere</em>
           </h1>
 
           <p style={{ fontSize: 17, color: "#5a5a40", lineHeight: 1.75, maxWidth: 500, marginBottom: 38, fontWeight: 400, ...h(320) }}>
-            Subscribe to authentic home-cooked meals by talented home chefs in your neighbourhood. Healthy, wholesome, and made with love — every single day.
+            Subscribe to authentic home-cooked meals by talented home chefs in your neighbourhood. Healthy, wholesome, and made with love.
           </p>
 
           {/* Search bar */}
-          <div style={{ display: "flex", background: "#fff", borderRadius: 18, padding: "6px 6px 6px 20px", boxShadow: "0 8px 32px rgba(100,130,80,0.14)", border: "1.5px solid rgba(143,174,142,0.3)", maxWidth: 430, marginBottom: 28, ...h(420), alignItems: 'center' }}>
+          <div className="hero-search" style={{ display: "flex", background: "#fff", borderRadius: 18, padding: "6px 6px 6px 20px", boxShadow: "0 8px 32px rgba(100,130,80,0.14)", border: "1.5px solid rgba(143,174,142,0.3)", maxWidth: 430, marginBottom: 28, ...h(420), alignItems: 'center' }}>
             <MapPin size={20} color="#8FAE8E" style={{ marginRight: 10 }} />
-            <input placeholder="Enter your city or area..." style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 15, fontFamily: "'Nunito', sans-serif", color: "#333" }} />
+            <input placeholder="Enter your city..." style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 15, fontFamily: "'Nunito', sans-serif", color: "#333", width: "100px" }} />
             <button
               style={{ background: "linear-gradient(135deg, #8FAE8E, #8FA873)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 22px", fontWeight: 700, cursor: "pointer", fontSize: 15, fontFamily: "'Nunito', sans-serif", whiteSpace: "nowrap", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", transition: "all 0.25s" }}
               onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
@@ -274,7 +323,7 @@ export default function Home() {
         </div>
 
         {/* Right — hero image from Unsplash */}
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", zIndex: 2, ...h(300) }}>
+        <div className="hero-img-block" style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", zIndex: 2, ...h(300) }}>
           <img
             src={heroImg}
             alt="Delicious home-cooked meal"
@@ -302,7 +351,7 @@ export default function Home() {
       </section>
 
       {/* ══ HOW IT WORKS ══ */}
-      <section id="how-it-works" style={{ background: "#D9D9A8", padding: "100px 48px", position: "relative", overflow: "hidden" }}>
+      <section id="how-it-works" className="section-padding" style={{ background: "#D9D9A8", padding: "100px 48px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 60, background: "#E7E6B6", clipPath: "ellipse(55% 100% at 50% 0%)" }} />
 
         <div style={{ textAlign: "center", marginBottom: 68 }}>
@@ -327,11 +376,11 @@ export default function Home() {
       </section>
 
       {/* ══ WHY US — completely rewritten ══ */}
-      <section id="why-us" style={{ background: "linear-gradient(135deg, #8FA873 0%, #6b8a5e 100%)", padding: "100px 48px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: -120, right: -120, width: 400, height: 400, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.08)", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", bottom: -60, left: -60, width: 240, height: 240, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.08)", pointerEvents: "none" }} />
+      <section id="why-us" className="section-padding" style={{ background: "linear-gradient(135deg, #8FA873 0%, #6b8a5e 100%)", padding: "100px 48px", position: "relative", overflow: "hidden" }}>
+        <div className="hide-on-mobile" style={{ position: "absolute", top: -120, right: -120, width: 400, height: 400, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.08)", pointerEvents: "none" }} />
+        <div className="hide-on-mobile" style={{ position: "absolute", bottom: -60, left: -60, width: 240, height: 240, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.08)", pointerEvents: "none" }} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", maxWidth: 1100, margin: "0 auto" }}>
+        <div className="grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center", maxWidth: 1100, margin: "0 auto" }}>
           {/* Left text + points */}
           <div>
             {(() => {
@@ -361,6 +410,7 @@ export default function Home() {
             <img
               src="https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=80"
               alt="Home chef cooking"
+              className="why-us-img"
               style={{
                 width: "100%", maxWidth: 360, height: 380,
                 borderRadius: 28, objectFit: "cover",
@@ -380,13 +430,13 @@ export default function Home() {
       </section>
 
       {/* ══ FOR CHEFS — replaces the hollow subscribe CTA ══ */}
-      <section id="for-chefs" style={{ background: "#E7E6B6", padding: "100px 48px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", width: 420, height: 420, borderRadius: "50%", background: "radial-gradient(circle, rgba(143,168,115,0.18) 0%, transparent 70%)", top: "-80px", right: "-80px", pointerEvents: "none" }} />
+      <section id="for-chefs" className="section-padding" style={{ background: "#E7E6B6", padding: "100px 48px", position: "relative", overflow: "hidden" }}>
+        <div className="hide-on-mobile" style={{ position: "absolute", width: 420, height: 420, borderRadius: "50%", background: "radial-gradient(circle, rgba(143,168,115,0.18) 0%, transparent 70%)", top: "-80px", right: "-80px", pointerEvents: "none" }} />
 
         {(() => {
           const [r, v] = useInView();
           return (
-            <div ref={r} style={{
+            <div ref={r} className="grid-2" style={{
               display: "grid", gridTemplateColumns: "1fr 1fr", gap: 72,
               alignItems: "center", maxWidth: 1100, margin: "0 auto",
               opacity: v ? 1 : 0, transform: v ? "translateY(0)" : "translateY(32px)",
@@ -397,6 +447,7 @@ export default function Home() {
                 <img
                   src={forChefsImg}
                   alt="Home chef preparing tiffin"
+                  className="for-chefs-img"
                   style={{ width: "100%", height: 420, borderRadius: 28, objectFit: "cover", boxShadow: "0 24px 64px rgba(90,120,70,0.2)" }}
                 />
                 {/* Overlay pill */}
@@ -458,11 +509,11 @@ export default function Home() {
       </section>
 
       {/* ══ FOOTER — completely rewritten ══ */}
-      <footer style={{ background: "#1a261a", color: "#fff", padding: "72px 48px 0" }}>
+      <footer className="section-padding" style={{ background: "#1a261a", color: "#fff", padding: "72px 48px 0" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
 
           {/* Top: brand + columns */}
-          <div style={{ display: "grid", gridTemplateColumns: "2.2fr 1fr 1fr 1.4fr", gap: 56, paddingBottom: 56, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="footer-grid" style={{ display: "grid", gridTemplateColumns: "2.2fr 1fr 1fr 1.4fr", gap: 56, paddingBottom: 56, borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
 
             {/* Brand */}
             <div>

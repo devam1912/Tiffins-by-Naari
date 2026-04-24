@@ -100,7 +100,7 @@ export default function Login() {
     });
 
     return (
-        <div style={{
+        <div className="login-container" style={{
             minHeight: "100vh",
             background: "#E7E6B6",
             fontFamily: "'Nunito', sans-serif",
@@ -134,10 +134,16 @@ export default function Login() {
                 .google-btn:hover  { background: #f5f5f5 !important; box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important; }
                 .submit-active:hover { opacity: 0.9 !important; transform: translateY(-1px) !important; box-shadow: 0 8px 28px rgba(143,174,142,0.55) !important; }
                 .link-hover:hover  { color: #5a7a50 !important; }
+
+                @media (max-width: 900px) {
+                    .login-container { flex-direction: column !important; }
+                    .left-panel { display: none !important; }
+                    .right-panel { padding: 40px 24px !important; }
+                }
             `}</style>
 
             {/* ── LEFT PANEL ── */}
-            <div style={{
+            <div className="left-panel" style={{
                 flex: 1,
                 background: "linear-gradient(145deg, #8FA873, #6b8a5e)",
                 display: "flex", flexDirection: "column",
@@ -201,7 +207,7 @@ export default function Login() {
             </div>
 
             {/* ── RIGHT PANEL ── */}
-            <div style={{
+            <div className="right-panel" style={{
                 flex: 1,
                 display: "flex", flexDirection: "column",
                 justifyContent: "center", alignItems: "center",

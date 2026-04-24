@@ -170,7 +170,7 @@ export default function RegisterProvider() {
   const closeModal = () => { if (modal?.nav) navigate(modal.nav); setModal(null); };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif", display: "flex", overflow: "hidden" }}>
+    <div className="register-container" style={{ minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif", display: "flex", overflow: "hidden" }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         input::placeholder, textarea::placeholder { color: #bbb; }
@@ -185,12 +185,17 @@ export default function RegisterProvider() {
         @keyframes confetti  { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(-120px) rotate(420deg);opacity:0} }
         .btn-submit:not(:disabled):hover { opacity:0.9 !important; transform:translateY(-2px) !important; box-shadow:0 12px 36px rgba(143,174,142,0.55) !important; }
         .upload-zone:hover { border-color:#8FAE8E !important; background:rgba(143,174,142,0.1) !important; }
+        @media (max-width: 900px) {
+          .register-container { flex-direction: column !important; overflow-y: auto !important; }
+          .register-left-panel { min-height: auto !important; flex: none !important; padding: 40px 20px !important; }
+          .register-right-panel { flex: none !important; padding: 40px 20px !important; overflow-y: visible !important; }
+        }
       `}</style>
 
       {modal && <Modal variant={modal.variant} title={modal.title} message={modal.message} onClose={closeModal} />}
 
       {/* LEFT PANEL */}
-      <div style={{ flex: 1, background: "linear-gradient(145deg,#8FA873,#6b8a5e)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", position: "relative", overflow: "hidden" }}>
+      <div className="register-left-panel" style={{ flex: 1, background: "linear-gradient(145deg,#8FA873,#6b8a5e)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 360 }}>
           <div style={{ position: "relative", margin: "0 auto 32px", width: 96, height: 96 }}>
             <div style={{ position: "absolute", inset: -12, borderRadius: "50%", border: "2px solid rgba(255,255,255,0.18)", animation: "pulseRing 2.5s ease-in-out infinite" }} />
@@ -205,7 +210,7 @@ export default function RegisterProvider() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "48px", background: "#E7E6B6", position: "relative", overflowY: "auto" }}>
+      <div className="register-right-panel" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "48px", background: "#E7E6B6", position: "relative", overflowY: "auto" }}>
         <div style={{ width: "100%", maxWidth: 460, position: "relative", zIndex: 1 }}>
           <div style={{ ...anim(80) }}>
             <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3.5, textTransform: "uppercase", color: "#8FA873", marginBottom: 10 }}>Provider Registration</p>

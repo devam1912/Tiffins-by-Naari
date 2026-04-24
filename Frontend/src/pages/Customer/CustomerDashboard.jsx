@@ -389,6 +389,29 @@ export default function CustomerDashboard() {
         .stat-card:hover { transform:translateY(-7px); }
         .quick-btn { transition:all 0.28s cubic-bezier(.22,.68,0,1.2); border:none; cursor:pointer; font-family:'Nunito',sans-serif; }
         .logout-btn:hover { background:rgba(239,83,80,0.1)!important; color:#c62828!important; border-color:rgba(239,83,80,0.4)!important; }
+
+        /* Mobile Layout */
+        .dashboard-main {
+          margin-left: ${collapsed ? 72 : 260}px;
+          flex: 1; padding: 40px 44px;
+          transition: margin-left 0.35s cubic-bezier(.22,.68,0,1.2);
+          min-height: 100vh; overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+          .dashboard-main {
+            margin-left: 0 !important;
+            padding: 24px 16px 90px !important; /* Extra bottom padding for Bottom Nav */
+          }
+          .hero-banner {
+            flex-direction: column !important;
+            text-align: center !important;
+            padding: 24px !important;
+          }
+          .hero-banner .bg-circle-1 { top: -100px !important; right: -50px !important; width: 200px !important; height: 200px !important; }
+          .hero-banner .bg-circle-2 { display: none !important; }
+          .bottom-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {/* ══════════════ SIDEBAR ══════════════ */}
@@ -403,12 +426,7 @@ export default function CustomerDashboard() {
       />
 
       {/* ══════════════ MAIN CONTENT ══════════════ */}
-      <main style={{
-        marginLeft: collapsed ? 72 : 260,
-        flex: 1, padding: "40px 44px",
-        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
-        minHeight: "100vh", overflowY: "auto",
-      }}>
+      <main className="dashboard-main">
 
         {/* ── Top bar ── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, flexWrap: "wrap", gap: 16, ...anim(0) }}>
@@ -458,7 +476,7 @@ export default function CustomerDashboard() {
         </div>
 
         {/* ── Hero banner ── */}
-        <div style={{
+        <div className="hero-banner" style={{
           background: "linear-gradient(135deg, #8FA873, #6b8a5e)",
           borderRadius: 26, padding: "38px 44px",
           display: "flex", justifyContent: "space-between", alignItems: "center",
@@ -467,8 +485,8 @@ export default function CustomerDashboard() {
           flexWrap: "wrap", gap: 20,
           ...anim(80),
         }}>
-          <div style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: "rgba(255,255,255,0.07)", top: "-70px", right: "200px", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.12)", bottom: "-50px", right: "60px", pointerEvents: "none", animation: "spinSlow 30s linear infinite" }} />
+          <div className="bg-circle-1" style={{ position: "absolute", width: 260, height: 260, borderRadius: "50%", background: "rgba(255,255,255,0.07)", top: "-70px", right: "200px", pointerEvents: "none" }} />
+          <div className="bg-circle-2" style={{ position: "absolute", width: 160, height: 160, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.12)", bottom: "-50px", right: "60px", pointerEvents: "none", animation: "spinSlow 30s linear infinite" }} />
 
           <div style={{ position: "relative", zIndex: 1, maxWidth: 480 }}>
             <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "rgba(255,255,255,0.6)", marginBottom: 10 }}>Today's Menu is Ready</p>
@@ -642,7 +660,7 @@ export default function CustomerDashboard() {
           )}
         </div>
         {/* ── Bottom row: activity + today's meal ── */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start", ...anim(340) }}>
+        <div className="bottom-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start", ...anim(340) }}>
 
           {/* Activity feed */}
           <div style={{ background: "rgba(255,255,255,0.72)", backdropFilter: "blur(14px)", border: "1px solid rgba(143,174,142,0.2)", borderRadius: 24, padding: "28px 26px", boxShadow: "0 4px 24px rgba(143,174,142,0.1)" }}>

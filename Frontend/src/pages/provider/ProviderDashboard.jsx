@@ -148,10 +148,30 @@ export const ProviderDashboard = () => {
                     width: 18px; height: 18px; border-radius: 50%;
                     background: #fff; transition: all 0.3s cubic-bezier(.22,.68,0,1.2);
                 }
+                
+                @media (max-width: 768px) {
+                  .provider-sidebar {
+                    width: 100% !important; height: auto !important; min-height: unset !important;
+                    flex-direction: row !important; padding: 12px 8px !important;
+                    top: auto !important; bottom: 0 !important;
+                    z-index: 9999 !important; border-radius: 20px 20px 0 0 !important;
+                    box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+                  }
+                  .provider-sidebar-logo { display: none !important; }
+                  .provider-sidebar-nav { flex-direction: row !important; overflow-x: auto !important; gap: 6px !important; margin: 0 !important; }
+                  .nav-btn { padding: 10px !important; justify-content: center !important; }
+                  .nav-btn > span:last-child { display: none !important; }
+                  .provider-bottom-actions { display: flex !important; flex-direction: row !important; align-items: center !important; margin-top: 0 !important; margin-left: auto !important; gap: 8px !important; }
+                  .provider-service-card { display: none !important; }
+                  .provider-logout-btn { padding: 10px !important; justify-content: center !important; width: auto !important; }
+                  .provider-logout-btn > span { display: none !important; }
+                  .provider-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 120px !important; }
+                  .provider-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+                }
             `}</style>
 
             {/* ══════════════ SIDEBAR ══════════════ */}
-            <aside style={{
+            <aside className="provider-sidebar" style={{
                 width: collapsed ? 80 : 280,
                 minHeight: "100vh",
                 display: "flex", flexDirection: "column",
@@ -161,7 +181,7 @@ export const ProviderDashboard = () => {
                 background: T.sidebarBg,
                 boxShadow: "6px 0 44px rgba(50,80,40,0.15)",
             }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, justifyContent: collapsed ? "center" : "flex-start" }}>
+                <div className="provider-sidebar-logo" style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, justifyContent: collapsed ? "center" : "flex-start" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
                         <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
                     </div>
@@ -173,7 +193,7 @@ export const ProviderDashboard = () => {
                     )}
                 </div>
 
-                <nav style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                <nav className="provider-sidebar-nav" style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
                     {menuItems.map(item => (
                         <button
                             key={item.name}
@@ -187,9 +207,9 @@ export const ProviderDashboard = () => {
                     ))}
                 </nav>
 
-                <div style={{ marginTop: "auto" }}>
+                <div className="provider-bottom-actions" style={{ marginTop: "auto" }}>
                     {!collapsed && (
-                        <div style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: "16px", marginBottom: 20 }}>
+                        <div className="provider-service-card" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 18, padding: "16px", marginBottom: 20 }}>
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
                                 <span style={{ fontSize: 11, fontWeight: 800, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1.5 }}>Service Status</span>
                                 <button
@@ -202,7 +222,7 @@ export const ProviderDashboard = () => {
                         </div>
                     )}
 
-                    <button
+                    <button className="provider-logout-btn"
                         onClick={handleLogout}
                         style={{
                             width: "100%", padding: "14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
@@ -218,14 +238,14 @@ export const ProviderDashboard = () => {
             </aside>
 
             {/* ══════════════ MAIN CONTENT ══════════════ */}
-            <main style={{
+            <main className="provider-main" style={{
                 marginLeft: collapsed ? 80 : 280,
                 flex: 1, padding: "44px",
                 transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
                 minHeight: "100vh", overflowY: "auto",
             }}>
                 {/* Top header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
+                <div className="provider-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
                     <div>
                         <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Welcome Back Chef</p>
                         <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>

@@ -181,6 +181,11 @@ export default function OrderDetailPage() {
         .item-row { transition: all 0.2s ease; }
         .item-row:hover { background: rgba(143,174,142,0.06)!important; }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @media (max-width: 768px) {
+          .order-detail-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .order-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .progress-container { flex-wrap: wrap !important; gap: 12px !important; }
+        }
       `}</style>
 
       {/* ════ SIDEBAR ════ */}
@@ -195,7 +200,7 @@ export default function OrderDetailPage() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main style={{
+      <main className="order-detail-main" style={{
         marginLeft: collapsed ? 72 : 260,
         flex: 1, padding: "40px 44px",
         transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
@@ -242,7 +247,7 @@ export default function OrderDetailPage() {
 
         {/* Order Content */}
         {!isLoading && order && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, alignItems: "start", ...anim(100) }}>
+          <div className="order-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 340px", gap: 24, alignItems: "start", ...anim(100) }}>
 
             {/* ── LEFT COLUMN ── */}
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
@@ -267,7 +272,7 @@ export default function OrderDetailPage() {
               {order.status !== "cancelled" && (
                 <div style={{ background: "rgba(255,255,255,0.78)", backdropFilter: "blur(14px)", borderRadius: 22, padding: "24px 26px", border: "1px solid rgba(143,174,142,0.2)", boxShadow: "0 4px 20px rgba(143,174,142,0.08)" }}>
                   <h3 style={{ fontFamily: "'Lora',serif", fontSize: 17, fontWeight: 700, color: "#2d3b2d", marginBottom: 24 }}>Pickup Progress</h3>
-                  <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
+                  <div className="progress-container" style={{ display: "flex", alignItems: "center", gap: 0 }}>
                     {statusSteps.map((step, idx) => {
                       const isDone = idx <= currentStepIndex;
                       const isActive = idx === currentStepIndex;

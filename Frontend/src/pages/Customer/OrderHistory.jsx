@@ -138,6 +138,13 @@ export default function OrderHistory() {
         
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spin-anim { animation: spin 1s linear infinite; }
+
+        @media (max-width: 768px) {
+          .history-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .order-card { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+          .order-card > div { width: 100% !important; min-width: unset !important; text-align: left !important; }
+          .order-action { text-align: left !important; margin-top: 12px; }
+        }
       `}</style>
 
       {/* ════ SIDEBAR ════ */}
@@ -152,7 +159,7 @@ export default function OrderHistory() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main style={{
+      <main className="history-main" style={{
         marginLeft: collapsed ? 72 : 260,
         flex: 1, padding: "40px 44px",
         transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
@@ -246,7 +253,7 @@ export default function OrderHistory() {
                   </div>
 
                   {/* Price & Action */}
-                  <div style={{ textAlign: "right", minWidth: 120 }}>
+                  <div className="order-action" style={{ textAlign: "right", minWidth: 120 }}>
                     <p style={{ fontSize: 11, fontWeight: 800, color: "#aaa", textTransform: "uppercase", marginBottom: 4 }}>Total Amount</p>
                     <p style={{ fontSize: 20, fontWeight: 800, color: "#2d3b2d", margin: 0 }}>₹{order.totalPrice}</p>
                     <button 

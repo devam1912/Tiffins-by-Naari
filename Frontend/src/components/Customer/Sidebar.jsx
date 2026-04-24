@@ -49,14 +49,14 @@ export default function Sidebar({
   ];
 
   return (
-    <aside style={{
+    <aside className="sidebar-container" style={{
       width: collapsed ? 72 : 260,
       minHeight: "100vh",
       background: "linear-gradient(165deg, #8FA873 0%, #5a7a50 100%)",
       display: "flex", flexDirection: "column",
       padding: collapsed ? "28px 12px" : "28px 20px",
       position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
-      transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), padding 0.35s ease",
+      transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), padding 0.35s ease, transform 0.35s ease",
       boxShadow: "4px 0 36px rgba(50,80,40,0.2)",
     }}>
       <style>{`
@@ -83,9 +83,49 @@ export default function Sidebar({
             border-style: solid !important;
         }
         .logout-btn:hover { background:rgba(239,83,80,0.1)!important; color:#c62828!important; border-color:rgba(239,83,80,0.4)!important; }
+        
+        /* Mobile Bottom Nav */
+        @media (max-width: 768px) {
+          .sidebar-container {
+            width: 100% !important;
+            min-height: auto !important;
+            height: 70px !important;
+            flex-direction: row !important;
+            top: auto !important;
+            bottom: 0 !important;
+            padding: 0 10px !important;
+            z-index: 999 !important;
+            align-items: center;
+            justify-content: space-around;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.1) !important;
+          }
+          .sidebar-header { display: none !important; }
+          .sidebar-nav {
+            flex-direction: row !important;
+            width: 100%;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0 !important;
+          }
+          .nav-btn {
+            flex-direction: column !important;
+            gap: 4px !important;
+            padding: 8px !important;
+            width: auto !important;
+            justify-content: center !important;
+            text-align: center !important;
+            border-radius: 12px !important;
+          }
+          .nav-btn:hover { transform: none !important; }
+          .nav-btn span:not(.icon-wrapper) { display: none !important; }
+          .kitchen-cta { display: none !important; }
+          .user-info-panel { display: none !important; }
+          .desktop-nav-title { display: none !important; }
+        }
       `}</style>
       {/* Logo and Collapse Toggle */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", marginBottom: 36 }}>
+      <div className="sidebar-header" style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", marginBottom: 36 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ width: 40, height: 40, borderRadius: 12, flexShrink: 0, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
@@ -110,10 +150,10 @@ export default function Sidebar({
         </button>
       )}
 
-      {!collapsed && <p style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,0.38)", marginBottom: 10 }}>Navigation</p>}
+      {!collapsed && <p className="desktop-nav-title" style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, textTransform: "uppercase", color: "rgba(255,255,255,0.38)", marginBottom: 10 }}>Navigation</p>}
 
       {/* Nav Items */}
-      <nav style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+      <nav className="sidebar-nav" style={{ display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
         {navItems.map(item => (
           <button
             key={item.id}
@@ -157,7 +197,7 @@ export default function Sidebar({
       </nav>
 
       {/* User Info & Logout */}
-      <div style={{ position: "relative", zIndex: 1, marginTop: "auto" }}>
+      <div className="user-info-panel" style={{ position: "relative", zIndex: 1, marginTop: "auto" }}>
         {!collapsed && (
           <div style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: 16, padding: "14px 16px", marginBottom: 12 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

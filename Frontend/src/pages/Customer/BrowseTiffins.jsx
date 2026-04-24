@@ -194,7 +194,7 @@ export default function BrowseTiffins() {
         logout={handleLogout}
       />
       
-      <div style={{ 
+      <div className="dashboard-main" style={{ 
         flex: 1, 
         marginLeft: collapsed ? 72 : 260, 
         transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
@@ -226,10 +226,21 @@ export default function BrowseTiffins() {
           .skeleton{background:linear-gradient(90deg,rgba(143,174,142,0.08) 25%,rgba(143,174,142,0.18) 50%,rgba(143,174,142,0.08) 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:12px}
           @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
           .area-loading{animation:pulse 1.2s ease-in-out infinite;color:#ccc!important}
+          
+          /* Mobile Layout */
+          @media (max-width: 768px) {
+            .dashboard-main {
+              margin-left: 0 !important;
+              padding-bottom: 90px !important;
+            }
+            .browse-hero { padding: 32px 20px 40px !important; }
+            .browse-hero h1 { font-size: 32px !important; }
+            .browse-content { padding: 24px 16px 60px !important; }
+          }
         `}</style>
 
         {/* ── HERO HEADER ── */}
-        <div style={{ background: "linear-gradient(160deg,#8FA873,#6b8a5e)", padding: "48px 40px 56px", position: "relative", overflow: "hidden" }}>
+        <div className="browse-hero" style={{ background: "linear-gradient(160deg,#8FA873,#6b8a5e)", padding: "48px 40px 56px", position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", width: 320, height: 320, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.07)", top: "-120px", right: "-80px", pointerEvents: "none" }} />
           <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1px dashed rgba(255,255,255,0.1)", bottom: "-60px", left: "10%", pointerEvents: "none", animation: "spinSlow 40s linear infinite" }} />
 
@@ -284,7 +295,7 @@ export default function BrowseTiffins() {
         </div>
 
         {/* ── MAIN CONTENT ── */}
-        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 40px 60px" }}>
+        <div className="browse-content" style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 40px 60px" }}>
 
           {/* Results bar + sort */}
           {!loading && (

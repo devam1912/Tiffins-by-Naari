@@ -130,8 +130,7 @@ export default function EditProfile() {
         location={location}
         logout={handleLogout}
       />
-      <main style={{
-        marginLeft: collapsed ? 72 : 260,
+      <main className="dashboard-main" style={{
         flex: 1,
         display: "flex",
         alignItems: "center",
@@ -180,6 +179,16 @@ export default function EditProfile() {
         .submit-btn:hover { opacity: 0.9 !important; transform: translateY(-2px) !important; box-shadow: 0 10px 32px rgba(143,174,142,0.55) !important; }
         .link-hover:hover { color: #5a7a50 !important; }
         .cancel-btn:hover { background: rgba(143,174,142,0.08) !important; border-color: #8FAE8E !important; }
+
+        .dashboard-main { margin-left: ${collapsed ? 72 : 260}px; }
+
+        @media (max-width: 768px) {
+          .dashboard-main {
+            margin-left: 0 !important;
+            padding: 24px 16px 90px !important; /* Bottom Nav padding */
+          }
+          .profile-card { padding: 32px 24px !important; }
+        }
       `}</style>
 
       {/* Background decorations */}
@@ -259,7 +268,7 @@ export default function EditProfile() {
       )}
 
       {/* ══ CARD ══ */}
-      <div style={{
+      <div className="profile-card" style={{
         width: "100%", maxWidth: 480,
         background: "rgba(255,255,255,0.75)",
         backdropFilter: "blur(20px)",
@@ -268,6 +277,7 @@ export default function EditProfile() {
         padding: "52px 44px 44px",
         boxShadow: "0 24px 64px rgba(90,120,70,0.14)",
         position: "relative", overflow: "hidden",
+        zIndex: 10,
       }}>
         {/* Top accent */}
         <div style={{ position:"absolute", top:0, left:0, right:0, height:5, background:"linear-gradient(90deg,#8FAE8E,#8FA873,#D9D9A8)" }} />

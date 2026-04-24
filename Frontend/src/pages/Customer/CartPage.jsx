@@ -137,6 +137,12 @@ const CartPage = () => {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .cart-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .cart-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+        }
+      `}</style>
       <Sidebar 
         collapsed={collapsed} 
         setCollapsed={setCollapsed} 
@@ -148,7 +154,7 @@ const CartPage = () => {
       />
 
 
-      <main style={{ 
+      <main className="cart-main" style={{ 
         marginLeft: collapsed ? 72 : 260, 
         flex: 1, padding: "40px", 
         transition: "all 0.35s ease",
@@ -173,7 +179,7 @@ const CartPage = () => {
             </button>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 32, alignItems: "start" }}>
+          <div className="cart-grid" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 32, alignItems: "start" }}>
             {/* Left: Item List */}
             <div style={{ display: "flex", flexDirection: "column", gap: 16, ...anim(100) }}>
               <div style={{ background: "rgba(255,255,255,0.7)", backdropFilter: "blur(20px)", borderRadius: 28, padding: "24px", border: "1.5px solid rgba(143,174,142,0.15)" }}>

@@ -305,7 +305,7 @@ const ProviderDetailPage = () => {
                 logout={handleLogout}
             />
             
-            <div style={{ 
+            <div className="dashboard-main" style={{ 
                 flex: 1, 
                 marginLeft: collapsed ? 72 : 260, 
                 transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
@@ -329,11 +329,17 @@ const ProviderDetailPage = () => {
         .sub-btn-active:hover{opacity:.88!important}
         .info-pill{background:#fff;padding:12px 20px;border-radius:20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 20px rgba(90,120,70,0.04);border:1.5px solid rgba(143,174,142,0.08);flex:1;min-width:200px}
 
-        @media(max-width:760px){
+        @media(max-width:768px){
+          .dashboard-main {
+            margin-left: 0 !important;
+            padding-bottom: 90px !important;
+          }
           .main-grid{grid-template-columns:1fr!important}
           .panel-wrap{position:static!important}
           .info-bar{flex-direction:column;align-items:stretch!important}
           .info-pill{min-width:100%}
+          .hero-content { padding: 24px 20px 40px !important; }
+          .hero-title { font-size: 32px !important; }
         }
       `}</style>
 
@@ -354,7 +360,7 @@ const ProviderDetailPage = () => {
                 </div>
 
                 {/* hero content */}
-                <div style={{ maxWidth: 1060, margin: "0 auto", padding: "28px 40px 56px", position: "relative", zIndex: 1 }}>
+                <div className="hero-content" style={{ maxWidth: 1060, margin: "0 auto", padding: "28px 40px 56px", position: "relative", zIndex: 1 }}>
                     <div style={a(0)}>
                         {/* top label row */}
                         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
@@ -367,7 +373,7 @@ const ProviderDetailPage = () => {
                         </div>
 
                         {/* name */}
-                        <h1 style={{ fontFamily: "'Lora',serif", fontSize: 46, fontWeight: 700, color: "#fff", lineHeight: 1.08, marginBottom: 20, letterSpacing: "-0.5px" }}>
+                        <h1 className="hero-title" style={{ fontFamily: "'Lora',serif", fontSize: 46, fontWeight: 700, color: "#fff", lineHeight: 1.08, marginBottom: 20, letterSpacing: "-0.5px" }}>
                             {tiffin.businessName}
                         </h1>
 

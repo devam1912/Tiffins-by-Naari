@@ -172,6 +172,11 @@ export default function NotificationPage() {
             top: 24px; right: 24px;
             box-shadow: 0 0 10px rgba(239,83,80,0.5);
         }
+
+        @media (max-width: 768px) {
+          .notifs-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .notification-card { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+        }
       `}</style>
 
       {/* ════ SIDEBAR ════ */}
@@ -186,7 +191,7 @@ export default function NotificationPage() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main style={{
+      <main className="notifs-main" style={{
         marginLeft: collapsed ? 72 : 260,
         flex: 1, padding: "40px 44px",
         transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",

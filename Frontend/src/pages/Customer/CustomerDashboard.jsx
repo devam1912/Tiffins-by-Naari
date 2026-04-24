@@ -193,35 +193,44 @@ export default function CustomerDashboard() {
               const pId = String(menu.provider?._id || menu.provider);
               if (providerIds.has(pId)) {
                   const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
-                  if (todayMenu) {
-                      // ✅ FIX: Pick items from current time-slot (lunch or dinner)
-                      const slotItems = todayMenu[currentSlot]?.items || [];
-                      const providerDetails = providers.find(p => String(p.id || p._id) === pId);
-                      slotItems.forEach(item => {
-                          if (item.name) {
-                              availableItemsToday.push({
-                                  ...item,
-                                  mealSlot: currentSlot,
-                                  provider: providerDetails
-                              });
-                          }
-                      });
+                  let itemsToConsider = [];
+                  let usedSlot = currentSlot;
 
-                      // If no items in current slot, fallback to the other slot
-                      if (slotItems.length === 0) {
-                          const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
-                          const otherItems = todayMenu[otherSlot]?.items || [];
-                          otherItems.forEach(item => {
-                              if (item.name) {
-                                  availableItemsToday.push({
-                                      ...item,
-                                      mealSlot: otherSlot,
-                                      provider: providerDetails
-                                  });
-                              }
-                          });
+                  if (todayMenu) {
+                      const slotItems = todayMenu[currentSlot]?.items || [];
+                      const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
+                      const otherItems = todayMenu[otherSlot]?.items || [];
+                      
+                      if (slotItems.length > 0) {
+                          itemsToConsider = slotItems;
+                      } else if (otherItems.length > 0) {
+                          itemsToConsider = otherItems;
+                          usedSlot = otherSlot;
                       }
                   }
+
+                  // ✅ FALLBACK: If today is totally empty, look at all items in the week menu
+                  if (itemsToConsider.length === 0) {
+                      menu.weekMenu?.forEach(dayMenu => {
+                          const allDayItems = [
+                              ...(dayMenu.lunch?.items || []),
+                              ...(dayMenu.dinner?.items || [])
+                          ];
+                          itemsToConsider.push(...allDayItems);
+                      });
+                      usedSlot = "general"; // Flag for fallback
+                  }
+
+                  const providerDetails = providers.find(p => String(p.id || p._id) === pId);
+                  itemsToConsider.forEach(item => {
+                      if (item.name) {
+                          availableItemsToday.push({
+                              ...item,
+                              mealSlot: usedSlot === "general" ? (item.type === "Sabzi" ? "Special" : "Always") : usedSlot,
+                              provider: providerDetails
+                          });
+                      }
+                  });
               }
           });
           

@@ -4,6 +4,7 @@ import axios from "axios";
 import Sidebar from "../../components/Customer/Sidebar";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
+import { BASE_URL } from "../../api/auth";
 import { toast } from "sonner";
 import { 
   Bell, 
@@ -88,7 +89,6 @@ export default function CustomerDashboard() {
     document.head.appendChild(link);
 
     // ✅ Token ab Redux se aa raha hai, localStorage se nahi
-    const BASE_URL = import.meta.env.VITE_API_URL ?? "";
     const headers = { Authorization: `Bearer ${token}` };
 
     // Fetch Subscriptions and Orders (Non-location dependent)
@@ -116,8 +116,8 @@ export default function CustomerDashboard() {
       try {
         const headers = { Authorization: `Bearer ${token}` };
         const [ordersRes, subsRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/orders/my", { headers }),
-          axios.get("http://localhost:5000/api/subscriptions/my-subscriptions", { headers })
+          axios.get(`${BASE_URL}/api/orders/my`, { headers }),
+          axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers })
         ]);
 
         const rawOrders = ordersRes.data || [];
@@ -141,10 +141,8 @@ export default function CustomerDashboard() {
     getUnreadCount();
   }, [token, user?.id]);
 
-  // ✅ 3. Fetch Recommendations when location is available
   useEffect(() => {
     if (location.lat && location.lng) {
-      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const headers = { Authorization: `Bearer ${token}` };
 
       // 1. Fetch nearby tiffins count for stats

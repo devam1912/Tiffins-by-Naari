@@ -4,6 +4,7 @@ import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout, fetchProfile } from "../../store/authSlice";
+import { BASE_URL } from "../../api/auth";
 import { useDialog } from "../../context/DialogContext";
 import { 
   Calendar, 
@@ -49,7 +50,6 @@ export default function CustomerSubscriptions() {
     try {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
-      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const res = await axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers });
       setSubscriptions(res.data.data || []);
       setError(null);

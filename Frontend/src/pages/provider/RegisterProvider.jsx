@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { BASE_URL } from "../../api/auth";
 import { 
   ChefHat, 
   Store, 
@@ -154,7 +155,6 @@ export default function RegisterProvider() {
       formData.append("location[coordinates][]", coords[1]);
       formData.append("fssaiCertificate", fssaiFile);
 
-      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       await axios.post(`${BASE_URL}/api/tiffins/register`, formData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
       });

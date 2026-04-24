@@ -99,7 +99,6 @@ Contributions, issues, and feature requests are welcome! Feel free to check the 
 
 ## 👥 Contributors
 A big thank you to the following contributors who have helped build this project:
-- Devam (devam1912)
 - Charmi Bhayani
 - Bhavika Mulani
 - Kajal Varlani

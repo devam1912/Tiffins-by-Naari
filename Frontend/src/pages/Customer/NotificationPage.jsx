@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import axios from "axios";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
+import { BASE_URL } from "../../api/auth";
 import { 
   Bell, 
   Truck, 
@@ -41,8 +42,7 @@ export default function NotificationPage() {
     try {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
-      
-      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
+
       const [ordersRes, subsRes] = await Promise.all([
         axios.get(`${BASE_URL}/api/orders/my`, { headers }),
         axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers })

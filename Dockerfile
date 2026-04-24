@@ -18,6 +18,8 @@ RUN npm ci --ignore-scripts
 
 # Copy source and build
 COPY Frontend/ ./
+ARG VITE_API_URL=""
+ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 # Output: /build/dist
 
@@ -92,9 +94,9 @@ USER appuser
 # (Python service runs on 127.0.0.1:8000, internal only)
 EXPOSE 5000
 
-# Health check
+# Health check (uses 127.0.0.1 for internal container check)
 HEALTHCHECK --interval=30s --timeout=15s --start-period=60s --retries=5 \
-    CMD wget -q --spider http://localhost:5000/api/health || exit 1
+    CMD wget -q --spider http://127.0.0.1:5000/api/health || exit 1
 
 # Start all services
 CMD ["./start.sh"]

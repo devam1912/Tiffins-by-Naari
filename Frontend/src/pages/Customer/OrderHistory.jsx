@@ -4,6 +4,7 @@ import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
+import { BASE_URL } from "../../api/auth";
 import { 
   History, 
   RefreshCcw, 
@@ -40,7 +41,6 @@ export default function OrderHistory() {
     try {
       setIsLoading(true);
       const headers = { Authorization: `Bearer ${token}` };
-      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       const res = await axios.get(`${BASE_URL}/api/orders/my`, { headers });
       setOrders(res.data || []);
       setError(null);

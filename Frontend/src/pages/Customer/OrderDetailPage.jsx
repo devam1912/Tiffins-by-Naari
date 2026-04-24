@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
+import { BASE_URL } from "../../api/auth";
 import { toast } from "sonner";
 import { 
   ArrowLeft, 
@@ -23,7 +24,8 @@ import {
   Moon, 
   Calendar, 
   Star,
-  X
+  X,
+  AlertTriangle
 } from "lucide-react";
 
 
@@ -81,7 +83,6 @@ export default function OrderDetailPage() {
     const fetchOrder = async () => {
       try {
         setIsLoading(true);
-        const BASE_URL = import.meta.env.VITE_API_URL ?? "";
         const res = await axios.get(`${BASE_URL}/api/orders/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -116,7 +117,6 @@ export default function OrderDetailPage() {
     }
     setReviewSubmitting(true);
     try {
-      const BASE_URL = import.meta.env.VITE_API_URL ?? "";
       await axios.post(`${BASE_URL}/api/feedback`, {
         providerId: order.provider._id || order.provider,
         rating,

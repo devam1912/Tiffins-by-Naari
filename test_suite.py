@@ -3,11 +3,11 @@ import time
 import sys
 
 # ==========================================
-# CONFIGURATION
+# CONFIGURATION (Render Deployment)
 # ==========================================
-BACKEND_URL = "http://localhost:5000/api"
-REC_SERVICE_URL = "http://localhost:8000"
-FRONTEND_URL = "http://localhost:5173"
+BASE_URL = "https://tiffins-by-naari.onrender.com"
+BACKEND_URL = f"{BASE_URL}/api"
+FRONTEND_URL = BASE_URL
 
 # Gandhinagar DAIICT road coordinates
 GEO_LOC = {"lat": 23.1883, "lng": 72.6275}
@@ -61,8 +61,12 @@ def test_backend_health():
     return res.status_code == 200, "Node.js API is accepting connections"
 
 def test_rec_service_health():
-    res = requests.get(f"{REC_SERVICE_URL}", timeout=3)
-    return res.status_code in [200, 404], "Python ML Service is active"
+    # In production, the ML service is proxied by the backend
+    try:
+        res = requests.get(f"{BACKEND_URL}/recommendations/nearby?lat={GEO_LOC['lat']}&lng={GEO_LOC['lng']}", timeout=10)
+        return res.status_code in [200, 401], "ML Proxy bridge is reachable"
+    except:
+        return False, "ML Microservice bridge failed"
 
 def test_db_ping():
     res = requests.get(f"{BACKEND_URL}/tiffins/menu", timeout=5)
@@ -154,9 +158,9 @@ print(f"\n{Colors.BOLD}🏗️  TIFFINS-BY-NAARI: FULL SYSTEM INTEGRATION AUDIT{
 print("=" * 60)
 
 # Run Category: Connectivity
-run_test("CONNECT", "Node.js Core Backend", test_backend_health)
-run_test("CONNECT", "Python ML Microservice", test_rec_service_health)
-run_test("CONNECT", "MongoDB Connection", test_db_ping)
+run_test("CONNECT", "Node.js Core Backend (Production)", test_backend_health)
+run_test("CONNECT", "ML Service Proxy Bridge", test_rec_service_health)
+run_test("CONNECT", "MongoDB Live Connection", test_db_ping)
 
 # Run Category: Identity
 run_test("AUTH", "Customer Registration", test_registration)

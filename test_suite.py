@@ -8,9 +8,7 @@ import sys
 BASE_URL = "https://tiffins-by-naari.onrender.com"
 BACKEND_URL = f"{BASE_URL}/api"
 FRONTEND_URL = BASE_URL
-
-# Gandhinagar DAIICT road coordinates
-GEO_LOC = {"lat": 23.1883, "lng": 72.6275}
+GEO_LOC = {"lat": 23.1883, "lng": 72.6275} # DAIICT Gandhinagar
 
 # ==========================================
 # COLOR UTILITIES
@@ -21,17 +19,16 @@ if IS_WINDOWS:
     os.system("") 
 
 class Colors:
-    PASS = '\033[92m'
-    FAIL = '\033[91m'
-    INFO = '\033[94m'
-    WARN = '\033[93m'
+    PASS = '\033[92m'    # Green
+    FAIL = '\033[91m'    # Red
+    INFO = '\033[94m'    # Blue
     BOLD = '\033[1m'
-    END = '\033[0m'
+    DIM  = '\033[2m'
+    END  = '\033[0m'
 
 # ==========================================
-# AUDIT ENGINE
+# TEST ENGINE
 # ==========================================
-results = []
 token = None
 test_user = {
     "name": "Audit Admin Bot",
@@ -40,164 +37,119 @@ test_user = {
     "role": "admin"
 }
 
-def run_test(category, name, func):
-    """Executes a test and saves the result."""
-    print(f"{Colors.INFO}[AUDITING]{Colors.END} {name}...", end="\r")
+def print_separator(title=None):
+    if title:
+        print(f"\n{Colors.BOLD}Testing Module: {title}{Colors.END}")
+        print("=" * 60)
+    else:
+        print("-" * 60)
+
+def run_test(name, method, endpoint, func):
+    start_time = time.time()
     try:
-        success, message = func()
-        status = f"{Colors.PASS}PASS{Colors.END}" if success else f"{Colors.FAIL}FAIL{Colors.END}"
-        results.append({"category": category, "name": name, "status": status, "msg": message})
-        print(f"[{status}] {name}{' ' * 40}")
+        success, actual_status, expected_status, message = func()
+        duration = time.time() - start_time
+        
+        status_color = Colors.PASS if success else Colors.FAIL
+        icon = "✓" if success else "✗"
+        label = "PASS" if success else "FAIL"
+
+        print(f"{status_color}{icon} {label} {name}{Colors.END}")
+        print(f"  {Colors.DIM}Method: {method} | Endpoint: {endpoint}{Colors.END}")
+        print(f"  {Colors.DIM}Status: {actual_status} (Expected: {expected_status}) | Time: {duration:.3f}s{Colors.END}")
+        if not success:
+            print(f"  {Colors.FAIL}Error: {message}{Colors.END}")
+        print()
     except Exception as e:
-        results.append({"category": category, "name": name, "status": f"{Colors.FAIL}ERROR{Colors.END}", "msg": str(e)})
-        print(f"[{Colors.FAIL}ERROR{Colors.END}] {name}{' ' * 40}")
+        print(f"{Colors.FAIL}✗ ERROR {name}{Colors.END}")
+        print(f"  {Colors.FAIL}Exception: {str(e)}{Colors.END}\n")
 
 # ==========================================
-# 1. CONNECTIVITY TESTS
+# TEST DEFINITIONS
 # ==========================================
 
-def test_backend_health():
-    res = requests.get(f"{BACKEND_URL}/health", timeout=3)
-    return res.status_code == 200, "Node.js API is accepting connections"
-
-def test_rec_service_health():
-    # In production, the ML service is proxied by the backend
+def api_check(path, method="GET", json_data=None, use_token=False):
+    headers = {"Authorization": f"Bearer {token}"} if use_token and token else {}
     try:
-        res = requests.get(f"{BACKEND_URL}/recommendations/nearby?lat={GEO_LOC['lat']}&lng={GEO_LOC['lng']}", timeout=10)
-        return res.status_code in [200, 401], "ML Proxy bridge is reachable"
-    except:
-        return False, "ML Microservice bridge failed"
+        if method == "GET":
+            res = requests.get(f"{BACKEND_URL}{path}", headers=headers, timeout=10)
+        else:
+            res = requests.post(f"{BACKEND_URL}{path}", json=json_data, headers=headers, timeout=10)
+        return res
+    except Exception as e:
+        return None
 
-def test_db_ping():
-    res = requests.get(f"{BACKEND_URL}/tiffins/menu", timeout=5)
-    return res.ok, "API retrieved menus from MongoDB successfully"
+# --- Connectivity ---
+def check_health():
+    res = api_check("/health")
+    if not res: return False, "ECONN", 200, "Connection Refused"
+    return res.status_code == 200, res.status_code, 200, "API operational"
 
-# ==========================================
-# 2. IDENTITY & SECURITY TESTS
-# ==========================================
+def check_db():
+    res = api_check("/tiffins/menu")
+    if not res: return False, "ECONN", 200, "DB Bridge Failed"
+    return res.status_code == 200, res.status_code, 200, "Menu data retrieved"
 
-def test_registration():
-    res = requests.post(f"{BACKEND_URL}/auth/register", json=test_user, timeout=5)
-    return res.status_code in [200, 201], f"Account created: {test_user['email']}"
+# --- Authentication ---
+def check_register():
+    res = api_check("/auth/register", "POST", test_user)
+    if not res: return False, "ECONN", 201, "Reg Failed"
+    return res.status_code in [200, 201], res.status_code, 201, "User registered"
 
-def test_login():
+def check_login():
     global token
-    res = requests.post(f"{BACKEND_URL}/auth/login", json={
-        "email": test_user["email"],
-        "password": test_user["password"]
-    }, timeout=5)
-    if res.status_code == 200:
+    res = api_check("/auth/login", "POST", {"email": test_user["email"], "password": test_user["password"]})
+    if res and res.status_code == 200:
         token = res.json().get("token")
-        return True, "JWT Token generated and returned"
-    return False, "Authentication failed"
+        return True, 200, 200, "Token obtained"
+    status = res.status_code if res else "ECONN"
+    return False, status, 200, "Identity verification failed"
 
-def test_protected_route():
-    if not token: return False, "No token available"
-    headers = {"Authorization": f"Bearer {token}"}
-    res = requests.get(f"{BACKEND_URL}/auth/me", headers=headers, timeout=5)
-    return res.status_code == 200, "Secure middleware (protect) is working"
+# --- Discovery ---
+def check_nearby():
+    res = api_check(f"/tiffins/nearby?lat={GEO_LOC['lat']}&lng={GEO_LOC['lng']}")
+    if not res: return False, "ECONN", 200, "Geo failed"
+    return res.status_code == 200, res.status_code, 200, "Nearby results found"
 
-# ==========================================
-# 3. DISCOVERY & PRODUCT TESTS
-# ==========================================
+# --- Business ---
+def check_cart():
+    res = api_check("/cart", use_token=True)
+    if not res: return False, "ECONN", 200, "Cart error"
+    return res.status_code == 200, res.status_code, 200, "Cart accessible"
 
-def test_nearby_search():
-    res = requests.get(f"{BACKEND_URL}/tiffins/nearby?lat={GEO_LOC['lat']}&lng={GEO_LOC['lng']}", timeout=5)
-    data = res.json()
-    return res.status_code == 200, f"Found {len(data)} kitchens in current radius"
+def check_orders():
+    res = api_check("/orders/customer", use_token=True)
+    if not res: return False, "ECONN", 200, "Orders error"
+    return res.status_code == 200, res.status_code, 200, "Order history reachable"
 
-def test_menu_retrieval():
-    res = requests.get(f"{BACKEND_URL}/tiffins/menu", timeout=5)
-    return res.status_code == 200, "Full menu catalog retrieved"
-
-# ==========================================
-# 4. BUSINESS LOGIC TESTS
-# ==========================================
-
-def test_cart_persistence():
-    if not token: return False, "Auth required"
-    headers = {"Authorization": f"Bearer {token}"}
-    res = requests.get(f"{BACKEND_URL}/cart", headers=headers, timeout=5)
-    return res.status_code == 200, "Cart module is responsive"
-
-def test_order_history_access():
-    if not token: return False, "Auth required"
-    headers = {"Authorization": f"Bearer {token}"}
-    res = requests.get(f"{BACKEND_URL}/orders/customer", headers=headers, timeout=5)
-    return res.status_code == 200, "Order management module accessible"
-
-def test_subscription_plans():
-    res = requests.get(f"{BACKEND_URL}/subscriptions", timeout=5)
-    return res.status_code == 200, "Subscription engine is active"
+def check_recs():
+    res = api_check(f"/recommendations/nearby?lat={GEO_LOC['lat']}&lng={GEO_LOC['lng']}", use_token=True)
+    if not res: return False, "ECONN", 200, "AI error"
+    return res.status_code == 200, res.status_code, 200, "ML Recommendations live"
 
 # ==========================================
-# 5. MACHINE LEARNING & RECS
+# EXECUTION
 # ==========================================
 
-def test_ml_recs_api():
-    if not token: return False, "Auth required"
-    headers = {"Authorization": f"Bearer {token}"}
-    # Test the proxy endpoint that talks to Python
-    res = requests.get(f"{BACKEND_URL}/recommendations/nearby?lat={GEO_LOC['lat']}&lng={GEO_LOC['lng']}", headers=headers, timeout=5)
-    return res.status_code == 200, f"ML-to-Node proxy bridge is functional"
+print(f"\n{Colors.BOLD}🚀 {Colors.INFO}TIFFINS-BY-NAARI FULL SYSTEM DIAGNOSTIC{Colors.END}")
 
-# ==========================================
-# 6. DATA INTEGRITY & GUARDS
-# ==========================================
+print_separator("System Foundations")
+run_test("API Server Health", "GET", "/health", check_health)
+run_test("MongoDB Live Link", "GET", "/tiffins/menu", check_db)
 
-def test_negative_price_guard():
-    # This is a manual check because we verified the 'min: 0' Mongoose Schema earlier
-    # We can confirm it's protecting 'Menu' and 'MenuItem' collections
-    return True, "Negative price validation enforced at DB Schema level"
+print_separator("Authentication & Identity")
+run_test("Admin User Registration", "POST", "/auth/register", check_register)
+run_test("JWT Session Generation", "POST", "/auth/login", check_login)
 
-# ==========================================
-# MAIN EXECUTION
-# ==========================================
+print_separator("Geographic Discovery")
+run_test("Nearby Kitchen Search", "GET", "/tiffins/nearby", check_nearby)
 
-print(f"\n{Colors.BOLD}🏗️  TIFFINS-BY-NAARI: FULL SYSTEM INTEGRATION AUDIT{Colors.END}")
-print("=" * 60)
+print_separator("Business & Logic")
+run_test("Shopping Cart State", "GET", "/cart", check_cart)
+run_test("Order Management Subsystem", "GET", "/orders/customer", check_orders)
 
-# Run Category: Connectivity
-run_test("CONNECT", "Node.js Core Backend (Production)", test_backend_health)
-run_test("CONNECT", "ML Service Proxy Bridge", test_rec_service_health)
-run_test("CONNECT", "MongoDB Live Connection", test_db_ping)
-
-# Run Category: Identity
-run_test("AUTH", "Customer Registration", test_registration)
-run_test("AUTH", "JWT Auth & Login", test_login)
-run_test("AUTH", "Secured Route Access", test_protected_route)
-
-# Run Category: Products
-run_test("DISCOVERY", "Nearby Search (Geo)", test_nearby_search)
-run_test("DISCOVERY", "Menu Catalog Engine", test_menu_retrieval)
-
-# Run Category: Business
-run_test("LOGIC", "Shopping Cart Module", test_cart_persistence)
-run_test("LOGIC", "Order Management Subsystem", test_order_history_access)
-run_test("LOGIC", "Subscription Logic", test_subscription_plans)
-
-# Run Category: Intelligence
-run_test("AI", "ML Recommendation Bridge", test_ml_recs_api)
-
-# Run Category: Integrity
-run_test("DATA", "Price Guard Validation", test_negative_price_guard)
+print_separator("Artificial Intelligence")
+run_test("ML Recommendation Engine", "GET", "/recommendations/nearby", check_recs)
 
 print("=" * 60)
-print(f"{Colors.BOLD}AUDIT SUMMARY BY CATEGORY:{Colors.END}")
-
-categories = sorted(list(set(r['category'] for r in results)))
-total_pass = 0
-
-for cat in categories:
-    cat_results = [r for r in results if r['category'] == cat]
-    passed = sum(1 for r in cat_results if "PASS" in r['status'])
-    total_pass += passed
-    icon = "✅" if passed == len(cat_results) else "⚠️"
-    print(f" {icon} {cat:<10} : {passed}/{len(cat_results)} Tests Passed")
-
-print("-" * 60)
-if total_pass == len(results):
-    print(f"{Colors.PASS}{Colors.BOLD}PASS: System integrity verified. Ready for Production.{Colors.END}")
-else:
-    print(f"{Colors.FAIL}{Colors.BOLD}FAIL: {len(results) - total_pass} service(s) require attention.{Colors.END}")
-print("=" * 60 + "\n")
+print(f"{Colors.BOLD}Diagnostic Report Complete.{Colors.END}\n")

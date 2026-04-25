@@ -34,10 +34,10 @@ class Colors:
 results = []
 token = None
 test_user = {
-    "name": "Audit Bot",
-    "email": f"audit_{int(time.time())}@test.com",
+    "name": "Audit Admin Bot",
+    "email": f"admin_audit_{int(time.time())}@test.com",
     "password": "Password123",
-    "role": "customer"
+    "role": "admin"
 }
 
 def run_test(category, name, func):

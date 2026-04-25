@@ -140,7 +140,7 @@ export default function Signup() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif", display: "flex", overflow: "hidden", position: "relative" }}>
+    <div className="signup-container" style={{ minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif", display: "flex", overflow: "hidden", position: "relative" }}>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         input::placeholder { color: #bbb; }
@@ -153,12 +153,18 @@ export default function Signup() {
         .google-btn:hover    { background:#f5f5f5 !important; box-shadow:0 4px 16px rgba(0,0,0,0.1) !important; }
         .submit-active:hover { opacity:0.9 !important; transform:translateY(-1px) !important; box-shadow:0 8px 28px rgba(143,174,142,0.55) !important; }
         .link-hover:hover    { color:#5a7a50 !important; }
+
+        @media (max-width: 900px) {
+          .signup-container { flex-direction: column !important; }
+          .left-panel { display: none !important; }
+          .right-panel { padding: 40px 24px !important; }
+        }
       `}</style>
 
       {errorMsg && <ErrorDialog message={errorMsg} onClose={() => setErrorMsg(null)} />}
 
       {/* LEFT PANEL */}
-      <div style={{ flex: 1, background: "linear-gradient(145deg,#8FA873,#6b8a5e)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", position: "relative", overflow: "hidden" }}>
+      <div className="left-panel" style={{ flex: 1, background: "linear-gradient(145deg,#8FA873,#6b8a5e)", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "60px 48px", position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", width: 440, height: 440, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)", top: "-120px", left: "-120px" }} />
         <div style={{ position: "absolute", width: 300, height: 300, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.08)", bottom: "-80px", right: "-80px" }} />
         <div style={{ position: "absolute", width: 200, height: 200, borderRadius: "50%", border: "1.5px dashed rgba(255,255,255,0.15)", top: "50%", left: "50%", transform: "translate(-50%,-50%)", animation: "spinSlow 25s linear infinite" }} />
@@ -188,7 +194,7 @@ export default function Signup() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "48px 48px", background: "#E7E6B6", position: "relative", overflowY: "auto" }}>
+      <div className="right-panel" style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", padding: "48px 48px", background: "#E7E6B6", position: "relative", overflowY: "auto" }}>
         <div style={{ position: "absolute", width: 400, height: 400, borderRadius: "50%", background: "radial-gradient(circle,rgba(143,168,115,0.15),transparent 70%)", bottom: "-80px", right: "-80px", pointerEvents: "none" }} />
 
         <div style={{ width: "100%", maxWidth: 440, position: "relative", zIndex: 1 }}>

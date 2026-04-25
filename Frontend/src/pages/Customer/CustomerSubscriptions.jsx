@@ -229,6 +229,11 @@ export default function CustomerSubscriptions() {
         
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .spin-anim { animation: spin 1s linear infinite; }
+
+        @media (max-width: 768px) {
+          .subs-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .subs-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
+        }
       `}</style>
 
       {/* ════ SIDEBAR ════ */}
@@ -243,7 +248,7 @@ export default function CustomerSubscriptions() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main style={{
+      <main className="subs-main" style={{
         marginLeft: collapsed ? 72 : 260,
         flex: 1, padding: "40px 44px",
         transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
@@ -292,7 +297,7 @@ export default function CustomerSubscriptions() {
             </button>
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24, ...anim(100) }}>
+          <div className="subs-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 24, ...anim(100) }}>
             {subscriptions.map((sub, index) => {
               const badge = getStatusBadge(sub.status);
               const planBadge = getPlanBadge(sub.planType);

@@ -442,6 +442,24 @@ export default function AdminDashboard() {
         }
         .nav-btn:hover { background:rgba(255,255,255,0.15); color:#fff; transform:translateX(4px); }
         .nav-btn.active { background:rgba(255,255,255,0.25); color:#fff; box-shadow:0 8px 24px rgba(0,0,0,0.12); }
+        
+        @media (max-width: 768px) {
+          .admin-sidebar {
+            width: 100% !important; height: auto !important; min-height: unset !important;
+            flex-direction: row !important; padding: 12px 8px !important;
+            top: auto !important; bottom: 0 !important;
+            z-index: 9999 !important; border-radius: 20px 20px 0 0 !important;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+          }
+          .admin-sidebar-logo { display: none !important; }
+          .admin-sidebar-nav { flex-direction: row !important; overflow-x: auto !important; gap: 6px !important; margin: 0 !important; }
+          .nav-btn { padding: 10px !important; justify-content: center !important; }
+          .nav-btn > span:last-child { display: none !important; }
+          .admin-logout-btn { padding: 10px !important; justify-content: center !important; margin-left: 10px !important; width: auto !important; margin-top: 0 !important; }
+          .admin-logout-btn > span { display: none !important; }
+          .admin-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 120px !important; }
+          .admin-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+        }
       `}</style>
 
       {approveTarget && <ApproveModal provider={approveTarget} onClose={() => setApproveTarget(null)} onApprove={confirmApprove} loading={approving} T={T} />}
@@ -480,7 +498,7 @@ export default function AdminDashboard() {
         />
       )}
 
-      <aside style={{
+      <aside className="admin-sidebar" style={{
         width: collapsed ? 80 : 280, minHeight: "100vh",
         display: "flex", flexDirection: "column", padding: "36px 24px",
         position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
@@ -488,7 +506,7 @@ export default function AdminDashboard() {
         background: T.sidebarBg,
         boxShadow: "6px 0 44px rgba(0,0,0,0.15)",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>
+        <div className="admin-sidebar-logo" style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, cursor: "pointer" }} onClick={() => setCollapsed(!collapsed)}>
           <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
             <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
           </div>
@@ -499,7 +517,7 @@ export default function AdminDashboard() {
         </div>
 
 
-        <nav style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+        <nav className="admin-sidebar-nav" style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
           {[
             { id: "dashboard", icon: <LayoutDashboard size={20} />, label: "Overview" },
             { id: "users", icon: <Users size={20} />, label: "Users" },
@@ -519,14 +537,14 @@ export default function AdminDashboard() {
 
         </nav>
 
-        <button onClick={handleLogout} style={{ marginTop: "auto", width: "100%", padding: "14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "rgba(255,255,255,0.6)", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
+        <button className="admin-logout-btn" onClick={handleLogout} style={{ marginTop: "auto", width: "100%", padding: "14px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 16, color: "rgba(255,255,255,0.6)", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
           <LogOut size={18} /> {!collapsed && <span>Logout</span>}
         </button>
 
       </aside>
 
-      <main style={{ marginLeft: collapsed ? 80 : 280, flex: 1, padding: "44px", transition: "margin-left 0.35s ease" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
+      <main className="admin-main" style={{ marginLeft: collapsed ? 80 : 280, flex: 1, padding: "44px", transition: "margin-left 0.35s ease" }}>
+        <div className="admin-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
           <div>
             <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Admin Dashboard</p>
             <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>Namaste, <em style={{ color: "#8FA873" }}>{adminName}!</em></h1>

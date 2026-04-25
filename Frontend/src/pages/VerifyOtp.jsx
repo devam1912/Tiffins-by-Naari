@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { verifyOTP } from "../api/auth";
 import { 
   Mail, 
@@ -23,6 +23,12 @@ export default function VerifyOtp() {
   const phone = location.state?.phone;
 
   useEffect(() => {
+    // 🛡️ Redirect if state is lost (e.g. on manual page refresh)
+    if (!email && !phone) {
+      navigate("/signup");
+      return;
+    }
+
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
@@ -30,7 +36,7 @@ export default function VerifyOtp() {
     setTimeout(() => setLoaded(true), 80);
     // Focus first input
     setTimeout(() => inputRefs.current[0]?.focus(), 200);
-  }, []);
+  }, [email, phone, navigate]);
 
   const anim = (delay = 0) => ({
     opacity: loaded ? 1 : 0,
@@ -244,6 +250,7 @@ export default function VerifyOtp() {
           </div>
 
           {/* Error */}
+          {error && (
             <div style={{
               background: "#fff5f5", border: "1.5px solid #ef9a9a",
               borderRadius: 12, padding: "12px 16px",
@@ -254,6 +261,7 @@ export default function VerifyOtp() {
               <AlertTriangle size={18} color="#c62828" />
               <span style={{ color: "#c62828", fontSize: 14, fontWeight: 600 }}>{error}</span>
             </div>
+          )}
 
 
           {/* Submit */}
@@ -309,9 +317,9 @@ export default function VerifyOtp() {
               Resend OTP
             </button>
           </p>
-          <a href="/signup" className="link-hover" style={{ color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", transition: "color 0.2s", display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Link to="/signup" className="link-hover" style={{ color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", transition: "color 0.2s", display: 'inline-flex', alignItems: 'center', gap: 6 }}>
             <ArrowLeft size={16} /> Back to Sign Up
-          </a>
+          </Link>
 
         </div>
 

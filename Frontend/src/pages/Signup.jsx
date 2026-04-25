@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { signupUser } from "../api/auth";
 import { 
   Utensils, 
@@ -199,9 +199,9 @@ export default function Signup() {
 
         <div style={{ width: "100%", maxWidth: 440, position: "relative", zIndex: 1 }}>
 
-          <a href="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 28, ...anim(0) }}>
+          <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: 6, color: "#8FA873", fontWeight: 700, fontSize: 14, textDecoration: "none", marginBottom: 28, ...anim(0) }}>
             <ArrowLeft size={16} /> Back to home
-          </a>
+          </Link>
 
 
           <div style={{ ...anim(100) }}>
@@ -209,9 +209,9 @@ export default function Signup() {
             <h1 style={{ fontFamily: "'Lora',serif", fontSize: 36, fontWeight: 700, color: "#2d3b2d", marginBottom: 8 }}>Create Account</h1>
             <p style={{ color: "#888", fontSize: 15, marginBottom: 24 }}>
               Already have an account?{" "}
-              <a href="/login" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none", display: 'inline-flex', alignItems: 'center', gap: 4 }} className="link-hover">
+              <Link to="/login" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none", display: 'inline-flex', alignItems: 'center', gap: 4 }} className="link-hover">
                 Log in <ArrowRight size={14} />
-              </a>
+              </Link>
 
             </p>
           </div>
@@ -344,8 +344,8 @@ export default function Signup() {
                 </div>
 
                 <span style={{ fontSize: 13, color: "#777", lineHeight: 1.5 }}>
-                  I agree to the{" "}<a href="#" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }}>Terms of Service</a>{" "}and{" "}
-                  <a href="#" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }}>Privacy Policy</a>
+                  I agree to the{" "}<Link to="/terms" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }}>Terms of Service</Link>{" "}and{" "}
+                  <Link to="/privacy" style={{ color: "#8FA873", fontWeight: 700, textDecoration: "none" }}>Privacy Policy</Link>
                 </span>
               </label>
 

@@ -169,7 +169,11 @@ export const ProviderMenu = ({ theme }) => {
     };
 
     const handleMealPriceChange = (dayName, mealType, newPrice) => {
-        const val = parseFloat(newPrice) || 0;
+        let val = parseFloat(newPrice) || 0;
+        if (val < 0) {
+            showToast("Price cannot be negative", "error");
+            val = 0;
+        }
         setWeekMenu(prev => prev.map(d => {
             if (d.day !== dayName) return d;
             return { ...d, [mealType]: { ...d[mealType], price: val } };
@@ -182,6 +186,10 @@ export const ProviderMenu = ({ theme }) => {
         const price = parseFloat(priceRef.current?.value) || 0;
         const image = itemImage;
         if (!name) return;
+        if (price < 0) {
+            showToast("Price cannot be negative", "error");
+            return;
+        }
 
         const { day, mealType, item } = editingItem;
         setWeekMenu(prev => prev.map(d => {
@@ -344,6 +352,7 @@ export const ProviderMenu = ({ theme }) => {
                                         <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: T.textSec }}>₹</span>
                                         <input
                                             type="number"
+                                            min="0"
                                             value={currentDayData.lunch.price || ""}
                                             onChange={(e) => handleMealPriceChange(selectedDay, "lunch", e.target.value)}
                                             placeholder="Tiffin Price"
@@ -376,6 +385,7 @@ export const ProviderMenu = ({ theme }) => {
                                         <span style={{ position: "absolute", left: 8, fontSize: 11, fontWeight: 800, color: T.textSec }}>₹</span>
                                         <input
                                             type="number"
+                                            min="0"
                                             value={currentDayData.dinner.price || ""}
                                             onChange={(e) => handleMealPriceChange(selectedDay, "dinner", e.target.value)}
                                             placeholder="Tiffin Price"
@@ -476,7 +486,7 @@ export const ProviderMenu = ({ theme }) => {
                                     <label style={{ fontSize: 11, fontWeight: 800, color: T.textSec, textTransform: "uppercase", letterSpacing: 1, display: "block", marginBottom: 8 }}>Individual Price</label>
                                     <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                                         <span style={{ position: "absolute", left: 12, fontSize: 14, fontWeight: 800, color: T.textSec }}>₹</span>
-                                        <input ref={priceRef} type="number" defaultValue={editingItem?.item?.price || 0}
+                                        <input ref={priceRef} type="number" min="0" defaultValue={editingItem?.item?.price || 0}
                                             placeholder="0"
                                             style={{ width: "100%", padding: "12px 16px 12px 28px", border: `2px solid ${T.border}`, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : '#fff', color: T.text, borderRadius: 14, fontSize: 14, fontFamily: "'Nunito', sans-serif", outline: "none", boxSizing: "border-box" }} />
                                     </div>

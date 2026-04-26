@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
 import { BASE_URL } from "../../api/auth";
+import { formatToISTDateLong, formatToISTTime } from "../../lib/dateUtils";
 import { toast } from "sonner";
 import { 
   ArrowLeft, 
@@ -146,17 +147,8 @@ export default function OrderDetailPage() {
 
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      weekday: "long", year: "numeric", month: "long", day: "numeric",
-    });
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
-  };
+  const formatDate = (dateString) => formatToISTDateLong(dateString);
+  const formatTime = (dateString) => formatToISTTime(dateString);
 
   const statusSteps = ["pending", "confirmed", "preparing", "ready", "completed"];
   const currentStepIndex = order ? statusSteps.indexOf(order.status) : -1;

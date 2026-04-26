@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderSubscriptions, markMealReady, fetchProviderOrders, updateOrderStatus } from "../store/providerSlice";
 import { X, ChevronRight, Info, Trash2, CheckCircle2, Clock, Package, Phone, User, ExternalLink } from "lucide-react";
+import { formatToISTDateLong } from "../lib/dateUtils";
 import { useDialog } from "../context/DialogContext";
 
 export const OrdersToday = ({ theme }) => {
@@ -49,7 +50,7 @@ export const OrdersToday = ({ theme }) => {
         }
     };
 
-    const formatDate = () => new Date().toLocaleDateString("en-IN", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
+    const formatDate = () => formatToISTDateLong(new Date());
 
     // Filter to active subscriptions that need serving today
     const today = new Date();

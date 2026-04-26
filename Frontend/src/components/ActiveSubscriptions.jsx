@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchProviderSubscriptions, markMealReady } from "../store/providerSlice";
 import { useDialog } from "../context/DialogContext";
 import API from "../api/auth";
+import { formatToISTDate } from "../lib/dateUtils";
 
 export const ActiveSubscriptions = ({ theme }) => {
     const dispatch = useDispatch();
@@ -39,7 +40,7 @@ export const ActiveSubscriptions = ({ theme }) => {
     };
 
     // Helpers
-    const formatDate = (d) => d ? new Date(d).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "—";
+    const formatDate = (d) => formatToISTDate(d);
     const getTotalMeals = (sub) => sub.planType === "weekly" ? 7 : sub.planType === "monthly" ? 30 : sub.planType === "yearly" ? 365 : sub.remainingMeals || 0;
     const getDaysRemaining = (endDate) => endDate ? Math.max(0, Math.ceil((new Date(endDate) - new Date()) / 86400000)) : 0;
 

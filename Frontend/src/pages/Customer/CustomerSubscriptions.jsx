@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout, fetchProfile } from "../../store/authSlice";
 import { BASE_URL } from "../../api/auth";
+import { formatToISTDate } from "../../lib/dateUtils";
 import { useDialog } from "../../context/DialogContext";
 import { 
   Calendar, 
@@ -178,10 +179,7 @@ export default function CustomerSubscriptions() {
     return map[planType] || { bg: "#f5f5f5", color: "#616161" };
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    return new Date(dateString).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
-  };
+  const formatDate = (dateString) => formatToISTDate(dateString);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>

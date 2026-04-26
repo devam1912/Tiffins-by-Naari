@@ -9,6 +9,7 @@ import {
     toggleServiceStatus
 } from "../../store/providerSlice";
 import API from "../../api/auth";
+import { formatToISTDate } from "../../lib/dateUtils";
 import { ProviderMenu } from "../../components/ProviderMenu";
 import { ActiveSubscriptions } from "../../components/ActiveSubscriptions";
 import { OrdersToday } from "../../components/OrdersToday";
@@ -317,7 +318,7 @@ export const ProviderDashboard = () => {
                                                             <span style={{ padding: "4px 10px", borderRadius: 8, background: "#eef2ff", color: "#4f46e5", fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>{activity.planType}</span>
                                                         </td>
                                                         <td style={{ padding: "18px 10px", fontWeight: 800, color: T.text }}>₹{activity.amountPaid}</td>
-                                                        <td style={{ padding: "18px 10px", textAlign: "right", color: T.textMuted, fontSize: 13 }}>{new Date(activity.createdAt).toLocaleDateString()}</td>
+                                                        <td style={{ padding: "18px 10px", textAlign: "right", color: T.textMuted, fontSize: 13 }}>{formatToISTDate(activity.createdAt)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>

@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import Sidebar from "../../components/Customer/Sidebar";
 import { logout } from "../../store/authSlice";
 import { BASE_URL } from "../../api/auth";
+import { formatToISTDate } from "../../lib/dateUtils";
 import { 
   History, 
   RefreshCcw, 
@@ -107,11 +108,7 @@ export default function OrderHistory() {
     return map[status] || { bg: "#f5f5f5", color: "#616161", label: status };
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "—";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
-  };
+  const formatDate = (dateString) => formatToISTDate(dateString);
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>

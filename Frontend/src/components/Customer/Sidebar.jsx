@@ -110,9 +110,11 @@ export default function Sidebar({
           }
           .nav-btn {
             flex-direction: column !important;
-            gap: 4px !important;
-            padding: 8px !important;
+            gap: 2px !important;
+            padding: 6px 4px !important;
             width: auto !important;
+            flex: 1 !important;
+            min-width: 0 !important;
             justify-content: center !important;
             text-align: center !important;
             border-radius: 12px !important;

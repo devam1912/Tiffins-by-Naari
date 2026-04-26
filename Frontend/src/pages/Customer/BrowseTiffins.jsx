@@ -228,6 +228,7 @@ export default function BrowseTiffins() {
           .area-loading{animation:pulse 1.2s ease-in-out infinite;color:#ccc!important}
           
           /* Mobile Layout */
+          /* Mobile Layout */
           @media (max-width: 768px) {
             .dashboard-main {
               margin-left: 0 !important;
@@ -236,6 +237,10 @@ export default function BrowseTiffins() {
             .browse-hero { padding: 32px 20px 40px !important; }
             .browse-hero h1 { font-size: 32px !important; }
             .browse-content { padding: 24px 16px 60px !important; }
+            .search-bar-container { gap: 10px !important; }
+            .search-wrap { min-width: 100% !important; }
+            .radius-selector { width: 100% !important; }
+            .radius-selector select { width: 100% !important; }
           }
         `}</style>
 
@@ -265,7 +270,7 @@ export default function BrowseTiffins() {
             </div>
 
             {/* Search + filter bar */}
-            <div style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap", ...anim(100) }}>
+            <div className="search-bar-container" style={{ marginTop: 32, display: "flex", gap: 12, flexWrap: "wrap", ...anim(100) }}>
               <div className="search-wrap" style={{ flex: 1, minWidth: 240, display: "flex", alignItems: "center", gap: 10, background: "rgba(255,255,255,0.92)", border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 16, padding: "12px 18px", transition: "all 0.2s" }}>
                 <Search size={18} color="#8FA873" />
                 <input
@@ -279,7 +284,7 @@ export default function BrowseTiffins() {
                 )}
               </div>
 
-              <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+              <div className="radius-selector" style={{ position: "relative", display: "flex", alignItems: "center" }}>
                 <MapPin size={16} color="#8FA873" style={{ position: "absolute", left: 14, pointerEvents: "none" }} />
                 <select
                   value={radius}

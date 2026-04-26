@@ -317,7 +317,7 @@ export default function Home() {
           {/* Search bar - Locator button */}
           <button 
             className="hero-search" 
-            onClick={() => navigate("/tiffins")}
+            onClick={() => navigate("/signup")}
             style={{ 
               display: "flex", background: "#fff", borderRadius: 22, padding: "14px 28px", 
               boxShadow: "0 8px 32px rgba(100,130,80,0.14)", border: "1.5px solid rgba(143,174,142,0.3)", 

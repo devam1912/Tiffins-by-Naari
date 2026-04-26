@@ -232,7 +232,7 @@ export const ProviderMenu = ({ theme }) => {
     const renderMenuItemCard = (item, mealType) => {
         const isApproved = item.status === "approved";
         return (
-            <div key={item.id || item._id} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <div key={item.id || item._id} className="menu-item-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 60, height: 60, borderRadius: 12, background: item.status === "pending" ? "#fffbeb" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
                         {item.image ? (
@@ -254,7 +254,7 @@ export const ProviderMenu = ({ theme }) => {
                         </div>
                     </div>
                 </div>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div className="menu-item-actions" style={{ display: "flex", gap: 6 }}>
                     {!isApproved && (
                         <>
                             <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setItemImage(item.image || ""); setIsModalOpen(true); }}
@@ -279,6 +279,58 @@ export const ProviderMenu = ({ theme }) => {
 
     return (
         <div style={{ paddingBottom: 40, fontFamily: "'Nunito', sans-serif", position: "relative" }}>
+            <style>{`
+                @media (max-width: 900px) {
+                    .menu-header-actions {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 16px !important;
+                    }
+                    .header-btns {
+                        width: 100% !important;
+                        justify-content: flex-start !important;
+                        flex-wrap: wrap !important;
+                    }
+                    .header-btns button {
+                        flex: 1 !important;
+                        min-width: 140px !important;
+                        justify-content: center !important;
+                    }
+                    .main-layout-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 20px !important;
+                    }
+                    .meal-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 24px !important;
+                    }
+                    .sticky-preview {
+                        position: static !important;
+                        margin-top: 24px !important;
+                    }
+                    .day-tabs {
+                        padding: 4px !important;
+                    }
+                    .day-tabs button {
+                        min-width: 80px !important;
+                        padding: 8px 4px !important;
+                        font-size: 12px !important;
+                    }
+                }
+                @media (max-width: 480px) {
+                    .menu-item-card {
+                        flex-direction: column !important;
+                        align-items: flex-start !important;
+                        gap: 12px !important;
+                    }
+                    .menu-item-actions {
+                        width: 100% !important;
+                        justify-content: flex-end !important;
+                        border-top: 1px solid rgba(255,255,255,0.05) !important;
+                        padding-top: 8px !important;
+                    }
+                }
+            `}</style>
 
             {/* Toast */}
             {toast && (
@@ -288,37 +340,37 @@ export const ProviderMenu = ({ theme }) => {
             )}
 
             {/* Header actions */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
+            <div className="menu-header-actions" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28 }}>
                 <div>
                     <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: T.text, margin: 0 }}>Menu Manager</h2>
                     <p style={{ fontSize: 13, color: T.textSec, marginTop: 4 }}>
                         {menuStatus.isApproved ? "✅ Menu is approved & live" : menuStatus.submittedForApproval ? "⏳ Awaiting admin approval" : "Draft — save and submit for approval"}
                     </p>
                 </div>
-                <div style={{ display: "flex", gap: 10 }}>
+                <div className="header-btns" style={{ display: "flex", gap: 10 }}>
                     {menu && (
                          <button onClick={handleDeleteMenu}
-                            style={{ padding: "11px 22px", borderRadius: 12, border: `1px solid ${T.border}`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                            <Trash2 size={14} /> Delete Menu
+                            style={{ padding: "11px 18px", borderRadius: 12, border: `1px solid ${T.border}`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                            <Trash2 size={14} /> Delete
                         </button>
                     )}
                     <button onClick={handleSaveMenu} disabled={isSaving}
-                        style={{ padding: "11px 22px", borderRadius: 12, border: "none", background: "#2d3b2d", color: "#fff", fontWeight: 800, fontSize: 14, cursor: isSaving ? "not-allowed" : "pointer" }}>
-                        {isSaving ? "Saving..." : "💾 Save Menu"}
+                        style={{ padding: "11px 18px", borderRadius: 12, border: "none", background: "#2d3b2d", color: "#fff", fontWeight: 800, fontSize: 13, cursor: isSaving ? "not-allowed" : "pointer" }}>
+                        {isSaving ? "Saving..." : "💾 Save"}
                     </button>
                     {!menuStatus.isApproved && (
                         <button onClick={handleSubmitForApproval} disabled={isSubmitting}
-                            style={{ padding: "11px 22px", borderRadius: 12, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 800, fontSize: 14, cursor: isSubmitting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                            <Send size={14} /> {isSubmitting ? "Submitting..." : "Submit for Approval"}
+                            style={{ padding: "11px 18px", borderRadius: 12, border: "none", background: "#8FAE8E", color: "#fff", fontWeight: 800, fontSize: 13, cursor: isSubmitting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                            <Send size={14} /> {isSubmitting ? "Submitting..." : "Submit"}
                         </button>
                     )}
                 </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 28 }}>
+            <div className="main-layout-grid" style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 28 }}>
                 <div>
                     {/* Day Tabs — FIXED: explicit colors, always readable */}
-                    <div style={{ display: "flex", background: T.card, padding: 6, borderRadius: 18, border: `1px solid ${T.border}`, overflowX: "auto", gap: 4, marginBottom: 28 }}>
+                    <div className="day-tabs" style={{ display: "flex", background: T.card, padding: 6, borderRadius: 18, border: `1px solid ${T.border}`, overflowX: "auto", gap: 4, marginBottom: 28 }}>
                         {DAYS.map(day => (
                             <button
                                 key={day}
@@ -339,7 +391,7 @@ export const ProviderMenu = ({ theme }) => {
                         ))}
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                    <div className="meal-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
                         {/* Lunch */}
                         <div>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
@@ -409,7 +461,7 @@ export const ProviderMenu = ({ theme }) => {
                 </div>
 
                 {/* Subscriber Preview */}
-                <div style={{ position: "sticky", top: 28 }}>
+                <div className="sticky-preview" style={{ position: "sticky", top: 28 }}>
                     <div style={{ background: T.card, borderRadius: 24, overflow: "hidden", border: `1px solid ${T.border}`, boxShadow: T.cardShadow }}>
                         <div style={{ background: "#5a7a50", padding: "16px 20px", display: "flex", alignItems: "center", gap: 8 }}>
                             <Eye size={16} color="#fff" />

@@ -186,9 +186,9 @@ export default function RegisterProvider() {
         .btn-submit:not(:disabled):hover { opacity:0.9 !important; transform:translateY(-2px) !important; box-shadow:0 12px 36px rgba(143,174,142,0.55) !important; }
         .upload-zone:hover { border-color:#8FAE8E !important; background:rgba(143,174,142,0.1) !important; }
         @media (max-width: 900px) {
-          .register-container { flex-direction: column !important; overflow-y: auto !important; }
-          .register-left-panel { min-height: auto !important; flex: none !important; padding: 40px 20px !important; }
-          .register-right-panel { flex: none !important; padding: 40px 20px !important; overflow-y: visible !important; }
+          .register-container { flex-direction: column !important; overflow-y: auto !important; min-height: auto !important; }
+          .register-left-panel { min-height: auto !important; flex: none !important; padding: 60px 20px !important; }
+          .register-right-panel { flex: none !important; padding: 40px 20px !important; overflow-y: visible !important; min-height: 100vh !important; justify-content: flex-start !important; }
         }
       `}</style>
 

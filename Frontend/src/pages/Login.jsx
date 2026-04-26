@@ -136,9 +136,9 @@ export default function Login() {
                 .link-hover:hover  { color: #5a7a50 !important; }
 
                 @media (max-width: 900px) {
-                    .login-container { flex-direction: column !important; }
+                    .login-container { flex-direction: column !important; min-height: auto !important; }
                     .left-panel { display: none !important; }
-                    .right-panel { padding: 40px 24px !important; }
+                    .right-panel { padding: 60px 24px !important; min-height: 100vh !important; justify-content: flex-start !important; }
                 }
             `}</style>
 

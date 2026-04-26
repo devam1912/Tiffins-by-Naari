@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import heroImg from "../assets/hero.png";
 import forChefsImg from "../assets/for_chefs.png";
 import { 
@@ -96,6 +96,7 @@ function WhyPoint({ icon, title, desc, delay }) {
 
 /* ── MAIN HOME ── */
 export default function Home() {
+  const navigate = useNavigate();
   const [scrollY, setScrollY] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -195,11 +196,21 @@ export default function Home() {
         @media (max-width: 900px) {
           .desktop-nav-links { display: none !important; }
           .mobile-menu-btn { display: flex !important; }
-          .hero-section { flex-direction: column !important; text-align: center; padding-top: 120px !important; }
+          .hero-section { flex-direction: column !important; text-align: center; padding-top: 110px !important; min-height: auto !important; padding-bottom: 60px !important; }
           .hero-text-block { align-items: center !important; }
-          .hero-title { font-size: clamp(36px, 8vw, 44px) !important; }
-          .hero-search { margin: 0 auto 28px !important; }
-          .hero-img-block { margin-top: 40px; }
+          .hero-title { font-size: clamp(34px, 8vw, 42px) !important; }
+          .hero-search { margin: 0 auto 28px !important; width: 100% !important; max-width: 100% !important; }
+          .hero-img-block { margin-top: 40px; width: 100% !important; }
+          .hero-badge-float { 
+            position: relative !important; 
+            bottom: auto !important; 
+            left: auto !important; 
+            margin: 20px auto 0 !important;
+            display: inline-flex !important;
+            transform: none !important;
+            animation: slideInBadge 0.6s ease both !important;
+          }
+          .food-float { width: 300px !important; height: 340px !important; }
           .section-padding { padding: 60px 24px !important; }
           .grid-2 { grid-template-columns: 1fr !important; gap: 40px !important; }
           .footer-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
@@ -303,16 +314,52 @@ export default function Home() {
             Subscribe to authentic home-cooked meals by talented home chefs in your neighbourhood. Healthy, wholesome, and made with love.
           </p>
 
-          {/* Search bar */}
-          <div className="hero-search" style={{ display: "flex", background: "#fff", borderRadius: 18, padding: "6px 6px 6px 20px", boxShadow: "0 8px 32px rgba(100,130,80,0.14)", border: "1.5px solid rgba(143,174,142,0.3)", maxWidth: 430, marginBottom: 28, ...h(420), alignItems: 'center' }}>
-            <MapPin size={20} color="#8FAE8E" style={{ marginRight: 10 }} />
-            <input placeholder="Enter your city..." style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 15, fontFamily: "'Nunito', sans-serif", color: "#333", width: "100px" }} />
-            <button
-              style={{ background: "linear-gradient(135deg, #8FAE8E, #8FA873)", color: "#fff", border: "none", borderRadius: 12, padding: "12px 22px", fontWeight: 700, cursor: "pointer", fontSize: 15, fontFamily: "'Nunito', sans-serif", whiteSpace: "nowrap", boxShadow: "0 4px 14px rgba(143,174,142,0.4)", transition: "all 0.25s" }}
-              onMouseEnter={e => e.currentTarget.style.opacity = "0.88"}
-              onMouseLeave={e => e.currentTarget.style.opacity = "1"}
-            >Find Tiffins</button>
-          </div>
+          {/* Search bar - Locator button */}
+          <button 
+            className="hero-search" 
+            onClick={() => navigate("/tiffins")}
+            style={{ 
+              display: "flex", background: "#fff", borderRadius: 22, padding: "14px 28px", 
+              boxShadow: "0 8px 32px rgba(100,130,80,0.14)", border: "1.5px solid rgba(143,174,142,0.3)", 
+              maxWidth: 430, marginBottom: 28, ...h(420), alignItems: 'center', cursor: 'pointer',
+              transition: "all 0.3s cubic-bezier(.22,.68,0,1.2)",
+              gap: 15,
+              width: "100%",
+              textAlign: "left",
+              fontFamily: "inherit"
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-4px) scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 14px 44px rgba(100,130,80,0.2)";
+              e.currentTarget.style.borderColor = "#8FAE8E";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0) scale(1)";
+              e.currentTarget.style.boxShadow = "0 8px 32px rgba(100,130,80,0.14)";
+              e.currentTarget.style.borderColor = "rgba(143,174,142,0.3)";
+            }}
+          >
+            <div style={{ 
+              width: 44, height: 44, borderRadius: 14, 
+              background: "rgba(143,174,142,0.12)", display: "flex", 
+              alignItems: "center", justifyContent: "center", color: "#8FAE8E",
+              flexShrink: 0
+            }}>
+              <MapPin size={24} fill="rgba(143,174,142,0.2)" />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 16, fontWeight: 800, color: "#2d3b2d" }}>Find Tiffins Near Me</div>
+              <div style={{ fontSize: 13, color: "#8FA873", fontWeight: 600 }}>Locate me automatically</div>
+            </div>
+            <div style={{ 
+              background: "linear-gradient(135deg, #8FAE8E, #8FA873)", 
+              color: "#fff", padding: "8px", borderRadius: 12,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 12px rgba(143,174,142,0.3)"
+            }}>
+              <ArrowRight size={20} />
+            </div>
+          </button>
 
           <div style={{ ...h(520), display: "flex", alignItems: "center", gap: 8 }}>
             <span style={{ color: "#888", fontSize: 14 }}>Are you a home chef?</span>

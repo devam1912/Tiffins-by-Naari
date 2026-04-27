@@ -32,9 +32,18 @@ export default function CustomerDashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [stats, setStats] = useState({ tiffins: 0, subscriptions: 0, orders: 0 });
-  const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
+  const [location, setLocation] = useState({ 
+    address: localStorage.getItem('last_known_address') || "Fetching location...", 
+    lat: localStorage.getItem('last_known_lat'), 
+    lng: localStorage.getItem('last_known_lng'),
+    loading: !localStorage.getItem('last_known_lat') 
+  });
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [manualAddress, setManualAddress] = useState("");
+  const [geoLoading, setGeoLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [foodRecs, setFoodRecs] = useState([]);
+  const [similarRecs, setSimilarRecs] = useState([]); // ✅ New state for Cosine AI matches
   const [recTitle, setRecTitle] = useState("✨ Top Picks Just For You");
   const [recSubtitle, setRecSubtitle] = useState("Personalized kitchens based on your location and history");
 
@@ -47,42 +56,37 @@ export default function CustomerDashboard() {
   if (!token) { navigate("/login"); return; }
 
   useEffect(() => {
-    // 1. Get Coordinates from Browser
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
+    // Attempt Auto-Location only if we don't have a manual one saved already
+    if (!location.lat || !location.lng) {
+        if ("geolocation" in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const { latitude, longitude } = position.coords;
+              try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+                const data = await response.json();
+                const city = data.address.city || data.address.town || data.address.village || "";
+                const suburb = data.address.suburb || data.address.neighbourhood || "";
+                const displayAddress = suburb ? `${suburb}, ${city}` : city;
 
-          try {
-            // 2. Reverse Geocode using OpenStreetMap (Nominatim)
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
-            );
-            const data = await response.json();
-
-            // Extract a clean address (Suburb/City)
-            const city = data.address.city || data.address.town || data.address.village || "";
-            const suburb = data.address.suburb || data.address.neighbourhood || "";
-            const displayAddress = suburb ? `${suburb}, ${city}` : city;
-
-            setLocation({
-              address: displayAddress || "Location Found",
-              lat: latitude,
-              lng: longitude,
-              loading: false
-            });
-          } catch (error) {
-            console.error("Geocoding error:", error);
-            setLocation({ address: "Location unavailable", loading: false });
-          }
-        },
-        (error) => {
-          console.error("Geolocation error:", error);
-          setLocation({ address: "Location access denied", loading: false });
+                const locData = { address: displayAddress || "Location Found", lat: latitude, lng: longitude, loading: false };
+                setLocation(locData);
+                localStorage.setItem('last_known_lat', latitude);
+                localStorage.setItem('last_known_lng', longitude);
+                localStorage.setItem('last_known_address', locData.address);
+              } catch (error) {
+                console.error("Geocoding error:", error);
+                setShowLocationModal(true);
+              }
+            },
+            (error) => {
+              console.error("Geolocation error:", error);
+              setShowLocationModal(true);
+            }
+          );
+        } else {
+          setShowLocationModal(true);
         }
-      );
-    } else {
-      setLocation({ address: "Geolocation not supported", loading: false });
     }
 
     // Fonts
@@ -91,10 +95,7 @@ export default function CustomerDashboard() {
     link.rel = "stylesheet";
     document.head.appendChild(link);
 
-    // ✅ Token ab Redux se aa raha hai, localStorage se nahi
     const headers = { Authorization: `Bearer ${token}` };
-
-    // Fetch Subscriptions and Orders (Non-location dependent)
     Promise.all([
       axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers }),
       axios.get(`${BASE_URL}/api/orders/my`, { headers }),
@@ -110,6 +111,34 @@ export default function CustomerDashboard() {
 
     setTimeout(() => setLoaded(true), 80);
   }, [navigate, token]);
+
+  const handleManualLocation = async (e) => {
+    e.preventDefault();
+    if (!manualAddress.trim()) return;
+    setGeoLoading(true);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(manualAddress)}&limit=1`);
+      const data = await response.json();
+      if (data && data.length > 0) {
+        const { lat, lon, display_name } = data[0];
+        const simplifiedAddress = display_name.split(',')[0] + (display_name.split(',')[1] ? ', ' + display_name.split(',')[1] : "");
+        
+        const locData = { address: simplifiedAddress, lat: parseFloat(lat), lng: parseFloat(lon), loading: false };
+        setLocation(locData);
+        localStorage.setItem('last_known_lat', lat);
+        localStorage.setItem('last_known_lng', lon);
+        localStorage.setItem('last_known_address', simplifiedAddress);
+        setShowLocationModal(false);
+        toast.success("Location updated successfully!");
+      } else {
+        toast.error("Could not find that location. Please try better keywords.");
+      }
+    } catch (err) {
+      toast.error("Search failed. Check your connection.");
+    } finally {
+      setGeoLoading(false);
+    }
+  };
 
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -352,8 +381,11 @@ export default function CustomerDashboard() {
   ];
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#fcfdfc", color: "#2d3b2d", fontFamily: "'Nunito', sans-serif" }}>
       <style>{`
+        @keyframes floatY { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
+        /* Smooth location selector animations */
+        @keyframes modalIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #E7E6B6; }
@@ -410,6 +442,66 @@ export default function CustomerDashboard() {
           .bottom-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
+      {/* ── LOCATION SELECTOR MODAL (Blinkit Style) ── */}
+      {showLocationModal && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 10000,
+          background: "rgba(45,59,45,0.65)", backdropFilter: "blur(18px)",
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 20
+        }}>
+          <div style={{
+            background: "#fff", maxWidth: 500, width: "100%", padding: "44px",
+            borderRadius: 36, boxShadow: "0 40px 100px rgba(0,0,0,0.25)",
+            textAlign: "center", animation: "modalIn 0.4s cubic-bezier(.22,.68,0,1.2)"
+          }}>
+            <div style={{ width: 80, height: 80, background: "rgba(143,174,142,0.1)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px", color: "#8FAE8E" }}>
+              <MapPin size={40} />
+            </div>
+            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 26, fontWeight: 700, color: "#2d3b2d", marginBottom: 10 }}>Where should we deliver?</h2>
+            <p style={{ color: "#777", fontSize: 15, lineHeight: 1.6, marginBottom: 32 }}>Automated location is disabled. Please enter your area to find the best home chefs near you.</p>
+
+            <form onSubmit={handleManualLocation} style={{ position: "relative", marginBottom: 24 }}>
+              <input 
+                type="text"
+                placeholder="Search for area, city or colony..."
+                value={manualAddress}
+                onChange={e => setManualAddress(e.target.value)}
+                style={{
+                  width: "100%", padding: "18px 24px", borderRadius: 20,
+                  border: "2px solid #f0f0f0", outline: "none", fontSize: 16,
+                  fontWeight: 600, color: "#2d3b2d", transition: "all 0.3s"
+                }}
+                disabled={geoLoading}
+              />
+              <button 
+                type="submit"
+                disabled={geoLoading}
+                style={{
+                  position: "absolute", right: 8, top: 8, bottom: 8,
+                  padding: "0 22px", background: "#8FAE8E", color: "#fff",
+                  border: "none", borderRadius: 16, fontWeight: 800,
+                  cursor: geoLoading ? "not-allowed" : "pointer", fontSize: 14
+                }}
+              >
+                {geoLoading ? "Searching..." : "Search"}
+              </button>
+            </form>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 12, opacity: 0.5 }}>
+              <hr style={{ flex: 1, border: "0.5px solid #eee" }} />
+              <span style={{ fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>Or</span>
+              <hr style={{ flex: 1, border: "0.5px solid #eee" }} />
+            </div>
+
+            <button 
+                onClick={() => { setShowLocationModal(false); window.location.reload(); }}
+                style={{ marginTop: 24, background: "none", border: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 14, textDecoration: "underline" }}
+            >
+              Try auto-detecting again
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ══════════════ SIDEBAR ══════════════ */}
       <Sidebar

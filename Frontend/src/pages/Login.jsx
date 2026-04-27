@@ -3,18 +3,18 @@ import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../api/auth";
 import { useDispatch } from "react-redux";
 import { loginSuccess } from "../store/authSlice";
-import { 
-  Utensils, 
-  Home, 
-  Leaf, 
-  Truck, 
-  ArrowLeft, 
-  ArrowRight, 
-  Mail, 
-  Lock, 
-  Eye, 
-  EyeOff, 
-  AlertTriangle 
+import {
+    Utensils,
+    Home,
+    Leaf,
+    Truck,
+    ArrowLeft,
+    ArrowRight,
+    Mail,
+    Lock,
+    Eye,
+    EyeOff,
+    AlertTriangle
 } from "lucide-react";
 
 export default function Login() {
@@ -29,45 +29,45 @@ export default function Login() {
 
     const isFormReady = form.email.trim() !== "" && form.password !== "";
 
-   const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!isFormReady || loading) return;
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        if (!isFormReady || loading) return;
 
-    setError("");
-    setLoading(true);
+        setError("");
+        setLoading(true);
 
-    try {
-        const res = await loginUser({
-            email: form.email,
-            password: form.password,
-        });
+        try {
+            const res = await loginUser({
+                email: form.email,
+                password: form.password,
+            });
 
-        const token = res.data.token;
-        const user = res.data.user;
+            const token = res.data.token;
+            const user = res.data.user;
 
-        dispatch(loginSuccess({ user, token }));
-        
-        // role based navigation
-        if (user.role === "admin") {
-            navigate("/admin");
-        } 
-        else if (user.role === "provider") {
-            navigate("/ProviderDashboard");
-        } 
-        else {
-            navigate("/CustomerDashboard");
+            dispatch(loginSuccess({ user, token }));
+
+            // role based navigation
+            if (user.role === "admin") {
+                navigate("/admin");
+            }
+            else if (user.role === "provider") {
+                navigate("/ProviderDashboard");
+            }
+            else {
+                navigate("/CustomerDashboard");
+            }
+
+        } catch (err) {
+            console.log(err);
+            setError(
+                err.response?.data?.message ||
+                "Invalid email or password. Please try again."
+            );
+        } finally {
+            setLoading(false);
         }
-
-    } catch (err) {
-        console.log(err);
-        setError(
-            err.response?.data?.message ||
-            "Invalid email or password. Please try again."
-        );
-    } finally {
-        setLoading(false);
-    }
-};
+    };
     useEffect(() => {
         const link = document.createElement("link");
         link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
@@ -86,8 +86,8 @@ export default function Login() {
         width: "100%",
         padding: "14px 16px 14px 44px",
         border: `2px solid ${error && (name === "email" || name === "password") ? "#ef5350"
-                : focused === name ? "#8FAE8E"
-                    : "#e8e8d8"
+            : focused === name ? "#8FAE8E"
+                : "#e8e8d8"
             }`,
         borderRadius: 14,
         fontSize: 15,
@@ -368,7 +368,7 @@ export default function Login() {
                         ...anim(540),
                     }}>
                         <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#8FA873", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
-                        <span style={{ fontSize: 13, color: "#888", fontWeight: 600 }}>Home-cooked · Trusted by 12,000+ subscribers</span>
+                        <span style={{ fontSize: 13, color: "#888", fontWeight: 600 }}>Home-cooked · Trusted by our customers</span>
                     </div>
                 </div>
             </div>

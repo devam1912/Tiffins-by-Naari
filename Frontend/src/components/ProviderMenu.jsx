@@ -267,19 +267,14 @@ export const ProviderMenu = ({ theme }) => {
                     </div>
                 </div>
                 <div className="menu-item-actions" style={{ display: "flex", gap: 6 }}>
-                    {!effectivelyApproved && (
-                        <>
-                            <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setItemImage(item.image || ""); setIsModalOpen(true); }}
-                                style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
-                                <Edit3 size={16} />
-                            </button>
-                            <button onClick={() => handleDelete(selectedDay, mealType, item._id || item.id)}
-                                style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
-                                <Trash2 size={16} />
-                            </button>
-                        </>
-                    )}
-                    {effectivelyApproved && <div style={{ padding: 8, color: "#16a34a" }}><ShieldCheck size={16} /></div>}
+                    <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setItemImage(item.image || ""); setIsModalOpen(true); }}
+                        style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
+                        <Edit3 size={16} />
+                    </button>
+                    <button onClick={() => handleDelete(selectedDay, mealType, item._id || item.id)}
+                        style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
+                        <Trash2 size={16} />
+                    </button>
                 </div>
             </div>
         );

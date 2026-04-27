@@ -217,13 +217,19 @@ export const ProviderMenu = ({ theme }) => {
 
     const StatusBadge = ({ status }) => {
         const map = {
-            pending: { cls: "background:#fef9e6;color:#b45309;border:1px solid #fde68a", label: "Pending", Icon: Clock },
-            approved: { cls: "background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0", label: "Approved", Icon: CheckCircle2 },
-            rejected: { cls: "background:#fff1f2;color:#be123c;border:1px solid #fecdd3", label: "Rejected", Icon: Ban },
+            pending: { color: "#b45309", bg: "#fef9e6", border: "#fde68a", label: "Pending", Icon: Clock },
+            approved: { color: "#065f46", bg: "#ecfdf5", border: "#a7f3d0", label: "Approved", Icon: CheckCircle2 },
+            rejected: { color: "#be123c", bg: "#fff1f2", border: "#fecdd3", label: "Rejected", Icon: Ban },
         };
-        const { cls, label, Icon } = map[status] || map.pending;
+        const { color, bg, border, label, Icon } = map[status] || map.pending;
         return (
-            <span style={{ ...Object.fromEntries(cls.split(";").filter(Boolean).map(s => { const [k, v] = s.split(":"); return [k.trim(), v.trim()]; })), display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 800, padding: "2px 8px", borderRadius: 100, textTransform: "uppercase" }}>
+            <span style={{ 
+                background: bg, color: color, border: `1px solid ${border}`,
+                display: "inline-flex", alignItems: "center", gap: 4, 
+                fontSize: 10, fontWeight: 800, padding: "2px 8px", 
+                borderRadius: 100, textTransform: "uppercase",
+                whiteSpace: "nowrap"
+            }}>
                 <Icon size={9} />{label}
             </span>
         );
@@ -242,11 +248,13 @@ export const ProviderMenu = ({ theme }) => {
                         )}
                     </div>
                     <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                            <span style={{ fontWeight: 700, fontSize: 14, color: "inherit" }}>{item.name}</span>
-                            <span style={{ background: "#f3f4f6", color: "#6b7280", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6, textTransform: "uppercase" }}>{item.type}</span>
-                            <span style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E" }}>₹{item.price || 0}</span>
-                            <StatusBadge status={item.status} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", justifyContent: "flex-start" }}>
+                            <span style={{ fontWeight: 700, fontSize: 14, color: "inherit", marginRight: "auto" }}>{item.name}</span>
+                            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                                <span style={{ background: "#f3f4f6", color: "#6b7280", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6, textTransform: "uppercase" }}>{item.type}</span>
+                                <span style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E" }}>₹{item.price || 0}</span>
+                                <StatusBadge status={item.status} />
+                            </div>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
                             <Leaf size={10} color="#16a34a" />
@@ -474,20 +482,29 @@ export const ProviderMenu = ({ theme }) => {
                                     <Leaf size={14} color="#16a34a" />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].filter(i => i.status === "approved").map((item, i) => (
-                                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#8FAE8E", flexShrink: 0 }} />
+                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].map((item, i) => (
+                                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, opacity: item.status === 'approved' ? 1 : 0.6 }}>
+                                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: item.status === 'approved' ? "#8FAE8E" : "#f59e0b", flexShrink: 0 }} />
                                             <span style={{ fontSize: 13, color: T.text }}>{item.name}</span>
+                                            {item.status !== 'approved' && <span style={{ fontSize: 8, fontWeight: 800, color: "#f59e0b", textTransform: "uppercase" }}>(Draft)</span>}
                                         </div>
                                     ))}
-                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].filter(i => i.status === "approved").length === 0 && (
-                                        <p style={{ fontSize: 12, color: "#d1d5db", fontStyle: "italic", margin: 0 }}>No approved items yet</p>
+                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].length === 0 && (
+                                        <p style={{ fontSize: 12, color: "#d1d5db", fontStyle: "italic", margin: 0 }}>No items added yet</p>
                                     )}
                                 </div>
-                                <div style={{ marginTop: 16 }}>
-                                    <p style={{ fontSize: 10, color: T.textSec, marginBottom: 6, fontWeight: 800, textTransform: "uppercase" }}>Tiffin Price</p>
-                                    <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "10px 14px", fontWeight: 800, color: T.text, gap: 6 }}>
-                                        <span>₹</span><span>{currentDayData.lunch.price || 0}</span>
+                                <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                                    <div>
+                                        <p style={{ fontSize: 10, color: T.textSec, marginBottom: 4, fontWeight: 800, textTransform: "uppercase" }}>Lunch</p>
+                                        <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "8px 10px", fontWeight: 800, color: T.text, gap: 4, fontSize: 13 }}>
+                                            <span>₹</span><span>{currentDayData.lunch.price || 0}</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <p style={{ fontSize: 10, color: T.textSec, marginBottom: 4, fontWeight: 800, textTransform: "uppercase" }}>Dinner</p>
+                                        <div style={{ display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "8px 10px", fontWeight: 800, color: T.text, gap: 4, fontSize: 13 }}>
+                                            <span>₹</span><span>{currentDayData.dinner.price || 0}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

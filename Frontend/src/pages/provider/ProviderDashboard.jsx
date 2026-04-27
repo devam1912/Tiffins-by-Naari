@@ -153,13 +153,14 @@ export const ProviderDashboard = () => {
                 
                 @media (max-width: 768px) {
                   .provider-sidebar {
-                    transform: ${({ isMobileOpen }) => isMobileOpen ? 'translateX(0)' : 'translateX(-100.5%)'};
+                    transform: ${isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100.5%)'};
                     width: 280px !important;
                     transition: transform 0.4s cubic-bezier(.22,.68,0,1.2) !important;
                   }
                   .provider-main {
                     margin-left: 0 !important;
                     padding: 24px 16px !important;
+                    padding-bottom: 40px !important;
                   }
                   .mobile-toggle {
                     display: flex !important;
@@ -168,9 +169,7 @@ export const ProviderDashboard = () => {
                     flex-direction: column-reverse !important;
                     align-items: flex-start !important;
                     gap: 20px !important;
-                  }
-                  .desktop-logo-space {
-                    display: none !important;
+                    padding-bottom: 12px;
                   }
                 }
                 @media (min-width: 769px) {

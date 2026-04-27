@@ -113,10 +113,10 @@ export const AdminMenu = ({ menus = [], theme }) => {
             {/* Header */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
                 <div>
-                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: 28, fontWeight: 700, color: T.text, margin: 0 }}>Menu Moderation</h2>
+                    <h2 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(24px, 4vw, 28px)", fontWeight: 700, color: T.text, margin: 0 }}>Menu Moderation</h2>
                     <p style={{ color: T.textSec, fontSize: 13, marginTop: 4 }}>{menus.length} menus from registered kitchen partners</p>
                 </div>
-                <div style={{ position: "relative" }}>
+                <div style={{ position: "relative", width: "100%", maxWidth: "300px" }}>
                     <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.textSec, display: 'flex', alignItems: 'center' }}>
                         <Search size={16} />
                     </span>
@@ -124,10 +124,9 @@ export const AdminMenu = ({ menus = [], theme }) => {
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         placeholder="Search by kitchen or chef..."
-                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: 240, background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : 'transparent', color: T.text }}
+                        style={{ paddingLeft: 36, paddingRight: 16, paddingTop: 10, paddingBottom: 10, border: `1px solid ${T.border}`, borderRadius: 12, fontSize: 13, fontFamily: "'Nunito', sans-serif", outline: "none", width: "100%", background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : 'transparent', color: T.text }}
                     />
                 </div>
-
             </div>
 
             {/* Table */}
@@ -161,7 +160,7 @@ export const AdminMenu = ({ menus = [], theme }) => {
                                         <div style={{ fontSize: 12, color: T.textSec, marginTop: 2 }}>Chef: {menu.provider?.ownerName || "—"} &bull; {menu.weekMenu?.length || 0} days scheduled</div>
                                     </div>
 
-                                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
                                         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 12px", borderRadius: 100, fontSize: 10, fontWeight: 800, textTransform: "uppercase", background: badge.bg, color: badge.color }}>
                                             <span style={{ width: 6, height: 6, borderRadius: "50%", background: badge.dot, display: "inline-block" }} />
                                             {badge.label}
@@ -176,20 +175,12 @@ export const AdminMenu = ({ menus = [], theme }) => {
                                                     </button>
                                                 )}
 
-                                                {menu.isApproved && (
+                                                {(menu.isApproved || menu.submittedForApproval) && (
                                                     <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
                                                         style={{ padding: "8px 16px", borderRadius: 10, border: `1px solid #ef5350`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                        <X size={14} /> Revoke
+                                                        <X size={14} /> {menu.isApproved ? "Revoke" : "Reject"}
                                                     </button>
                                                 )}
-
-                                                {!menu.isApproved && menu.submittedForApproval && (
-                                                     <button onClick={e => { e.stopPropagation(); setRejectTarget(menu); }}
-                                                     style={{ padding: "8px 16px", borderRadius: 10, border: `1px solid #ef5350`, background: "none", color: "#ef5350", fontWeight: 800, fontSize: 12, cursor: "pointer", display: 'flex', alignItems: 'center', gap: 6 }}>
-                                                     <X size={14} /> Reject
-                                                 </button>
-                                                )}
-
                                             </div>
                                         ) : (
                                             <span style={{ fontSize: 12, color: T.textSec }}>Processing...</span>

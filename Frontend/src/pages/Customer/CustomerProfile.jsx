@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "../../App.css";
 import { useNavigate } from "react-router-dom";
 import { updateProfile } from "../../api/auth";
 import { useSelector, useDispatch } from "react-redux";
@@ -120,7 +121,7 @@ export default function EditProfile() {
   });
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+    <div className="page-container">
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}
@@ -130,13 +131,12 @@ export default function EditProfile() {
         location={location}
         logout={handleLogout}
       />
-      <main className="dashboard-main" style={{
-        flex: 1,
+      <main className="main-content" style={{
+        marginLeft: collapsed ? "72px" : "260px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         padding: "48px 40px",
-        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
         minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
@@ -180,12 +180,12 @@ export default function EditProfile() {
         .link-hover:hover { color: #5a7a50 !important; }
         .cancel-btn:hover { background: rgba(143,174,142,0.08) !important; border-color: #8FAE8E !important; }
 
-        .dashboard-main { margin-left: ${collapsed ? 72 : 260}px; }
+        /* Sidebar logic handled by .main-content */
 
         @media (max-width: 768px) {
-          .dashboard-main {
+          .main-content {
             margin-left: 0 !important;
-            padding: 24px 16px 90px !important; /* Bottom Nav padding */
+            padding: 24px 16px 120px !important; /* Bottom Nav padding */
           }
           .profile-card { padding: 32px 24px !important; }
         }

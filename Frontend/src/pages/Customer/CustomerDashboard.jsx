@@ -6,16 +6,16 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../store/authSlice";
 import { BASE_URL } from "../../api/auth";
 import { toast } from "sonner";
-import { 
-  Bell, 
-  MapPin, 
-  Home, 
-  Calendar, 
-  ShoppingBag, 
-  Soup, 
-  History, 
-  User, 
-  Lightbulb, 
+import {
+  Bell,
+  MapPin,
+  Home,
+  Calendar,
+  ShoppingBag,
+  Soup,
+  History,
+  User,
+  Lightbulb,
   Sparkles,
   LayoutDashboard,
   UtensilsCrossed,
@@ -119,7 +119,7 @@ export default function CustomerDashboard() {
       try {
         const headers = { Authorization: `Bearer ${token}` };
         const BASE_URL = import.meta.env.VITE_API_URL ?? "";
-        
+
         const [ordersRes, subsRes] = await Promise.all([
           axios.get(`${BASE_URL}/api/orders/my`, { headers }),
           axios.get(`${BASE_URL}/api/subscriptions/my-subscriptions`, { headers })
@@ -127,7 +127,7 @@ export default function CustomerDashboard() {
 
         const rawOrders = ordersRes.data || [];
         const rawSubs = subsRes.data.data || [];
-        
+
         const readIds = JSON.parse(localStorage.getItem(`read_notifs_${user?.id}`) || "[]");
         let count = 0;
 
@@ -164,138 +164,138 @@ export default function CustomerDashboard() {
         axios.get(`${BASE_URL}/api/recommendations/${userId}`, { headers }),
         axios.get(`${BASE_URL}/api/tiffins/menu`, { headers })
       ]).then(([nearbyRecsRes, mlRecsRes, menusRes]) => {
-          const providers = nearbyRecsRes.data.providers || [];
-          setRecommendations(providers);
+        const providers = nearbyRecsRes.data.providers || [];
+        setRecommendations(providers);
 
-          let topPicks = [];
-          if (mlRecsRes.data && mlRecsRes.data.top_picks) {
-              topPicks = mlRecsRes.data.top_picks;
-          }
-          const allMenus = menusRes.data.menus || [];
+        let topPicks = [];
+        if (mlRecsRes.data && mlRecsRes.data.top_picks) {
+          topPicks = mlRecsRes.data.top_picks;
+        }
+        const allMenus = menusRes.data.menus || [];
 
-          // Build a pool of available items from nearby TSPs for 'today'
-          const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-          const todayName = days[new Date().getDay()];
+        // Build a pool of available items from nearby TSPs for 'today'
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        const todayName = days[new Date().getDay()];
 
-          // ✅ Determine current meal slot based on time of day
-          const currentHour = new Date().getHours();
-          const currentSlot = currentHour < 15 ? "lunch" : "dinner";
-          const slotLabel = currentSlot === "lunch" ? "Lunch" : "Dinner";
+        // ✅ Determine current meal slot based on time of day
+        const currentHour = new Date().getHours();
+        const currentSlot = currentHour < 15 ? "lunch" : "dinner";
+        const slotLabel = currentSlot === "lunch" ? "Lunch" : "Dinner";
 
-          let availableItemsToday = [];
-          // ✅ FIX: Convert all provider IDs to strings for reliable comparison
-          const providerIds = new Set(providers.map(p => String(p.id || p._id)));
+        let availableItemsToday = [];
+        // ✅ FIX: Convert all provider IDs to strings for reliable comparison
+        const providerIds = new Set(providers.map(p => String(p.id || p._id)));
 
-          allMenus.forEach(menu => {
-              // ✅ Only include items from approved menus
-              if (!menu.isApproved) return;
+        allMenus.forEach(menu => {
+          // ✅ Only include items from approved menus
+          if (!menu.isApproved) return;
 
-              const pId = String(menu.provider?._id || menu.provider);
-              if (providerIds.has(pId)) {
-                  const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
-                  let itemsToConsider = [];
-                  let usedSlot = currentSlot;
+          const pId = String(menu.provider?._id || menu.provider);
+          if (providerIds.has(pId)) {
+            const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
+            let itemsToConsider = [];
+            let usedSlot = currentSlot;
 
-                  if (todayMenu) {
-                      const slotItems = todayMenu[currentSlot]?.items || [];
-                      const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
-                      const otherItems = todayMenu[otherSlot]?.items || [];
-                      
-                      if (slotItems.length > 0) {
-                          itemsToConsider = slotItems;
-                      } else if (otherItems.length > 0) {
-                          itemsToConsider = otherItems;
-                          usedSlot = otherSlot;
-                      }
-                  }
+            if (todayMenu) {
+              const slotItems = todayMenu[currentSlot]?.items || [];
+              const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
+              const otherItems = todayMenu[otherSlot]?.items || [];
 
-                  // ✅ FALLBACK: If today is totally empty, look at all items in the week menu
-                  if (itemsToConsider.length === 0) {
-                      menu.weekMenu?.forEach(dayMenu => {
-                          const allDayItems = [
-                              ...(dayMenu.lunch?.items || []),
-                              ...(dayMenu.dinner?.items || [])
-                          ];
-                          itemsToConsider.push(...allDayItems);
-                      });
-                      usedSlot = "general"; // Flag for fallback
-                  }
-
-                  const providerDetails = providers.find(p => String(p.id || p._id) === pId);
-                  itemsToConsider.forEach(item => {
-                      if (item.name) {
-                          availableItemsToday.push({
-                              ...item,
-                              mealSlot: usedSlot === "general" ? (item.type === "Sabzi" ? "Special" : "Always") : usedSlot,
-                              provider: providerDetails
-                          });
-                      }
-                  });
+              if (slotItems.length > 0) {
+                itemsToConsider = slotItems;
+              } else if (otherItems.length > 0) {
+                itemsToConsider = otherItems;
+                usedSlot = otherSlot;
               }
-          });
-          
-          // Remove exact duplicates by item name + provider ID
-          const uniqueItemsMap = new Map();
-          availableItemsToday.forEach(item => {
-              const key = `${item.name}-${String(item.provider?.id || item.provider?._id)}`;
-              if (!uniqueItemsMap.has(key)) {
-                  uniqueItemsMap.set(key, item);
-              }
-          });
-          availableItemsToday = Array.from(uniqueItemsMap.values());
+            }
 
-          if (topPicks.length > 0) {
-              setRecTitle("✨ Top Picks Just For You");
-              setRecSubtitle(`Personalized ${slotLabel.toLowerCase()} recommendations based on your taste`);
-              
-              const matchedItems = [];
-              // 1. Map ML predictions to actual TSPs selling it today
-              topPicks.forEach(pick => {
-                 const pickLower = pick.toLowerCase();
-                 let match = availableItemsToday.find(i => i.name.toLowerCase().includes(pickLower));
-                 if (match) {
-                     matchedItems.push(match);
-                     availableItemsToday = availableItemsToday.filter(i => i !== match);
-                 }
+            // ✅ FALLBACK: If today is totally empty, look at all items in the week menu
+            if (itemsToConsider.length === 0) {
+              menu.weekMenu?.forEach(dayMenu => {
+                const allDayItems = [
+                  ...(dayMenu.lunch?.items || []),
+                  ...(dayMenu.dinner?.items || [])
+                ];
+                itemsToConsider.push(...allDayItems);
               });
+              usedSlot = "general"; // Flag for fallback
+            }
 
-              // 2. Pad to 2 items, prioritizing 'Sabzi' / 'Paneer' / 'Aloo'
-              while (matchedItems.length < 2 && availableItemsToday.length > 0) {
-                 let fallbackMatch = availableItemsToday.find(i => {
-                     const n = i.name.toLowerCase();
-                     return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
-                 });
-                 if (!fallbackMatch) {
-                     fallbackMatch = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
-                 }
-                 matchedItems.push(fallbackMatch);
-                 availableItemsToday = availableItemsToday.filter(i => i !== fallbackMatch);
+            const providerDetails = providers.find(p => String(p.id || p._id) === pId);
+            itemsToConsider.forEach(item => {
+              if (item.name) {
+                availableItemsToday.push({
+                  ...item,
+                  mealSlot: usedSlot === "general" ? (item.type === "Sabzi" ? "Special" : "Always") : usedSlot,
+                  provider: providerDetails
+                });
               }
-              setFoodRecs(matchedItems.slice(0, 2));
-          } else {
-              setRecTitle(`🔥 Trending ${slotLabel} Meals Today`);
-              setRecSubtitle(`Popular local ${slotLabel.toLowerCase()} meals right now`);
-
-              let fallbackItems = [];
-              // 1. Prioritize exactly 1-2 sabzi/paneer/aloo
-              let sabzis = availableItemsToday.filter(i => {
-                  const n = i.name.toLowerCase();
-                  return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
-              });
-              
-              if (sabzis.length > 0) {
-                  fallbackItems.push(sabzis[0]);
-                  availableItemsToday = availableItemsToday.filter(i => i !== sabzis[0]);
-              }
-              
-              if (availableItemsToday.length > 0 && fallbackItems.length < 2) {
-                  // Pick one more random item to make it 2 max
-                  let randomItem = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
-                  fallbackItems.push(randomItem);
-              }
-
-              setFoodRecs(fallbackItems);
+            });
           }
+        });
+
+        // Remove exact duplicates by item name + provider ID
+        const uniqueItemsMap = new Map();
+        availableItemsToday.forEach(item => {
+          const key = `${item.name}-${String(item.provider?.id || item.provider?._id)}`;
+          if (!uniqueItemsMap.has(key)) {
+            uniqueItemsMap.set(key, item);
+          }
+        });
+        availableItemsToday = Array.from(uniqueItemsMap.values());
+
+        if (topPicks.length > 0) {
+          setRecTitle("✨ Top Picks Just For You");
+          setRecSubtitle(`Personalized ${slotLabel.toLowerCase()} recommendations based on your taste`);
+
+          const matchedItems = [];
+          // 1. Map ML predictions to actual TSPs selling it today
+          topPicks.forEach(pick => {
+            const pickLower = pick.toLowerCase();
+            let match = availableItemsToday.find(i => i.name.toLowerCase().includes(pickLower));
+            if (match) {
+              matchedItems.push(match);
+              availableItemsToday = availableItemsToday.filter(i => i !== match);
+            }
+          });
+
+          // 2. Pad to 2 items, prioritizing 'Sabzi' / 'Paneer' / 'Aloo'
+          while (matchedItems.length < 2 && availableItemsToday.length > 0) {
+            let fallbackMatch = availableItemsToday.find(i => {
+              const n = i.name.toLowerCase();
+              return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
+            });
+            if (!fallbackMatch) {
+              fallbackMatch = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
+            }
+            matchedItems.push(fallbackMatch);
+            availableItemsToday = availableItemsToday.filter(i => i !== fallbackMatch);
+          }
+          setFoodRecs(matchedItems.slice(0, 2));
+        } else {
+          setRecTitle(`🔥 Trending ${slotLabel} Meals Today`);
+          setRecSubtitle(`Popular local ${slotLabel.toLowerCase()} meals right now`);
+
+          let fallbackItems = [];
+          // 1. Prioritize exactly 1-2 sabzi/paneer/aloo
+          let sabzis = availableItemsToday.filter(i => {
+            const n = i.name.toLowerCase();
+            return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
+          });
+
+          if (sabzis.length > 0) {
+            fallbackItems.push(sabzis[0]);
+            availableItemsToday = availableItemsToday.filter(i => i !== sabzis[0]);
+          }
+
+          if (availableItemsToday.length > 0 && fallbackItems.length < 2) {
+            // Pick one more random item to make it 2 max
+            let randomItem = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
+            fallbackItems.push(randomItem);
+          }
+
+          setFoodRecs(fallbackItems);
+        }
       }).catch(err => console.error("Recs fetch error:", err));
     }
   }, [location.lat, location.lng, token, user?.id, user?._id]);
@@ -431,19 +431,19 @@ export default function CustomerDashboard() {
         {/* ── Top bar ── */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, flexWrap: "wrap", gap: 16, ...anim(0) }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-             <div style={{ width: 50, height: 50, borderRadius: 16, background: "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8FAE8E" }}>
-                {hour < 12 ? <Sun size={28} /> : hour < 17 ? <CloudSun size={28} /> : <Moon size={28} />}
-             </div>
-             <div>
-                <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>{greeting}</p>
-                <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3.2vw,38px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
-                  Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
-                </h1>
-                <p style={{ color: "#888", fontSize: 14, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
-                  <MapPin size={14} /> {location.address} · Ready for your next meal?
-                </p>
-             </div>
+            <div style={{ width: 50, height: 50, borderRadius: 16, background: "rgba(143,174,142,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8FAE8E" }}>
+              {hour < 12 ? <Sun size={28} /> : hour < 17 ? <CloudSun size={28} /> : <Moon size={28} />}
+            </div>
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>{greeting}</p>
+              <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3.2vw,38px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15 }}>
+                Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
+              </h1>
+              <p style={{ color: "#888", fontSize: 14, marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4caf50", display: "inline-block", animation: "pulseDot 1.8s ease-in-out infinite" }} />
+                <MapPin size={14} /> {location.address} · Ready for your next meal?
+              </p>
+            </div>
           </div>
 
           {/* Notification + Avatar */}
@@ -454,9 +454,9 @@ export default function CustomerDashboard() {
             >
               <Bell size={20} color="#5a7a50" />
               {unreadCount > 0 && (
-                <span style={{ 
-                  position: "absolute", top: 9, right: 10, 
-                  width: 18, height: 18, borderRadius: "50%", 
+                <span style={{
+                  position: "absolute", top: 9, right: 10,
+                  width: 18, height: 18, borderRadius: "50%",
                   background: "#ef5350", border: "2px solid #E7E6B6",
                   color: "#fff", fontSize: 10, fontWeight: 800,
                   display: "flex", alignItems: "center", justifyContent: "center"
@@ -567,7 +567,7 @@ export default function CustomerDashboard() {
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#fbbf24)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", overflow: "hidden" }}>
-                        {food.image ? <img src={food.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Soup size={22} />}
+                      {food.image ? <img src={food.image} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <Soup size={22} />}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       {food.mealSlot && (
@@ -585,19 +585,19 @@ export default function CustomerDashboard() {
                     </p>
                   )}
                   {food.provider ? (
-                      <button onClick={() => navigate(`/provider/${food.provider.id || food.provider._id}`, { state: { tiffin: food.provider } })} style={{
-                        marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
-                        borderRadius: 14, padding: "8px", fontWeight: 700, fontSize: 13, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
-                      }}>
-                        Order Here →
-                      </button>
+                    <button onClick={() => navigate(`/provider/${food.provider.id || food.provider._id}`, { state: { tiffin: food.provider } })} style={{
+                      marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
+                      borderRadius: 14, padding: "8px", fontWeight: 700, fontSize: 13, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
+                    }}>
+                      Order Here →
+                    </button>
                   ) : (
-                      <button onClick={() => navigate("/tiffins")} style={{
-                        marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
-                        borderRadius: 14, padding: "8px", fontWeight: 700, fontSize: 13, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
-                      }}>
-                        Explore Kitchens →
-                      </button>
+                    <button onClick={() => navigate("/tiffins")} style={{
+                      marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
+                      borderRadius: 14, padding: "8px", fontWeight: 700, fontSize: 13, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
+                    }}>
+                      Explore Kitchens →
+                    </button>
                   )}
                 </div>
               ))}

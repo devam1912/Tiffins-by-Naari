@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import "../../App.css";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchNearbyTiffins } from "../../store/tiffinSlice";
@@ -183,7 +184,7 @@ export default function BrowseTiffins() {
     </div>
   );
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
+    <div className="page-container">
       <Sidebar 
         collapsed={collapsed} 
         setCollapsed={setCollapsed} 
@@ -194,11 +195,8 @@ export default function BrowseTiffins() {
         logout={handleLogout}
       />
       
-      <div className="dashboard-main" style={{ 
-        flex: 1, 
-        marginLeft: collapsed ? 72 : 260, 
-        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
-        minWidth: 0 
+      <div className="main-content" style={{ 
+        marginLeft: collapsed ? "72px" : "260px"
       }}>
         <style>{`
           *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -227,16 +225,15 @@ export default function BrowseTiffins() {
           @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
           .area-loading{animation:pulse 1.2s ease-in-out infinite;color:#ccc!important}
           
-          /* Mobile Layout */
-          /* Mobile Layout */
+          /* Mobile Layout overrides */
           @media (max-width: 768px) {
-            .dashboard-main {
+            .main-content {
               margin-left: 0 !important;
-              padding-bottom: 90px !important;
+              padding: 0 !important; /* Reset padding because hero handles it */
             }
             .browse-hero { padding: 32px 20px 40px !important; }
             .browse-hero h1 { font-size: 32px !important; }
-            .browse-content { padding: 24px 16px 60px !important; }
+            .browse-content { padding: 24px 16px 120px !important; }
             .search-bar-container { gap: 10px !important; }
             .search-wrap { min-width: 100% !important; }
             .radius-selector { width: 100% !important; }

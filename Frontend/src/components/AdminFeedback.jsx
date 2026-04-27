@@ -39,7 +39,7 @@ export const AdminFeedback = ({ feedbacks, loading, theme }) => {
                 </div>
 
             ) : (
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: 20 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 20 }}>
                     {feedbacks.map((f, i) => (
                         <div key={f._id} style={{
                             background: T.card,

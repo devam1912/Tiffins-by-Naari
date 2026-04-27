@@ -446,19 +446,36 @@ export default function AdminDashboard() {
         @media (max-width: 768px) {
           .admin-sidebar {
             width: 100% !important; height: auto !important; min-height: unset !important;
-            flex-direction: row !important; padding: 12px 8px !important;
+            flex-direction: row !important; padding: 12px 16px !important;
             top: auto !important; bottom: 0 !important;
-            z-index: 9999 !important; border-radius: 20px 20px 0 0 !important;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+            z-index: 9999 !important; border-radius: 24px 24px 0 0 !important;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1) !important;
+            backdrop-filter: blur(20px);
+            background: ${T.sidebarBg} !important;
           }
           .admin-sidebar-logo { display: none !important; }
-          .admin-sidebar-nav { flex-direction: row !important; overflow-x: auto !important; gap: 6px !important; margin: 0 !important; }
-          .nav-btn { padding: 10px !important; justify-content: center !important; }
-          .nav-btn > span:last-child { display: none !important; }
-          .admin-logout-btn { padding: 10px !important; justify-content: center !important; margin-left: 10px !important; width: auto !important; margin-top: 0 !important; }
-          .admin-logout-btn > span { display: none !important; }
-          .admin-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 120px !important; }
-          .admin-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+          .admin-sidebar-nav { flex-direction: row !important; overflow-x: auto !important; gap: 8px !important; margin: 0 !important; flex: 1 !important; justify-content: center !important; }
+          .nav-btn { 
+            padding: 8px !important; 
+            flex-direction: column !important; 
+            gap: 4px !important; 
+            width: auto !important;
+            min-width: 60px;
+            justify-content: center !important;
+            background: none !important;
+            box-shadow: none !important;
+          }
+          .nav-btn > span:first-child { font-size: 20px !important; }
+          .nav-btn > span:last-child { 
+            display: block !important; 
+            font-size: 9px !important; 
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .admin-logout-btn { display: none !important; }
+          .admin-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 110px !important; }
+          .admin-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; padding-bottom: 24px; }
+          .admin-header > div:last-child { width: 100%; justify-content: space-between; }
         }
       `}</style>
 

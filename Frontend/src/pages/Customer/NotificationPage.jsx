@@ -174,8 +174,18 @@ export default function NotificationPage() {
         }
 
         @media (max-width: 768px) {
-          .notifs-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
-          .notification-card { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
+          .main-content {
+            margin-left: 0 !important;
+            padding: 24px 16px 120px !important; /* Bottom Nav padding */
+          }
+          .notification-card { 
+            flex-direction: row !important; 
+            padding: 16px !important; 
+            gap: 12px !important; 
+          }
+          .notification-card h3 { font-size: 15px !important; }
+          .notification-card p { font-size: 13px !important; }
+          .unread-dot { top: 16px !important; right: 16px !important; }
         }
       `}</style>
 
@@ -191,8 +201,8 @@ export default function NotificationPage() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main className="notifs-main" style={{
-        marginLeft: collapsed ? 72 : 260,
+      <main className="main-content" style={{
+        marginLeft: collapsed ? "72px" : "260px",
         flex: 1, padding: "40px 44px",
         transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
         minHeight: "100vh", overflowY: "auto"

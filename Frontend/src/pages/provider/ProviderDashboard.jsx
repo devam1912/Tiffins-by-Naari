@@ -48,6 +48,7 @@ export const ProviderDashboard = () => {
     const [loaded, setLoaded] = useState(false);
     const [collapsed, setCollapsed] = useState(false);
     const [activeTab, setActiveTab] = useState("Dashboard");
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const isServiceActive = profile?.isActive ?? true;
 
@@ -152,22 +153,29 @@ export const ProviderDashboard = () => {
                 
                 @media (max-width: 768px) {
                   .provider-sidebar {
-                    width: 100% !important; height: auto !important; min-height: unset !important;
-                    flex-direction: row !important; padding: 12px 8px !important;
-                    top: auto !important; bottom: 0 !important;
-                    z-index: 9999 !important; border-radius: 20px 20px 0 0 !important;
-                    box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+                    transform: ${({ isMobileOpen }) => isMobileOpen ? 'translateX(0)' : 'translateX(-100.5%)'};
+                    width: 280px !important;
+                    transition: transform 0.4s cubic-bezier(.22,.68,0,1.2) !important;
                   }
-                  .provider-sidebar-logo { display: none !important; }
-                  .provider-sidebar-nav { flex-direction: row !important; overflow-x: auto !important; gap: 6px !important; margin: 0 !important; }
-                  .nav-btn { padding: 10px !important; justify-content: center !important; }
-                  .nav-btn > span:last-child { display: none !important; }
-                  .provider-bottom-actions { display: flex !important; flex-direction: row !important; align-items: center !important; margin-top: 0 !important; margin-left: auto !important; gap: 8px !important; }
-                  .provider-service-card { display: none !important; }
-                  .provider-logout-btn { padding: 10px !important; justify-content: center !important; width: auto !important; }
-                  .provider-logout-btn > span { display: none !important; }
-                  .provider-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 120px !important; }
-                  .provider-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+                  .provider-main {
+                    margin-left: 0 !important;
+                    padding: 24px 16px !important;
+                  }
+                  .mobile-toggle {
+                    display: flex !important;
+                  }
+                  .provider-header {
+                    flex-direction: column-reverse !important;
+                    align-items: flex-start !important;
+                    gap: 20px !important;
+                  }
+                  .desktop-logo-space {
+                    display: none !important;
+                  }
+                }
+                @media (min-width: 769px) {
+                  .mobile-toggle { display: none !important; }
+                  .provider-sidebar { transform: none !important; }
                 }
             `}</style>
 
@@ -177,11 +185,22 @@ export const ProviderDashboard = () => {
                 minHeight: "100vh",
                 display: "flex", flexDirection: "column",
                 padding: "36px 24px",
-                position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 100,
+                position: "fixed", top: 0, left: 0, bottom: 0, zIndex: 300,
                 transition: "width 0.35s cubic-bezier(.22,.68,0,1.2), background 0.4s ease",
                 background: T.sidebarBg,
                 boxShadow: "6px 0 44px rgba(50,80,40,0.15)",
+                transform: isMobileMenuOpen ? "translateX(0)" : undefined
             }}>
+                {/* Mobile Overlay */}
+                <div 
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{ 
+                        position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)", 
+                        backdropFilter: "blur(4px)", zIndex: -1,
+                        display: isMobileMenuOpen ? "block" : "none"
+                    }} 
+                />
+
                 <div className="provider-sidebar-logo" style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 48, justifyContent: collapsed ? "center" : "flex-start" }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "rgba(255,255,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, overflow: "hidden" }}>
                         <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
@@ -199,7 +218,7 @@ export const ProviderDashboard = () => {
                         <button
                             key={item.name}
                             className={`nav-btn ${activeTab === item.name ? "active" : ""}`}
-                            onClick={() => setActiveTab(item.name)}
+                            onClick={() => { setActiveTab(item.name); setIsMobileMenuOpen(false); }}
                             style={{ justifyContent: collapsed ? "center" : "flex-start" }}
                         >
                             <span style={{ fontSize: 22 }}>{item.icon}</span>
@@ -247,11 +266,25 @@ export const ProviderDashboard = () => {
             }}>
                 {/* Top header */}
                 <div className="provider-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
-                    <div>
-                        <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Welcome Back Chef</p>
-                        <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>
-                            Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
-                        </h1>
+                    <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                        <button 
+                            className="mobile-toggle"
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            style={{ 
+                                display: "none", width: 44, height: 44, borderRadius: 12, 
+                                background: T.card, border: `1px solid ${T.border}`, 
+                                alignItems: "center", justifyContent: "center", color: T.accent,
+                                cursor: "pointer"
+                            }}
+                        >
+                            <ChefHat size={24} />
+                        </button>
+                        <div>
+                            <p style={{ fontSize: 12, fontWeight: 800, letterSpacing: 3, textTransform: "uppercase", color: "#8FA873", marginBottom: 6 }}>Welcome Back Chef</p>
+                            <h1 style={{ fontFamily: "'Lora',serif", fontSize: 32, fontWeight: 700, color: T.text }}>
+                                Namaste, <em style={{ color: "#8FA873" }}>{firstName}!</em>
+                            </h1>
+                        </div>
                     </div>
 
                     <div style={{ display: "flex", gap: 12, alignItems: "center" }}>

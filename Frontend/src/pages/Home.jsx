@@ -2,21 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import heroImg from "../assets/hero.png";
 import forChefsImg from "../assets/for_chefs.png";
-import { 
-  Utensils, 
-  Search, 
-  ClipboardList, 
-  Home as HomeIcon, 
-  Package, 
-  Lock, 
-  MapPin, 
-  Leaf, 
-  ChefHat, 
-  IndianRupee, 
-  Handshake, 
-  Mail, 
-  Phone, 
-  Smartphone, 
+import {
+  Utensils,
+  Search,
+  ClipboardList,
+  Home as HomeIcon,
+  Package,
+  Lock,
+  MapPin,
+  Leaf,
+  ChefHat,
+  IndianRupee,
+  Handshake,
+  Mail,
+  Phone,
+  Smartphone,
   Heart,
   ArrowRight,
   Instagram,
@@ -315,12 +315,12 @@ export default function Home() {
           </p>
 
           {/* Search bar - Locator button */}
-          <button 
-            className="hero-search" 
+          <button
+            className="hero-search"
             onClick={() => navigate("/signup")}
-            style={{ 
-              display: "flex", background: "#fff", borderRadius: 22, padding: "14px 28px", 
-              boxShadow: "0 8px 32px rgba(100,130,80,0.14)", border: "1.5px solid rgba(143,174,142,0.3)", 
+            style={{
+              display: "flex", background: "#fff", borderRadius: 22, padding: "14px 28px",
+              boxShadow: "0 8px 32px rgba(100,130,80,0.14)", border: "1.5px solid rgba(143,174,142,0.3)",
               maxWidth: 430, marginBottom: 28, ...h(420), alignItems: 'center', cursor: 'pointer',
               transition: "all 0.3s cubic-bezier(.22,.68,0,1.2)",
               gap: 15,
@@ -339,9 +339,9 @@ export default function Home() {
               e.currentTarget.style.borderColor = "rgba(143,174,142,0.3)";
             }}
           >
-            <div style={{ 
-              width: 44, height: 44, borderRadius: 14, 
-              background: "rgba(143,174,142,0.12)", display: "flex", 
+            <div style={{
+              width: 44, height: 44, borderRadius: 14,
+              background: "rgba(143,174,142,0.12)", display: "flex",
               alignItems: "center", justifyContent: "center", color: "#8FAE8E",
               flexShrink: 0
             }}>
@@ -351,8 +351,8 @@ export default function Home() {
               <div style={{ fontSize: 16, fontWeight: 800, color: "#2d3b2d" }}>Find Tiffins Near Me</div>
               <div style={{ fontSize: 13, color: "#8FA873", fontWeight: 600 }}>Locate me automatically</div>
             </div>
-            <div style={{ 
-              background: "linear-gradient(135deg, #8FAE8E, #8FA873)", 
+            <div style={{
+              background: "linear-gradient(135deg, #8FAE8E, #8FA873)",
               color: "#fff", padding: "8px", borderRadius: 12,
               display: "flex", alignItems: "center", justifyContent: "center",
               boxShadow: "0 4px 12px rgba(143,174,142,0.3)"
@@ -566,7 +566,7 @@ export default function Home() {
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: "'Lora', serif", fontSize: 21, fontWeight: 700, marginBottom: 14 }}>
                 <div style={{ width: 38, height: 38, borderRadius: 11, background: "linear-gradient(135deg, #8FAE8E, #8FA873)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, overflow: "hidden" }}>
-                    <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
+                  <img src="/logo.png" alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain", borderRadius: 8 }} />
                 </div>
                 Tiffins-By-Naari
               </div>
@@ -576,9 +576,9 @@ export default function Home() {
               {/* Social icons */}
               <div style={{ display: "flex", gap: 10 }}>
                 {[
-                  { icon: <Twitter size={16} />,  label: "Twitter/X"  },
-                  { icon: <Linkedin size={16} />, label: "LinkedIn"    },
-                  { icon: <Instagram size={16} />,  label: "Instagram"   },
+                  { icon: <Twitter size={16} />, label: "Twitter/X" },
+                  { icon: <Linkedin size={16} />, label: "LinkedIn" },
+                  { icon: <Instagram size={16} />, label: "Instagram" },
                 ].map(({ icon, label }) => (
                   <button key={label} title={label} className="social-icon" style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", cursor: "pointer", transition: "background 0.2s", fontFamily: "sans-serif" }}>
                     {icon}
@@ -609,10 +609,10 @@ export default function Home() {
               <h4 style={{ fontFamily: "'Lora', serif", fontWeight: 700, marginBottom: 22, fontSize: 15, color: "#fff" }}>Company</h4>
               <ul style={{ listStyle: "none", padding: 0, display: "flex", flexDirection: "column", gap: 13 }}>
                 {[
-                  { label: "About Us",       href: "#" },
+                  { label: "About Us", href: "#" },
                   { label: "Privacy Policy", href: "#" },
-                  { label: "Terms of Use",   href: "#" },
-                  { label: "Contact Us",     href: "#" },
+                  { label: "Terms of Use", href: "#" },
+                  { label: "Contact Us", href: "#" },
                 ].map(({ label, href }) => (
                   <li key={label}>
                     <a href={href} className="footer-link" style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, transition: "color 0.2s" }}>{label}</a>
@@ -650,7 +650,7 @@ export default function Home() {
           {/* Bottom bar */}
           <div style={{ padding: "24px 0 32px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
             <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-              © 2026 Tiffins-By-Naari · Built with <Heart size={12} fill="#8FAE8E" color="#8FAE8E" /> for home food lovers
+              Tiffins-By-Naari · Built with <Heart size={12} fill="#8FAE8E" color="#8FAE8E" /> for home food lovers
             </p>
             <div style={{ display: "flex", gap: 24 }}>
               {["Privacy", "Terms", "Cookies"].map(l => (

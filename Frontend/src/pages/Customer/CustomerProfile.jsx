@@ -121,7 +121,6 @@ export default function EditProfile() {
   });
 
   return (
-  return (
     <div className="page-container">
       <Sidebar
         collapsed={collapsed}

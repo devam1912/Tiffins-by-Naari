@@ -155,7 +155,6 @@ export default function OrderDetailPage() {
   const currentStepIndex = order ? statusSteps.indexOf(order.status) : -1;
 
   return (
-  return (
     <div className="page-container">
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

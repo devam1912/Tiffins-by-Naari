@@ -183,7 +183,6 @@ export default function CustomerSubscriptions() {
   const formatDate = (dateString) => formatToISTDate(dateString);
 
   return (
-  return (
     <div className="page-container">
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

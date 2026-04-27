@@ -59,7 +59,7 @@ const SuccessOverlay = ({ name, plan, slot, paymentMethod, onClose, onView }) =>
                 <p style={{ fontSize: 10, fontWeight: 900, letterSpacing: 4, textTransform: "uppercase", color: "#8FA873", marginBottom: 10 }}>Subscribed!</p>
                 <h2 style={{ fontFamily: "'Lora',serif", fontSize: 28, fontWeight: 700, color: "#1a2a1a", marginBottom: 8, lineHeight: 1.2 }}>Meals are on the way!</h2>
                 <p style={{ color: "#999", fontSize: 13, marginBottom: 4, fontWeight: 600 }}>{name}</p>
-                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 16, textTransform: "capitalize" }}>{plan} plan Â· {slot} pickup</p>
+                <p style={{ color: "#ccc", fontSize: 12, marginBottom: 16, textTransform: "capitalize" }}>{plan} plan · {slot} pickup</p>
                 {paymentMethod === "wallet" && (
                     <div style={{ background: "rgba(143,174,142,0.1)", border: "1px solid rgba(143,174,142,0.3)", borderRadius: 12, padding: "8px 14px", marginBottom: 16, display: "inline-flex", alignItems: "center", gap: 6 }}>
                         <Wallet size={14} color="#4a7040" />
@@ -352,7 +352,7 @@ const ProviderDetailPage = () => {
 
             {success && <SuccessOverlay name={tiffin.businessName} plan={planType} slot={timeSlot} paymentMethod={paymentMethod} onClose={() => setSuccess(false)} onView={() => navigate("/subscriptions")} />}
 
-            {/* â•â•â•â•â•â•â•â•â•â• HERO â•â•â•â•â•â•â•â•â•â• */}
+            {/* ══════════ HERO ══════════ */}
             <div style={{ background: "linear-gradient(158deg,#7da368 0%,#5d7f52 45%,#3f5939 100%)", position: "relative", overflow: "hidden" }}>
                 {/* bg blobs */}
                 <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 60% 80% at 80% 40%,rgba(255,255,255,0.04) 0%,transparent 70%)", pointerEvents: "none" }} />
@@ -407,7 +407,7 @@ const ProviderDetailPage = () => {
                 <div style={{ height: 40, background: "#E7E6B6", borderRadius: "50% 50% 0 0 / 40px 40px 0 0", marginTop: -1 }} />
             </div>
 
-            {/* â•â•â•â•â•â•â•â•â•â• QUICK INFO BAR â•â•â•â•â•â•â•â•â•â• */}
+            {/* ══════════ QUICK INFO BAR ══════════ */}
             <div style={{ maxWidth: 1060, margin: "-20px auto 24px", padding: "0 40px", position: "relative", zIndex: 10 }}>
                 <div className="info-bar" style={{ display: "flex", gap: 16, alignItems: "center", justifyContent: "space-between" }}>
                     <div style={{ display: "flex", gap: 12, flexWrap: "wrap", flex: 1 }}>
@@ -436,11 +436,11 @@ const ProviderDetailPage = () => {
                 </div>
             </div>
 
-            {/* â•â•â•â•â•â•â•â•â•â• BODY â•â•â•â•â•â•â•â•â•â• */}
+            {/* ══════════ BODY ══════════ */}
             <div className="body-content-wrap" style={{ maxWidth: 1060, margin: "0 auto", padding: "8px 40px 72px" }}>
                 <div className="main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 28, alignItems: "start" }}>
 
-                    {/* â•â• LEFT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+                    {/* ══ LEFT ══════════════════════════════════ */}
                     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
 
                         {/* About */}
@@ -452,7 +452,7 @@ const ProviderDetailPage = () => {
                         )}
 
 
-                        {/* Weekly Menu â€” Day Switcher */}
+                        {/* Weekly Menu — Day Switcher */}
                         <div style={{ background: "rgba(255,255,255,0.85)", backdropFilter: "blur(24px)", borderRadius: 32, border: "1.5px solid rgba(143,174,142,0.16)", boxShadow: "0 12px 32px rgba(90,120,70,0.06)", overflow: "hidden", ...a(140) }}>
                             {/* Header */}
                             <div style={{ padding: "28px 32px 0", display: "flex", alignItems: "center", gap: 14 }}>
@@ -524,7 +524,7 @@ const ProviderDetailPage = () => {
                                                             <button onClick={() => handleAddToCart({ name: `Full Lunch (${dayMenu.day})`, price: dayMenu.lunch.price }, "lunch")}
                                                                 disabled={!isToday || addingToCart === `Full Lunch (${dayMenu.day})`}
                                                                 style={{ padding: "6px 14px", background: isToday ? "rgba(143,174,142,0.15)" : "#f0f0f0", color: isToday ? "#4a7040" : "#aaa", border: "none", borderRadius: 10, fontSize: 10, fontWeight: 800, cursor: isToday ? "pointer" : "not-allowed", transition: "all 0.2s" }}>
-                                                                Add Full Tiffin @ â‚¹{dayMenu.lunch.price}
+                                                                Add Full Tiffin @ ₹{dayMenu.lunch.price}
                                                             </button>
                                                         </div>
                                                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -535,7 +535,7 @@ const ProviderDetailPage = () => {
                                                                     </div>
                                                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                                                                         <span style={{ fontSize: 14, fontWeight: 700, color: "#2d3b2d" }}>{item.name}</span>
-                                                                        {item.price > 0 && <span style={{ fontSize: 12, color: "#8FAE8E", fontWeight: 800 }}>â‚¹{item.price}</span>}
+                                                                        {item.price > 0 && <span style={{ fontSize: 12, color: "#8FAE8E", fontWeight: 800 }}>₹{item.price}</span>}
                                                                     </div>
                                                                     {isToday && (
                                                                         <button onClick={() => handleAddToCart(item, "lunch", dayMenu.lunch.price)} disabled={addingToCart === item.name}
@@ -560,7 +560,7 @@ const ProviderDetailPage = () => {
                                                             <button onClick={() => handleAddToCart({ name: `Full Dinner (${dayMenu.day})`, price: dayMenu.dinner.price }, "dinner")}
                                                                 disabled={!isToday || addingToCart === `Full Dinner (${dayMenu.day})`}
                                                                 style={{ padding: "6px 14px", background: isToday ? "rgba(107,138,94,0.15)" : "#f0f0f0", color: isToday ? "#3f5939" : "#aaa", border: "none", borderRadius: 10, fontSize: 10, fontWeight: 800, cursor: isToday ? "pointer" : "not-allowed", transition: "all 0.2s" }}>
-                                                                Add Full Tiffin @ â‚¹{dayMenu.dinner.price}
+                                                                Add Full Tiffin @ ₹{dayMenu.dinner.price}
                                                             </button>
                                                         </div>
                                                         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -571,7 +571,7 @@ const ProviderDetailPage = () => {
                                                                     </div>
                                                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
                                                                         <span style={{ fontSize: 14, fontWeight: 700, color: "#2d3b2d" }}>{item.name}</span>
-                                                                        {item.price > 0 && <span style={{ fontSize: 12, color: "#6b8a5e", fontWeight: 800 }}>â‚¹{item.price}</span>}
+                                                                        {item.price > 0 && <span style={{ fontSize: 12, color: "#6b8a5e", fontWeight: 800 }}>₹{item.price}</span>}
                                                                     </div>
                                                                     {isToday && (
                                                                         <button onClick={() => handleAddToCart(item, "dinner", dayMenu.dinner.price)} disabled={addingToCart === item.name}
@@ -604,7 +604,7 @@ const ProviderDetailPage = () => {
                                     { icon: <Phone size={14} />, label: "Phone", value: tiffin.phone || tiffin.contact },
                                     { icon: <MapPin size={14} />, label: "Location", value: addr },
                                     { icon: <ClipboardList size={14} />, label: "FSSAI", value: tiffin.fssaiNumber },
-                                    { icon: <IndianRupee size={14} />, label: "Per Meal", value: tiffin.pricePerMeal ? `â‚¹${tiffin.pricePerMeal}` : null },
+                                    { icon: <IndianRupee size={14} />, label: "Per Meal", value: tiffin.pricePerMeal ? `₹${tiffin.pricePerMeal}` : null },
                                     { icon: <Star size={14} fill="#f59e0b" color="#f59e0b" />, label: "Rating", value: tiffin.rating ? `${Number(tiffin.rating).toFixed(1)} / 5` : "New" },
                                 ].filter(d => d.value).map(({ icon, label, value }) => (
                                     <div key={label}>
@@ -660,7 +660,7 @@ const ProviderDetailPage = () => {
                         </div>
                     </div>
 
-                    {/* â•â• RIGHT â€” SUBSCRIBE PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+                    {/* ══ RIGHT — SUBSCRIBE PANEL ══════════════ */}
                     <div className="panel-wrap" style={{ position: "sticky", top: 20, ...a(100) }}>
                         <div style={{ background: "#fff", borderRadius: 24, border: "1.5px solid rgba(143,174,142,0.28)", boxShadow: "0 12px 52px rgba(90,120,70,0.16)", overflow: "hidden" }}>
 
@@ -669,7 +669,7 @@ const ProviderDetailPage = () => {
                                 <p style={{ fontSize: 10, fontWeight: 900, letterSpacing: 3.5, textTransform: "uppercase", color: "rgba(255,255,255,0.6)", marginBottom: 4 }}>Subscribe Now</p>
                                 <h3 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.1 }}>Choose Your Plan</h3>
                                 {tiffin.pricePerMeal && (
-                                    <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, fontWeight: 600, marginTop: 5 }}>Starting at â‚¹{tiffin.pricePerMeal}/meal</p>
+                                    <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 12, fontWeight: 600, marginTop: 5 }}>Starting at ₹{tiffin.pricePerMeal}/meal</p>
                                 )}
                             </div>
 
@@ -682,7 +682,7 @@ const ProviderDetailPage = () => {
                                             <Wallet size={20} color="#8FA873" />
                                             <div>
                                                 <p style={{ fontSize: 9, fontWeight: 900, color: "#8FA873", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 }}>Wallet Balance</p>
-                                                <p style={{ fontSize: 14, fontWeight: 900, color: "#2d3b2d" }}>â‚¹{user.walletBalance}</p>
+                                                <p style={{ fontSize: 14, fontWeight: 900, color: "#2d3b2d" }}>₹{user.walletBalance}</p>
                                             </div>
                                         </div>
                                         <span style={{ fontSize: 10, fontWeight: 700, color: "#8FA873", background: "rgba(143,174,142,0.15)", padding: "3px 8px", borderRadius: 8 }}>Auto-applied</span>
@@ -738,10 +738,10 @@ const ProviderDetailPage = () => {
                                 {planType && timeSlot && (
                                     <div style={{ background: "linear-gradient(135deg,rgba(143,174,142,0.12),rgba(143,168,115,0.06))", border: "1px solid rgba(143,174,142,0.25)", borderRadius: 13, padding: "11px 16px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between", animation: "oIn .28s ease" }}>
                                         <span style={{ fontSize: 13, fontWeight: 700, color: "#4a7040" }}>
-                                            {planType.charAt(0).toUpperCase() + planType.slice(1)} Â· {timeSlot.charAt(0).toUpperCase() + timeSlot.slice(1)}
+                                            {planType.charAt(0).toUpperCase() + planType.slice(1)} · {timeSlot.charAt(0).toUpperCase() + timeSlot.slice(1)}
                                         </span>
                                         {tiffin.pricePerMeal && (
-                                            <span style={{ fontSize: 12, fontWeight: 800, color: "#8FA873" }}>â‚¹{tiffin.pricePerMeal}/meal</span>
+                                            <span style={{ fontSize: 12, fontWeight: 800, color: "#8FA873" }}>₹{tiffin.pricePerMeal}/meal</span>
                                         )}
                                     </div>
                                 )}
@@ -764,7 +764,7 @@ const ProviderDetailPage = () => {
                                         : <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}><UtensilsCrossed size={18} /> Subscribe Now <ArrowRight size={18} /></span>}
                                 </button>
 
-                                <p style={{ fontSize: 11, color: "#c8c8b4", textAlign: "center", marginTop: 14, fontWeight: 600 }}>Cancel or pause anytime Â· No hidden charges</p>
+                                <p style={{ fontSize: 11, color: "#c8c8b4", textAlign: "center", marginTop: 14, fontWeight: 600 }}>Cancel or pause anytime · No hidden charges</p>
                             </div>
                         </div>
                     </div>

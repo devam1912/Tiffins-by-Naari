@@ -195,7 +195,10 @@ export default function OrderHistory() {
 
       {/* ════ MAIN CONTENT ════ */}
       <main className="main-content" style={{
-        marginLeft: collapsed ? "72px" : "260px"
+        marginLeft: collapsed ? "72px" : "260px",
+        padding: "40px 60px",
+        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
+        flex: 1, minHeight: "100vh"
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0), flexWrap: "wrap", gap: 20 }}>
           <div>

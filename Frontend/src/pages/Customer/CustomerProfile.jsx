@@ -133,11 +133,12 @@ export default function EditProfile() {
       />
       <main className="main-content" style={{
         marginLeft: collapsed ? "72px" : "260px",
+        padding: "48px 60px",
+        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
+        flex: 1, minHeight: "100vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "48px 40px",
-        minHeight: "100vh",
         position: "relative",
         overflow: "hidden",
       }}>

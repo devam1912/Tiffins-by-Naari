@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "../../App.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
@@ -182,7 +183,8 @@ export default function CustomerSubscriptions() {
   const formatDate = (dateString) => formatToISTDate(dateString);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+  return (
+    <div className="page-container">
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
@@ -229,7 +231,7 @@ export default function CustomerSubscriptions() {
         .spin-anim { animation: spin 1s linear infinite; }
 
         @media (max-width: 768px) {
-          .subs-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .main-content { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 120px !important; }
           .subs-grid { grid-template-columns: 1fr !important; gap: 20px !important; }
         }
       `}</style>
@@ -246,11 +248,8 @@ export default function CustomerSubscriptions() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main className="subs-main" style={{
-        marginLeft: collapsed ? 72 : 260,
-        flex: 1, padding: "40px 44px",
-        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
-        minHeight: "100vh", overflowY: "auto", position: "relative"
+      <main className="main-content" style={{
+        marginLeft: collapsed ? "72px" : "260px"
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
           <div>

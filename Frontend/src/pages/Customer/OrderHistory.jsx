@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import "../../App.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
@@ -16,7 +17,10 @@ import {
   Clock, 
   Hash, 
   ArrowRight,
-  AlertCircle
+  AlertCircle,
+  Search,
+  ChevronDown,
+  Filter
 } from "lucide-react";
 
 
@@ -35,6 +39,9 @@ export default function OrderHistory() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [location, setLocation] = useState({ address: "Fetching location...", loading: true });
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("date-desc");
 
   if (!token) { navigate("/login"); return null; }
 
@@ -110,8 +117,22 @@ export default function OrderHistory() {
 
   const formatDate = (dateString) => formatToISTDate(dateString);
 
+  const filteredOrders = orders.filter(order => {
+    const q = searchQuery.toLowerCase();
+    const kitchenName = order.provider?.businessName?.toLowerCase() || "";
+    const orderId = `ORD-${order._id.slice(-6).toUpperCase()}`.toLowerCase();
+    return kitchenName.includes(q) || orderId.includes(q);
+  }).sort((a, b) => {
+    if (sortBy === "date-desc") return new Date(b.date) - new Date(a.date);
+    if (sortBy === "date-asc") return new Date(a.date) - new Date(b.date);
+    if (sortBy === "price-high") return b.totalPrice - a.totalPrice;
+    if (sortBy === "price-low") return a.totalPrice - b.totalPrice;
+    if (sortBy === "status") return a.status.localeCompare(b.status);
+    return 0;
+  });
+
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+    <div className="page-container">
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
@@ -137,11 +158,28 @@ export default function OrderHistory() {
         .spin-anim { animation: spin 1s linear infinite; }
 
         @media (max-width: 768px) {
-          .history-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
-          .order-card { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+          .main-content { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 120px !important; }
+          .order-card { flex-direction: column !important; align-items: stretch !important; gap: 16px !important; padding: 16px !important; }
           .order-card > div { width: 100% !important; min-width: unset !important; text-align: left !important; }
-          .order-action { text-align: left !important; margin-top: 12px; }
+          .order-action { text-align: left !important; margin-top: 12px; border-top: 1px dashed rgba(143,174,142,0.2); padding-top: 12px; }
         }
+
+        .filter-select {
+          appearance: none;
+          background: rgba(255, 255, 255, 0.7);
+          border: 1.5px solid rgba(143, 174, 142, 0.3);
+          border-radius: 12px;
+          padding: 8px 36px 8px 16px;
+          font-family: 'Nunito', sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          color: #5a7a50;
+          cursor: pointer;
+          outline: none;
+          transition: all 0.2s;
+        }
+        .filter-select:hover { border-color: #8FAE8E; background: #fff; }
+        .filter-select:focus { border-color: #8FAE8E; box-shadow: 0 0 0 3px rgba(143, 174, 142, 0.15); }
       `}</style>
 
       {/* ════ SIDEBAR ════ */}
@@ -156,13 +194,10 @@ export default function OrderHistory() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main className="history-main" style={{
-        marginLeft: collapsed ? 72 : 260,
-        flex: 1, padding: "40px 44px",
-        transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
-        minHeight: "100vh", overflowY: "auto", position: "relative"
+      <main className="main-content" style={{
+        marginLeft: collapsed ? "72px" : "260px"
       }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0) }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 36, ...anim(0), flexWrap: "wrap", gap: 20 }}>
           <div>
             <h1 style={{ fontFamily: "'Lora',serif", fontSize: "clamp(24px,3vw,34px)", fontWeight: 700, color: "#2d3b2d", lineHeight: 1.15, display: 'flex', alignItems: 'center', gap: 12 }}>
               Order History <History size={32} />
@@ -181,6 +216,44 @@ export default function OrderHistory() {
             <RefreshCcw size={16} className={isLoading ? 'spin-anim' : ''} />
             {isLoading ? "Loading..." : "Refresh"}
           </button>
+        </div>
+
+        {/* ── Search & Sort Bar ── */}
+        <div style={{ display: "flex", gap: 16, marginBottom: 32, flexWrap: "wrap", ...anim(50) }}>
+          <div style={{ flex: 1, minWidth: 280, position: "relative" }}>
+            <Search size={18} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "#8FAE8E" }} />
+            <input 
+              type="text"
+              placeholder="Search by kitchen name or Order ID..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: "100%", padding: "12px 16px 12px 48px", borderRadius: 16,
+                border: "1.5px solid rgba(143, 174, 142, 0.25)", background: "rgba(255, 255, 255, 0.8)",
+                fontFamily: "'Nunito', sans-serif", fontSize: 14, fontWeight: 600, outline: "none",
+                transition: "all 0.2s", boxShadow: "0 4px 12px rgba(90, 120, 70, 0.04)"
+              }}
+              onFocus={(e) => { e.target.style.borderColor = "#8FAE8E"; e.target.style.background = "#fff"; }}
+              onBlur={(e) => { e.target.style.borderColor = "rgba(143, 174, 142, 0.25)"; e.target.style.background = "rgba(255, 255, 255, 0.8)"; }}
+            />
+          </div>
+
+          <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+            <Filter size={16} style={{ position: "absolute", left: 14, color: "#8FAE8E", pointerEvents: "none" }} />
+            <select 
+              className="filter-select" 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{ paddingLeft: 40 }}
+            >
+              <option value="date-desc">Newest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="status">Sort by Status</option>
+            </select>
+            <ChevronDown size={14} style={{ position: "absolute", right: 14, color: "#8FAE8E", pointerEvents: "none" }} />
+          </div>
         </div>
 
         {error && (
@@ -206,7 +279,11 @@ export default function OrderHistory() {
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 16, ...anim(100) }}>
-            {orders.map((order, index) => {
+            {filteredOrders.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "48px", color: "#aaa", fontWeight: 600 }}>
+                No orders match your search criteria.
+              </div>
+            ) : filteredOrders.map((order, index) => {
               const badge = getStatusBadge(order.status);
               return (
                 <div key={order._id} className="order-card" style={{

@@ -52,6 +52,18 @@ export const OrdersToday = ({ theme }) => {
 
     const formatDate = () => formatToISTDateLong(new Date());
 
+    const getStatusInfo = (status) => {
+        const map = {
+            pending:   { color: "#f59e0b", bg: "rgba(245, 158, 11, 0.1)", label: "Pending" },
+            confirmed: { color: "#22c55e", bg: "rgba(34, 197, 94, 0.1)",  label: "Confirmed" },
+            preparing: { color: "#6366f1", bg: "rgba(99, 102, 241, 0.1)", label: "Preparing" },
+            ready:     { color: "#0ea5e9", bg: "rgba(14, 165, 233, 0.1)", label: "Ready" },
+            completed: { color: "#22c55e", bg: "rgba(34, 197, 94, 0.1)",  label: "Picked Up" },
+            cancelled: { color: "#ef4444", bg: "rgba(239, 68, 68, 0.1)",  label: "Cancelled" },
+        };
+        return map[status] || { color: "#9ca3af", bg: "rgba(156, 163, 175, 0.1)", label: status };
+    };
+
     // Filter to active subscriptions that need serving today
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -156,20 +168,17 @@ export const OrdersToday = ({ theme }) => {
                                         </button>
 
                                         {/* Status Badge */}
-                                        <div style={{ 
-                                            padding: "6px 12px", borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1,
-                                            background: order.status === 'pending' ? 'rgba(245, 158, 11, 0.1)' : 
-                                                        order.status === 'confirmed' ? 'rgba(34, 197, 94, 0.1)' :
-                                                        order.status === 'preparing' ? 'rgba(99, 102, 241, 0.1)' :
-                                                        order.status === 'ready' ? 'rgba(14, 165, 233, 0.1)' : 'rgba(156, 163, 175, 0.1)',
-                                            color: order.status === 'pending' ? '#f59e0b' : 
-                                                   order.status === 'confirmed' ? '#22c55e' :
-                                                   order.status === 'preparing' ? '#6366f1' :
-                                                   order.status === 'ready' ? '#0ea5e9' : '#9ca3af',
-                                            border: `1px solid ${order.status === 'preparing' ? 'rgba(99, 102, 241, 0.2)' : 'transparent'}`
-                                        }}>
-                                            {order.status}
-                                        </div>
+                                         {(() => {
+                                             const info = getStatusInfo(order.status);
+                                             return (
+                                                 <div style={{ 
+                                                     padding: "6px 12px", borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1,
+                                                     background: info.bg, color: info.color, border: `1px solid ${order.status === 'preparing' ? 'rgba(99, 102, 241, 0.2)' : 'transparent'}`
+                                                 }}>
+                                                     {info.label}
+                                                 </div>
+                                             );
+                                         })()}
 
                                         {/* Action Buttons based on status */}
                                         {(order.status === 'pending' || order.status === 'confirmed') && (
@@ -264,13 +273,17 @@ export const OrdersToday = ({ theme }) => {
                                         </button>
 
                                         {/* Status Badge */}
-                                        <div style={{ 
-                                            padding: "6px 12px", borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1,
-                                            background: order.status === 'completed' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                                            color: order.status === 'completed' ? '#22c55e' : '#ef4444'
-                                        }}>
-                                            {order.status}
-                                        </div>
+                                         {(() => {
+                                             const info = getStatusInfo(order.status);
+                                             return (
+                                                 <div style={{ 
+                                                     padding: "6px 12px", borderRadius: 8, fontSize: 10, fontWeight: 900, textTransform: "uppercase", letterSpacing: 1,
+                                                     background: info.bg, color: info.color
+                                                 }}>
+                                                     {info.label}
+                                                 </div>
+                                             );
+                                         })()}
                                     </div>
                                 </div>
                             </div>

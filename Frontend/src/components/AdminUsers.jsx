@@ -39,11 +39,11 @@ export const AdminUsers = ({ users = [], theme }) => {
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 16 }}>
                     <div>
-                        <h2 style={{ fontFamily: "'Lora', serif", fontSize: 32, fontWeight: 700, color: T.text, margin: 0 }}>User Management</h2>
+                        <h2 style={{ fontFamily: "'Lora', serif", fontSize: "clamp(24px, 4vw, 32px)", fontWeight: 700, color: T.text, margin: 0 }}>User Management</h2>
                         <p style={{ color: T.textSec, fontSize: 14, marginTop: 4 }}>Manage and monitor all registered platform users.</p>
                     </div>
-                    <div style={{ display: "flex", gap: 12 }}>
-                        <div style={{ position: "relative" }}>
+                    <div style={{ display: "flex", gap: 12, width: "100%", maxWidth: "400px" }}>
+                        <div style={{ position: "relative", flex: 1 }}>
                             <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: T.textMuted }}>
                                 <Search size={18} />
                             </span>
@@ -52,7 +52,7 @@ export const AdminUsers = ({ users = [], theme }) => {
                                     paddingLeft: 40, paddingRight: 16, paddingTop: 10, paddingBottom: 10,
                                     background: T.bg === '#000000' ? 'rgba(255,255,255,0.05)' : '#fff',
                                     border: `1px solid ${T.border}`,
-                                    borderRadius: 12, color: T.text, fontSize: 14, outline: "none", width: 240
+                                    borderRadius: 12, color: T.text, fontSize: 14, outline: "none", width: "100%"
                                 }}
                                 placeholder="Search users..."
                                 value={searchTerm}

@@ -150,24 +150,40 @@ export const ProviderDashboard = () => {
                     background: #fff; transition: all 0.3s cubic-bezier(.22,.68,0,1.2);
                 }
                 
-                @media (max-width: 768px) {
                   .provider-sidebar {
                     width: 100% !important; height: auto !important; min-height: unset !important;
-                    flex-direction: row !important; padding: 12px 8px !important;
+                    flex-direction: row !important; padding: 12px 16px !important;
                     top: auto !important; bottom: 0 !important;
-                    z-index: 9999 !important; border-radius: 20px 20px 0 0 !important;
-                    box-shadow: 0 -10px 40px rgba(0,0,0,0.2) !important;
+                    z-index: 9999 !important; border-radius: 24px 24px 0 0 !important;
+                    box-shadow: 0 -10px 40px rgba(0,0,0,0.1) !important;
+                    backdrop-filter: blur(20px);
+                    background: ${T.sidebarBg} !important;
                   }
                   .provider-sidebar-logo { display: none !important; }
-                  .provider-sidebar-nav { flex-direction: row !important; overflow-x: auto !important; gap: 6px !important; margin: 0 !important; }
-                  .nav-btn { padding: 10px !important; justify-content: center !important; }
-                  .nav-btn > span:last-child { display: none !important; }
-                  .provider-bottom-actions { display: flex !important; flex-direction: row !important; align-items: center !important; margin-top: 0 !important; margin-left: auto !important; gap: 8px !important; }
-                  .provider-service-card { display: none !important; }
-                  .provider-logout-btn { padding: 10px !important; justify-content: center !important; width: auto !important; }
-                  .provider-logout-btn > span { display: none !important; }
-                  .provider-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 120px !important; }
-                  .provider-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+                  .provider-sidebar-nav { flex-direction: row !important; overflow-x: auto !important; gap: 8px !important; margin: 0 !important; flex: 1 !important; justify-content: center !important; }
+                  .nav-btn { 
+                    padding: 8px !important; 
+                    flex-direction: column !important; 
+                    gap: 4px !important; 
+                    width: auto !important;
+                    min-width: 60px;
+                    justify-content: center !important;
+                    background: none !important;
+                    box-shadow: none !important;
+                  }
+                  .nav-btn > span:first-child { font-size: 20px !important; }
+                  .nav-btn > span:last-child { 
+                    display: block !important; 
+                    font-size: 9px !important; 
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                  }
+                  .provider-bottom-actions { display: none !important; }
+                  .provider-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 110px !important; }
+                  .provider-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; padding-bottom: 24px; }
+                  .provider-header > div:last-child { width: 100%; justify-content: space-between; }
+                  .stat-card { padding: 20px !important; }
+                  .content-panel { padding: 20px !important; border-radius: 24px !important; }
                 }
             `}</style>
 
@@ -328,7 +344,7 @@ export const ProviderDashboard = () => {
                             </div>
                         </div>
                     ) : (
-                        <div style={{ background: T.card, borderRadius: 32, padding: "40px", boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
+                        <div className="content-panel" style={{ background: T.card, borderRadius: 32, padding: "40px", boxShadow: T.cardShadow, border: `1px solid ${T.border}`, transition: "all 0.4s ease" }}>
                             {activeTab === "Menu Management" ? <ProviderMenu theme={T} /> :
                                 activeTab === "Active Subscriptions" ? <ActiveSubscriptions theme={T} /> :
                                     activeTab === "My Orders" ? <OrdersToday theme={T} /> :

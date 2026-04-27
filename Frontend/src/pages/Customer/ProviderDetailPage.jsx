@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import "../../App.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import API from "../../api/auth";
@@ -294,7 +295,7 @@ const ProviderDetailPage = () => {
     );
 
     return (
-        <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito',sans-serif" }}>
+        <div className="page-container">
             <Sidebar 
                 collapsed={collapsed} 
                 setCollapsed={setCollapsed} 
@@ -305,11 +306,8 @@ const ProviderDetailPage = () => {
                 logout={handleLogout}
             />
             
-            <div className="dashboard-main" style={{ 
-                flex: 1, 
-                marginLeft: collapsed ? 72 : 260, 
-                transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
-                minWidth: 0 
+            <div className="main-content" style={{ 
+                marginLeft: collapsed ? "72px" : "260px"
             }}>
             <style>{`
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -330,16 +328,17 @@ const ProviderDetailPage = () => {
         .info-pill{background:#fff;padding:12px 20px;border-radius:20px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 20px rgba(90,120,70,0.04);border:1.5px solid rgba(143,174,142,0.08);flex:1;min-width:200px}
 
         @media(max-width:768px){
-          .dashboard-main {
+          .main-content {
             margin-left: 0 !important;
-            padding-bottom: 90px !important;
+            padding: 0 0 100px 0 !important;
           }
-          .main-grid{grid-template-columns:1fr!important}
-          .panel-wrap{position:static!important}
-          .info-bar{flex-direction:column;align-items:stretch!important}
+          .main-grid{grid-template-columns:1fr!important; gap: 20px !important;}
+          .panel-wrap{position:static!important; margin-bottom: 20px;}
+          .info-bar{flex-direction:column;align-items:stretch!important; padding: 0 20px !important;}
           .info-pill{min-width:100%}
           .hero-content { padding: 24px 20px 40px !important; }
           .hero-title { font-size: 32px !important; }
+          .body-content-wrap { padding: 8px 20px 72px !important; }
         }
       `}</style>
 
@@ -430,7 +429,7 @@ const ProviderDetailPage = () => {
             </div>
 
             {/* ══════════ BODY ══════════ */}
-            <div style={{ maxWidth: 1060, margin: "0 auto", padding: "8px 40px 72px" }}>
+            <div className="body-content-wrap" style={{ maxWidth: 1060, margin: "0 auto", padding: "8px 40px 72px" }}>
                 <div className="main-grid" style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 28, alignItems: "start" }}>
 
                     {/* ══ LEFT ══════════════════════════════════ */}

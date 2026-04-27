@@ -139,8 +139,14 @@ const CartPage = () => {
     <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
       <style>{`
         @media (max-width: 768px) {
-          .cart-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .cart-main {
+            margin-left: 0 !important;
+            padding: 24px 16px 120px !important; /* Bottom Nav padding */
+          }
           .cart-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+          .checkout-sticky { position: static !important; }
+          .cart-item-card { padding: 16px !important; }
+          .item-actions { flex-direction: row !important; }
         }
       `}</style>
       <Sidebar 
@@ -225,7 +231,7 @@ const CartPage = () => {
             </div>
 
             {/* Right: Checkout Summary */}
-            <div style={{ position: "sticky", top: 40, ...anim(200) }}>
+            <div className="checkout-sticky" style={{ position: "sticky", top: 40, ...anim(200) }}>
               <div style={{ background: "#fff", borderRadius: 32, padding: "32px", border: "1.5px solid rgba(143,174,142,0.25)", boxShadow: "0 20px 50px rgba(0,0,0,0.05)" }}>
                 <h2 style={{ fontFamily: "'Lora', serif", fontSize: 20, fontWeight: 700, color: "#2d3b2d", marginBottom: 16 }}>Order Summary</h2>
 

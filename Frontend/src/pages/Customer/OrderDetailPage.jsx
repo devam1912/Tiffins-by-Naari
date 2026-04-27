@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import "../../App.css";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { useSelector, useDispatch } from "react-redux";
@@ -140,7 +141,7 @@ export default function OrderDetailPage() {
       confirmed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Confirmed", icon: <CheckCircle2 size={28} /> },
       preparing: { bg: "#e3f2fd", color: "#1565c0",  label: "Preparing", icon: <ChefHat size={28} /> },
       ready:     { bg: "#f3e5f5", color: "#7b1fa2",  label: "Ready",     icon: <Gift size={28} /> },
-      completed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Ready for Pickup", icon: <Truck size={28} /> },
+      completed: { bg: "#e8f5e9", color: "#2e7d32",  label: "Picked Up", icon: <Check size={28} /> },
       cancelled: { bg: "#ffebee", color: "#c62828",  label: "Cancelled", icon: <XCircle size={28} /> },
     };
     return map[status] || { bg: "#f5f5f5", color: "#616161", label: status, icon: <ClipboardList size={28} /> };
@@ -154,7 +155,8 @@ export default function OrderDetailPage() {
   const currentStepIndex = order ? statusSteps.indexOf(order.status) : -1;
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#E7E6B6", fontFamily: "'Nunito', sans-serif" }}>
+  return (
+    <div className="page-container">
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
@@ -173,10 +175,34 @@ export default function OrderDetailPage() {
         .item-row { transition: all 0.2s ease; }
         .item-row:hover { background: rgba(143,174,142,0.06)!important; }
         @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
         @media (max-width: 768px) {
-          .order-detail-main { margin-left: 0 !important; padding: 20px 16px !important; padding-bottom: 100px !important; }
+          .main-content {
+            margin-left: 0 !important;
+            padding: 24px 16px 120px !important; /* Bottom Nav padding */
+          }
           .order-detail-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-          .progress-container { flex-wrap: wrap !important; gap: 12px !important; }
+          .progress-container { 
+            flex-direction: column !important; 
+            align-items: flex-start !important; 
+            gap: 16px !important; 
+          }
+          .progress-step-item {
+            flex-direction: row !important;
+            width: 100%;
+            gap: 12px !important;
+            align-items: center !important;
+          }
+          .progress-line {
+            width: 3px !important;
+            height: 24px !important;
+            margin: 4px 0 4px 16px !important;
+          }
+          .step-label {
+            text-align: left !important;
+            max-width: none !important;
+            font-size: 12px !important;
+          }
         }
       `}</style>
 
@@ -192,8 +218,8 @@ export default function OrderDetailPage() {
       />
 
       {/* ════ MAIN CONTENT ════ */}
-      <main className="order-detail-main" style={{
-        marginLeft: collapsed ? 72 : 260,
+      <main className="main-content" style={{
+        marginLeft: collapsed ? "72px" : "260px",
         flex: 1, padding: "40px 44px",
         transition: "margin-left 0.35s cubic-bezier(.22,.68,0,1.2)",
         minHeight: "100vh", overflowY: "auto",
@@ -270,8 +296,8 @@ export default function OrderDetailPage() {
                       const isActive = idx === currentStepIndex;
                       const stepBadge = getStatusBadge(step);
                       return (
-                        <div key={step} style={{ display: "flex", alignItems: "center", flex: idx < statusSteps.length - 1 ? 1 : "none" }}>
-                          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 60 }}>
+                        <div key={step} className="progress-step-wrapper" style={{ display: "flex", flexDirection: "column", flex: idx < statusSteps.length - 1 ? 1 : "none" }}>
+                          <div className="progress-step-item" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 60 }}>
                             <div style={{
                               width: 36, height: 36, borderRadius: "50%",
                               background: isDone ? "linear-gradient(135deg,#8FAE8E,#8FA873)" : "#f0f0e8",
@@ -280,15 +306,16 @@ export default function OrderDetailPage() {
                               boxShadow: isActive ? "0 0 0 4px rgba(143,174,142,0.25)" : "none",
                               border: isDone ? "none" : "1.5px solid #ddddc8",
                               transition: "all 0.3s ease",
+                              zIndex: 2
                             }}>
                               {isDone ? <Check size={20} /> : React.cloneElement(stepBadge.icon, { size: 20 })}
                             </div>
-                            <span style={{ fontSize: 10, fontWeight: 700, color: isDone ? "#5a7a50" : "#bbb", textTransform: "uppercase", textAlign: "center", maxWidth: 55 }}>
+                            <span className="step-label" style={{ fontSize: 10, fontWeight: 700, color: isDone ? "#5a7a50" : "#bbb", textTransform: "uppercase", textAlign: "center", maxWidth: 55 }}>
                               {stepBadge.label}
                             </span>
                           </div>
                           {idx < statusSteps.length - 1 && (
-                            <div style={{ flex: 1, height: 3, background: idx < currentStepIndex ? "linear-gradient(90deg,#8FAE8E,#8FA873)" : "#e8e8d8", borderRadius: 4, margin: "0 4px", marginBottom: 22, transition: "background 0.4s ease" }} />
+                            <div className="progress-line" style={{ flex: 1, height: 3, background: idx < currentStepIndex ? "linear-gradient(90deg,#8FAE8E,#8FA873)" : "#e8e8d8", borderRadius: 4, margin: "0 4px", transform: "translateY(-22px)", marginBottom: -22, zIndex: 1, transition: "background 0.4s ease" }} />
                           )}
                         </div>
                       );

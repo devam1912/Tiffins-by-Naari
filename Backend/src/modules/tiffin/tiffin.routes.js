@@ -21,11 +21,9 @@ router.patch("/menu/submit", protect, authorize("provider"), submitForApproval);
 router.patch("/menu/:menuId/approve", protect, authorize("admin"), approveMenu);
 router.patch("/menu/:menuId/reject", protect, authorize("admin"), rejectMenu);
 
-// Delete a single item from a day's meal — must be before /:menuId to avoid param conflict
-// body: { day, meal, itemId }
+
 router.delete("/menu/item", protect, authorize("provider"), deleteMenuItem);
 
-// Delete entire menu — provider deletes own | admin deletes by menuId
 router.delete("/menu", protect, authorize("provider"), deleteMenu);
 router.delete("/menu/:menuId", protect, authorize("admin"), deleteMenu);
 

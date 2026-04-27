@@ -236,7 +236,11 @@ export const ProviderMenu = ({ theme }) => {
     };
 
     const renderMenuItemCard = (item, mealType) => {
-        const isApproved = item.status === "approved";
+        // Smart-Sync: If the overall menu is approved, treat all items in the weekMenu as approved 
+        // to handle the backend data mismatch.
+        const effectivelyApproved = menuStatus.isApproved || item.status === "approved";
+        const statusToDisplay = effectivelyApproved ? "approved" : item.status;
+        
         return (
             <div key={item.id || item._id} className="menu-item-card" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 16, padding: "16px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -253,7 +257,7 @@ export const ProviderMenu = ({ theme }) => {
                             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <span style={{ background: "#f3f4f6", color: "#6b7280", fontSize: 9, fontWeight: 800, padding: "2px 6px", borderRadius: 6, textTransform: "uppercase" }}>{item.type}</span>
                                 <span style={{ fontSize: 11, fontWeight: 800, color: "#8FAE8E" }}>₹{item.price || 0}</span>
-                                <StatusBadge status={item.status} />
+                                <StatusBadge status={statusToDisplay} />
                             </div>
                         </div>
                         <div style={{ display: "flex", alignItems: "center", gap: 4, marginTop: 4 }}>
@@ -263,7 +267,7 @@ export const ProviderMenu = ({ theme }) => {
                     </div>
                 </div>
                 <div className="menu-item-actions" style={{ display: "flex", gap: 6 }}>
-                    {!isApproved && (
+                    {!effectivelyApproved && (
                         <>
                             <button onClick={() => { setEditingItem({ day: selectedDay, mealType, item }); setItemImage(item.image || ""); setIsModalOpen(true); }}
                                 style={{ padding: 8, border: "none", background: "none", cursor: "pointer", borderRadius: 8, color: "#9ca3af" }}>
@@ -275,7 +279,7 @@ export const ProviderMenu = ({ theme }) => {
                             </button>
                         </>
                     )}
-                    {isApproved && <div style={{ padding: 8, color: "#16a34a" }}><ShieldCheck size={16} /></div>}
+                    {effectivelyApproved && <div style={{ padding: 8, color: "#16a34a" }}><ShieldCheck size={16} /></div>}
                 </div>
             </div>
         );
@@ -482,13 +486,16 @@ export const ProviderMenu = ({ theme }) => {
                                     <Leaf size={14} color="#16a34a" />
                                 </div>
                                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].map((item, i) => (
-                                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, opacity: item.status === 'approved' ? 1 : 0.6 }}>
-                                            <div style={{ width: 6, height: 6, borderRadius: "50%", background: item.status === 'approved' ? "#8FAE8E" : "#f59e0b", flexShrink: 0 }} />
-                                            <span style={{ fontSize: 13, color: T.text }}>{item.name}</span>
-                                            {item.status !== 'approved' && <span style={{ fontSize: 8, fontWeight: 800, color: "#f59e0b", textTransform: "uppercase" }}>(Draft)</span>}
-                                        </div>
-                                    ))}
+                                    {[...currentDayData.lunch.items, ...currentDayData.dinner.items].map((item, i) => {
+                                        const effectivelyApproved = menuStatus.isApproved || item.status === "approved";
+                                        return (
+                                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, opacity: effectivelyApproved ? 1 : 0.6 }}>
+                                                <div style={{ width: 6, height: 6, borderRadius: "50%", background: effectivelyApproved ? "#8FAE8E" : "#f59e0b", flexShrink: 0 }} />
+                                                <span style={{ fontSize: 13, color: T.text }}>{item.name}</span>
+                                                {!effectivelyApproved && <span style={{ fontSize: 8, fontWeight: 800, color: "#f59e0b", textTransform: "uppercase" }}>(Draft)</span>}
+                                            </div>
+                                        );
+                                    })}
                                     {[...currentDayData.lunch.items, ...currentDayData.dinner.items].length === 0 && (
                                         <p style={{ fontSize: 12, color: "#d1d5db", fontStyle: "italic", margin: 0 }}>No items added yet</p>
                                     )}

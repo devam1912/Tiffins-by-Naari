@@ -244,12 +244,12 @@ export default function CustomerDashboard() {
         });
         availableItemsToday = Array.from(uniqueItemsMap.values());
 
+        // ✅ 1. Process TOP PICKS (Personalized 1-2 items)
         if (topPicks.length > 0) {
           setRecTitle("✨ Top Picks Just For You");
           setRecSubtitle(`Personalized ${slotLabel.toLowerCase()} recommendations based on your taste`);
 
           const matchedItems = [];
-          // 1. Map ML predictions to actual TSPs selling it today
           topPicks.forEach(pick => {
             const pickLower = pick.toLowerCase();
             let match = availableItemsToday.find(i => i.name.toLowerCase().includes(pickLower));
@@ -259,42 +259,39 @@ export default function CustomerDashboard() {
             }
           });
 
-          // 2. Pad to 2 items, prioritizing 'Sabzi' / 'Paneer' / 'Aloo'
-          while (matchedItems.length < 2 && availableItemsToday.length > 0) {
-            let fallbackMatch = availableItemsToday.find(i => {
-              const n = i.name.toLowerCase();
-              return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
-            });
-            if (!fallbackMatch) {
-              fallbackMatch = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
-            }
-            matchedItems.push(fallbackMatch);
-            availableItemsToday = availableItemsToday.filter(i => i !== fallbackMatch);
+          // Pad to minimum 1, maximum 2
+          if (matchedItems.length < 1 && availableItemsToday.length > 0) {
+              matchedItems.push(availableItemsToday[0]);
+              availableItemsToday = availableItemsToday.slice(1);
           }
           setFoodRecs(matchedItems.slice(0, 2));
         } else {
-          setRecTitle(`🔥 Trending ${slotLabel} Meals Today`);
+          // Cold Start / Fallback Trending (1-2 items)
+          setRecTitle(`🔥 Trending ${slotLabel} Meals`);
           setRecSubtitle(`Popular local ${slotLabel.toLowerCase()} meals right now`);
+          setFoodRecs(availableItemsToday.slice(0, 2));
+        }
 
-          let fallbackItems = [];
-          // 1. Prioritize exactly 1-2 sabzi/paneer/aloo
-          let sabzis = availableItemsToday.filter(i => {
-            const n = i.name.toLowerCase();
-            return n.includes("sabzi") || n.includes("paneer") || n.includes("aloo");
+        // ✅ 2. Process SIMILAR ITEMS (Cosine AI 1-2 items)
+        if (similarPicks.length > 0) {
+          const matchedSimilar = [];
+          similarPicks.forEach(pick => {
+            const pickLower = pick.toLowerCase();
+            let match = availableItemsToday.find(i => i.name.toLowerCase().includes(pickLower));
+            if (match) {
+              matchedSimilar.push({ ...match, isAiMatched: true });
+              availableItemsToday = availableItemsToday.filter(i => i !== match);
+            }
           });
+          setSimilarRecs(matchedSimilar.slice(0, 2)); // Limit 1-2
+        } else {
+            setSimilarRecs([]);
+        }
 
-          if (sabzis.length > 0) {
-            fallbackItems.push(sabzis[0]);
-            availableItemsToday = availableItemsToday.filter(i => i !== sabzis[0]);
-          }
-
-          if (availableItemsToday.length > 0 && fallbackItems.length < 2) {
-            // Pick one more random item to make it 2 max
-            let randomItem = availableItemsToday[Math.floor(Math.random() * availableItemsToday.length)];
-            fallbackItems.push(randomItem);
-          }
-
-          setFoodRecs(fallbackItems);
+        // ✅ 3. Recommended Provider (Exactly 1)
+        if (providers.length > 0) {
+          // Pick the first provider as the 'Recommended Kitchen'
+          setRecommendations(providers.slice(0, 1));
         }
       }).catch(err => console.error("Recs fetch error:", err));
     }
@@ -613,20 +610,20 @@ export default function CustomerDashboard() {
           )}
         </div>
 
-        {/* ── NEARBY PROVIDERS CAROUSEL ── */}
+        {/* ── RECOMMENDED KITCHEN (Single Card) ── */}
         <div style={{ marginBottom: 44, ...anim(320) }}>
           <div style={{ marginBottom: 16 }}>
-            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>👩‍🍳 Top Kitchens Near You</h2>
-            <p style={{ color: "#888", fontSize: 14 }}>The highest-rated home chefs in your neighbourhood</p>
+            <h2 style={{ fontFamily: "'Lora',serif", fontSize: 22, fontWeight: 700, color: "#2d3b2d", marginBottom: 4 }}>👩‍🍳 Recommended Kitchen</h2>
+            <p style={{ color: "#888", fontSize: 14 }}>The top-rated home chef discovered near you</p>
           </div>
 
           {recommendations.length > 0 ? (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 18 }}>
-              {recommendations.slice(0, 4).map((rec) => (
+            <div style={{ maxWidth: 400 }}>
+              {recommendations.slice(0, 1).map((rec) => (
                 <div key={rec.id || rec._id} className="stat-card" style={{
                   background: "rgba(255,255,255,0.72)", backdropFilter: "blur(14px)",
                   border: "1px solid rgba(143,174,142,0.2)", borderRadius: 22, padding: "24px",
-                  boxShadow: "0 4px 20px rgba(143,174,142,0.1)", display: "flex", flexDirection: "column",
+                  boxShadow: "0 12px 30px rgba(143,174,142,0.15)", display: "flex", flexDirection: "column",
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                     <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg,#c5d490,#9ab870)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
@@ -641,24 +638,21 @@ export default function CustomerDashboard() {
                     <User size={14} /> <strong>Owner:</strong> {rec.ownerName}
                   </p>
                   <button onClick={() => navigate(`/provider/${rec.id || rec._id}`, { state: { tiffin: rec } })} style={{
-                    marginTop: "auto", background: "none", border: "1.5px solid #8FAE8E", color: "#5a7a50",
-                    borderRadius: 14, padding: "10px", fontWeight: 700, fontSize: 14, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
+                    marginTop: "auto", background: "#8FAE8E", color: "#fff", border: "none",
+                    borderRadius: 14, padding: "12px", fontWeight: 700, fontSize: 14, width: "100%", transition: "all 0.2s", cursor: "pointer", fontFamily: "'Nunito',sans-serif"
                   }}>
-                    View Kitchen →
+                    View Kitchen Details →
                   </button>
                 </div>
               ))}
             </div>
           ) : (
-            <div style={{
-              background: "rgba(255,255,255,0.5)", border: "1px dashed rgba(143,174,142,0.5)",
-              borderRadius: 22, padding: "40px", textAlign: "center", color: "#777",
-              fontFamily: "'Nunito',sans-serif", fontSize: 14
-            }}>
-              Discovering the best kitchens near you... Stay tuned for top recommendations!
+            <div style={{ background: "rgba(255,255,255,0.5)", border: "1px dashed rgba(143,174,142,0.5)", borderRadius: 22, padding: "30px", textAlign: "center", color: "#777", fontSize: 14 }}>
+               Scanning for your neighborhood chefs...
             </div>
           )}
         </div>
+
         {/* ── Bottom row: activity + today's meal ── */}
         <div className="bottom-grid" style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: 24, alignItems: "start", ...anim(340) }}>
 

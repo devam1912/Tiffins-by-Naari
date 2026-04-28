@@ -106,18 +106,19 @@ export default function EditProfile() {
   const isReady = form.name.trim() && form.email.trim() && form.phone.trim();
   const firstName = form.name?.split(" ")[0] || "User";
 
-  const inputStyle = (name) => ({
+  const inputStyle = (name, disabled = false) => ({
     width: "100%",
     padding: "14px 16px 14px 46px",
     border: `2px solid ${focused === name ? "#8FAE8E" : "#e8e8d8"}`,
     borderRadius: 14,
     fontSize: 15,
     fontFamily: "'Nunito', sans-serif",
-    color: "#2d3b2d",
-    background: focused === name ? "#fafff8" : "#fff",
+    color: disabled ? "#999" : "#2d3b2d",
+    background: disabled ? "#f9f9f9" : (focused === name ? "#fafff8" : "#fff"),
     outline: "none",
     transition: "all 0.25s ease",
     boxShadow: focused === name ? "0 0 0 4px rgba(143,174,142,0.12)" : "none",
+    cursor: disabled ? "not-allowed" : "text",
   });
 
   return (
@@ -340,38 +341,38 @@ export default function EditProfile() {
 
             {/* Email */}
             <div style={{ ...anim(200) }}>
-              <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Email Address</label>
-              <div style={{ position:"relative" }}>
-                <Mail size={18} color={focused === "email" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingLeft: 2 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#555" }}>Email Address</label>
+                <span style={{ fontSize: 11, color: "#aaa", fontWeight: 600 }}>Read-only</span>
+              </div>
+              <div style={{ position: "relative" }}>
+                <Mail size={18} color="#ccc" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
                 <input
                   type="email"
                   name="email"
                   value={form.email}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("email")}
-                  onBlur={() => setFocused("")}
-                  placeholder="your@email.com"
-                  required
-                  style={inputStyle("email")}
+                  disabled
+                  readOnly
+                  style={inputStyle("email", true)}
                 />
               </div>
             </div>
 
             {/* Phone */}
             <div style={{ ...anim(280) }}>
-              <label style={{ fontSize:13, fontWeight:700, color:"#555", display:"block", marginBottom:8, paddingLeft:2 }}>Phone Number</label>
-              <div style={{ position:"relative" }}>
-                <Phone size={18} color={focused === "phone" ? "#8FAE8E" : "#aaa"} style={{ position:"absolute", left:14, top:"50%", transform:"translateY(-50%)", pointerEvents:"none", transition: 'color 0.2s' }} />
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8, paddingLeft: 2 }}>
+                <label style={{ fontSize: 13, fontWeight: 700, color: "#555" }}>Phone Number</label>
+                <span style={{ fontSize: 11, color: "#aaa", fontWeight: 600 }}>Read-only</span>
+              </div>
+              <div style={{ position: "relative" }}>
+                <Phone size={18} color="#ccc" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }} />
                 <input
                   type="text"
                   name="phone"
                   value={form.phone}
-                  onChange={handleChange}
-                  onFocus={() => setFocused("phone")}
-                  onBlur={() => setFocused("")}
-                  placeholder="Your phone number"
-                  required
-                  style={inputStyle("phone")}
+                  disabled
+                  readOnly
+                  style={inputStyle("phone", true)}
                 />
               </div>
             </div>

@@ -32,11 +32,11 @@ export default function CustomerDashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState("dashboard");
   const [stats, setStats] = useState({ tiffins: 0, subscriptions: 0, orders: 0 });
-  const [location, setLocation] = useState({ 
-    address: localStorage.getItem('last_known_address') || "Fetching location...", 
-    lat: localStorage.getItem('last_known_lat'), 
+  const [location, setLocation] = useState({
+    address: localStorage.getItem('last_known_address') || "Fetching location...",
+    lat: localStorage.getItem('last_known_lat'),
     lng: localStorage.getItem('last_known_lng'),
-    loading: !localStorage.getItem('last_known_lat') 
+    loading: !localStorage.getItem('last_known_lat')
   });
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [manualAddress, setManualAddress] = useState("");
@@ -58,35 +58,35 @@ export default function CustomerDashboard() {
   useEffect(() => {
     // Attempt Auto-Location only if we don't have a manual one saved already
     if (!location.lat || !location.lng) {
-        if ("geolocation" in navigator) {
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const { latitude, longitude } = position.coords;
-              try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
-                const data = await response.json();
-                const city = data.address.city || data.address.town || data.address.village || "";
-                const suburb = data.address.suburb || data.address.neighbourhood || "";
-                const displayAddress = suburb ? `${suburb}, ${city}` : city;
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const { latitude, longitude } = position.coords;
+            try {
+              const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`);
+              const data = await response.json();
+              const city = data.address.city || data.address.town || data.address.village || "";
+              const suburb = data.address.suburb || data.address.neighbourhood || "";
+              const displayAddress = suburb ? `${suburb}, ${city}` : city;
 
-                const locData = { address: displayAddress || "Location Found", lat: latitude, lng: longitude, loading: false };
-                setLocation(locData);
-                localStorage.setItem('last_known_lat', latitude);
-                localStorage.setItem('last_known_lng', longitude);
-                localStorage.setItem('last_known_address', locData.address);
-              } catch (error) {
-                console.error("Geocoding error:", error);
-                setShowLocationModal(true);
-              }
-            },
-            (error) => {
-              console.error("Geolocation error:", error);
+              const locData = { address: displayAddress || "Location Found", lat: latitude, lng: longitude, loading: false };
+              setLocation(locData);
+              localStorage.setItem('last_known_lat', latitude);
+              localStorage.setItem('last_known_lng', longitude);
+              localStorage.setItem('last_known_address', locData.address);
+            } catch (error) {
+              console.error("Geocoding error:", error);
               setShowLocationModal(true);
             }
-          );
-        } else {
-          setShowLocationModal(true);
-        }
+          },
+          (error) => {
+            console.error("Geolocation error:", error);
+            setShowLocationModal(true);
+          }
+        );
+      } else {
+        setShowLocationModal(true);
+      }
     }
 
     // Fonts
@@ -122,7 +122,7 @@ export default function CustomerDashboard() {
       if (data && data.length > 0) {
         const { lat, lon, display_name } = data[0];
         const simplifiedAddress = display_name.split(',')[0] + (display_name.split(',')[1] ? ', ' + display_name.split(',')[1] : "");
-        
+
         const locData = { address: simplifiedAddress, lat: parseFloat(lat), lng: parseFloat(lon), loading: false };
         setLocation(locData);
         localStorage.setItem('last_known_lat', lat);
@@ -203,65 +203,61 @@ export default function CustomerDashboard() {
         const similarPicks = (mlRecsRes.data && mlRecsRes.data.similar_picks) || [];
         const allMenus = menusRes.data.menus || [];
 
-        // Build a pool of available items from nearby TSPs for 'today'
+        // Build a pool of all individual food items
+        let availableItemsToday = [];
         const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
         const todayName = days[new Date().getDay()];
 
-        // ✅ Determine current meal slot based on time of day
         const currentHour = new Date().getHours();
-        const currentSlot = currentHour < 15 ? "lunch" : "dinner";
-        const slotLabel = currentSlot === "lunch" ? "Lunch" : "Dinner";
-
-        let availableItemsToday = [];
-        // ✅ FIX: Convert all provider IDs to strings for reliable comparison
+        const currentSlot = currentHour < 15 ? "lunch" : "dinner"; 
         const providerIds = new Set(providers.map(p => String(p.id || p._id)));
+        
+        const isNearbyEmpty = providers.length === 0;
 
         allMenus.forEach(menu => {
-          // ✅ Only include items from approved menus
           if (!menu.isApproved) return;
-
           const pId = String(menu.provider?._id || menu.provider);
-          if (providerIds.has(pId)) {
-            const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
-            let itemsToConsider = [];
-            let usedSlot = currentSlot;
+          
+          // Nearby check (Bypassed if nearby is empty for demo)
+          if (!isNearbyEmpty && !providerIds.has(pId)) return;
 
-            if (todayMenu) {
-              const slotItems = todayMenu[currentSlot]?.items || [];
-              const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
-              const otherItems = todayMenu[otherSlot]?.items || [];
+          const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
+          let itemsToConsider = [];
+          let usedSlot = currentSlot;
 
-              if (slotItems.length > 0) {
-                itemsToConsider = slotItems;
-              } else if (otherItems.length > 0) {
-                itemsToConsider = otherItems;
-                usedSlot = otherSlot;
-              }
+          if (todayMenu) {
+            const slotItems = todayMenu[currentSlot]?.items || [];
+            const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
+            const otherItems = todayMenu[otherSlot]?.items || [];
+
+            if (slotItems.length > 0) {
+              itemsToConsider = slotItems;
+              usedSlot = currentSlot;
+            } else if (otherItems.length > 0) {
+              itemsToConsider = otherItems;
+              usedSlot = otherSlot;
             }
-
-            // ✅ FALLBACK: If today is totally empty, look at all items in the week menu
-            if (itemsToConsider.length === 0) {
-              menu.weekMenu?.forEach(dayMenu => {
-                const allDayItems = [
-                  ...(dayMenu.lunch?.items || []),
-                  ...(dayMenu.dinner?.items || [])
-                ];
-                itemsToConsider.push(...allDayItems);
-              });
-              usedSlot = "general"; // Flag for fallback
-            }
-
-            const providerDetails = providers.find(p => String(p.id || p._id) === pId);
-            itemsToConsider.forEach(item => {
-              if (item.name) {
-                availableItemsToday.push({
-                  ...item,
-                  mealSlot: usedSlot === "general" ? (item.type === "Sabzi" ? "Special" : "Always") : usedSlot,
-                  provider: providerDetails
-                });
-              }
-            });
           }
+
+          // Global Week Fallback
+          if (itemsToConsider.length === 0) {
+            menu.weekMenu?.forEach(dm => {
+               itemsToConsider.push(...(dm.lunch?.items || []), ...(dm.dinner?.items || []));
+            });
+            usedSlot = "general";
+          }
+
+          const providerDetails = isNearbyEmpty ? menu.provider : providers.find(p => String(p.id || p._id) === pId);
+
+          itemsToConsider.forEach(item => {
+            if (item.name) {
+              availableItemsToday.push({
+                ...item,
+                timeSlot: usedSlot,
+                provider: providerDetails
+              });
+            }
+          });
         });
 
         // Remove exact duplicates by item name + provider ID
@@ -290,32 +286,32 @@ export default function CustomerDashboard() {
           });
 
           // 🥗 Sabzi Priority: Find any sabzi in available items and move to index 0
-          const anySabzi = availableItemsToday.find(i => 
-            i.name.toLowerCase().includes("sabzi") || 
+          const anySabzi = availableItemsToday.find(i =>
+            i.name.toLowerCase().includes("sabzi") ||
             i.name.toLowerCase().includes("bhaji") ||
             i.name.toLowerCase().includes("paneer")
           );
           if (anySabzi) {
-             matchedItems = [anySabzi, ...matchedItems.filter(i => i !== anySabzi)];
-             availableItemsToday = availableItemsToday.filter(i => i !== anySabzi);
+            matchedItems = [anySabzi, ...matchedItems.filter(i => i !== anySabzi)];
+            availableItemsToday = availableItemsToday.filter(i => i !== anySabzi);
           }
 
           // Pad to minimum 1, maximum 2
           if (matchedItems.length < 1 && availableItemsToday.length > 0) {
-              matchedItems.push(availableItemsToday[0]);
-              availableItemsToday = availableItemsToday.slice(1);
+            matchedItems.push(availableItemsToday[0]);
+            availableItemsToday = availableItemsToday.slice(1);
           }
           setFoodRecs(matchedItems.slice(0, 2));
         } else {
           // Cold Start / Fallback Trending (1-2 items)
           setRecTitle(`🔥 Trending ${slotLabel} Meals`);
           setRecSubtitle(`Popular local ${slotLabel.toLowerCase()} meals right now`);
-          
+
           // Even in trending, try to show a Sabzi first
           const trendingSabzi = availableItemsToday.find(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer"));
           let finalTrending = availableItemsToday;
           if (trendingSabzi) {
-              finalTrending = [trendingSabzi, ...availableItemsToday.filter(i => i !== trendingSabzi)];
+            finalTrending = [trendingSabzi, ...availableItemsToday.filter(i => i !== trendingSabzi)];
           }
           setFoodRecs(finalTrending.slice(0, 2));
         }
@@ -333,9 +329,9 @@ export default function CustomerDashboard() {
           });
           setSimilarRecs(matchedSimilar.slice(0, 2)); // Limit 1-2
         } else {
-            // Fallback for Similar row so it's not empty in demo
-            const fallbackSimilar = availableItemsToday.slice(-2).map(i => ({...i, isAiMatched: true}));
-            setSimilarRecs(fallbackSimilar);
+          // Fallback for Similar row so it's not empty in demo
+          const fallbackSimilar = availableItemsToday.slice(-2).map(i => ({ ...i, isAiMatched: true }));
+          setSimilarRecs(fallbackSimilar);
         }
 
         // ✅ 3. Recommended Provider (Exactly 1)
@@ -482,7 +478,7 @@ export default function CustomerDashboard() {
             <p style={{ color: "#777", fontSize: 15, lineHeight: 1.6, marginBottom: 32 }}>Automated location is disabled. Please enter your area to find the best home chefs near you.</p>
 
             <form onSubmit={handleManualLocation} style={{ position: "relative", marginBottom: 24 }}>
-              <input 
+              <input
                 type="text"
                 placeholder="Search for area, city or colony..."
                 value={manualAddress}
@@ -494,7 +490,7 @@ export default function CustomerDashboard() {
                 }}
                 disabled={geoLoading}
               />
-              <button 
+              <button
                 type="submit"
                 disabled={geoLoading}
                 style={{
@@ -514,9 +510,9 @@ export default function CustomerDashboard() {
               <hr style={{ flex: 1, border: "0.5px solid #eee" }} />
             </div>
 
-            <button 
-                onClick={() => { setShowLocationModal(false); window.location.reload(); }}
-                style={{ marginTop: 24, background: "none", border: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 14, textDecoration: "underline" }}
+            <button
+              onClick={() => { setShowLocationModal(false); window.location.reload(); }}
+              style={{ marginTop: 24, background: "none", border: "none", color: "#8FAE8E", fontWeight: 800, cursor: "pointer", fontSize: 14, textDecoration: "underline" }}
             >
               Try auto-detecting again
             </button>
@@ -761,7 +757,7 @@ export default function CustomerDashboard() {
             </div>
           ) : (
             <div style={{ background: "rgba(255,255,255,0.5)", border: "1px dashed rgba(143,174,142,0.5)", borderRadius: 22, padding: "30px", textAlign: "center", color: "#777", fontSize: 14 }}>
-               Scanning for your neighborhood chefs...
+              Scanning for your neighborhood chefs...
             </div>
           )}
         </div>

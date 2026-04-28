@@ -185,14 +185,11 @@ const updateProfile = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const { name, email, phone, address } = req.body;
+    const { name, address } = req.body;
 
 
     if (name !== undefined) user.name = name;
-    if (email !== undefined) user.email = email;
-    if (phone !== undefined) user.phone = phone;
     if (address !== undefined) user.address = address;
-
     await user.save();
 
     res.status(200).json({

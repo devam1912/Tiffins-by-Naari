@@ -14,8 +14,8 @@ const isTimeValidForSlot = (timeSlot) => {
     const currentTime = hours + minutes / 60;
 
     if (timeSlot === "lunch") {
-        
-        if (currentTime >= 15) return false;
+        // Lunch can be ordered until 5:00 PM (17:00)
+        if (currentTime >= 17) return false;
         return true;
     }
 
@@ -30,10 +30,10 @@ const isTimeValidForSlot = (timeSlot) => {
 
 
 
-cron.schedule("0 15 * * *", async () => {
+cron.schedule("0 17 * * *", async () => {
     try {
         await Cart.updateMany({ timeSlot: "lunch" }, { $set: { items: [], totalPrice: 0 } });
-        console.log("CRON: Cleared all lunch carts at 3:00 PM IST");
+        console.log("CRON: Cleared all lunch carts at 5:00 PM IST");
     } catch (err) {
         console.error("Cron Error (Lunch Carts):", err);
     }

@@ -217,6 +217,9 @@ export default function CustomerDashboard() {
         // Note: days/todayName/currentSlot/slotLabel are now defined in outer scope ✅
 
         let availableItemsToday = [];
+        const currentHour = new Date().getHours();
+        const currentSlot = currentHour < 17 ? "lunch" : "dinner"; 
+
         const providerIds = new Set(providers.map(p => String(p.id || p._id)));
 
         allMenus.forEach(menu => {

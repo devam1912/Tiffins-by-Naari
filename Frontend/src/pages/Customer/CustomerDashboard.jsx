@@ -200,6 +200,7 @@ export default function CustomerDashboard() {
         if (mlRecsRes.data && mlRecsRes.data.top_picks) {
           topPicks = mlRecsRes.data.top_picks;
         }
+        const similarPicks = (mlRecsRes.data && mlRecsRes.data.similar_picks) || [];
         const allMenus = menusRes.data.menus || [];
 
         // Build a pool of available items from nearby TSPs for 'today'

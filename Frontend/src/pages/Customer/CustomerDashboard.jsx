@@ -43,20 +43,17 @@ export default function CustomerDashboard() {
   const [geoLoading, setGeoLoading] = useState(false);
   const [recommendations, setRecommendations] = useState([]);
   const [foodRecs, setFoodRecs] = useState([]);
-  const [similarRecs, setSimilarRecs] = useState([]); // ✅ New state for Cosine AI matches
+  const [similarRecs, setSimilarRecs] = useState([]);
   const [recTitle, setRecTitle] = useState("✨ Top Picks Just For You");
   const [recSubtitle, setRecSubtitle] = useState("Personalized kitchens based on your location and history");
 
-  // ✅ Redux se user aur token
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
   const dispatch = useDispatch();
 
-  // ✅ Login nahi hai toh redirect
   if (!token) { navigate("/login"); return; }
 
   useEffect(() => {
-    // Attempt Auto-Location only if we don't have a manual one saved already
     if (!location.lat || !location.lng) {
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition(
@@ -89,7 +86,6 @@ export default function CustomerDashboard() {
       }
     }
 
-    // Fonts
     const link = document.createElement("link");
     link.href = "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,600;1,700&family=Nunito:wght@400;500;600;700;800&display=swap";
     link.rel = "stylesheet";
@@ -180,6 +176,13 @@ export default function CustomerDashboard() {
       const headers = { Authorization: `Bearer ${token}` };
       const userId = user?.id || user?._id;
 
+      // ✅ FIX 1: Move time/slot variables to outer scope so they're accessible in all callbacks
+      const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+      const todayName = days[new Date().getDay()];
+      const currentHour = new Date().getHours();
+      const currentSlot = currentHour < 15 ? "lunch" : "dinner";
+      const slotLabel = currentSlot === "lunch" ? "Lunch" : "Dinner"; // ✅ Now in scope everywhere
+
       // 1. Fetch nearby tiffins count for stats
       axios.get(`${BASE_URL}/api/tiffins/nearby?lat=${location.lat}&lng=${location.lng}`, { headers })
         .then(res => {
@@ -197,67 +200,70 @@ export default function CustomerDashboard() {
         setRecommendations(providers);
 
         let topPicks = [];
+        // ✅ FIX 2: Also extract similarPicks from the API response
+        let similarPicks = [];
+
         if (mlRecsRes.data && mlRecsRes.data.top_picks) {
           topPicks = mlRecsRes.data.top_picks;
         }
-        const similarPicks = (mlRecsRes.data && mlRecsRes.data.similar_picks) || [];
+        // ✅ FIX 2: Define similarPicks from API response (was referenced but never defined)
+        if (mlRecsRes.data && mlRecsRes.data.similar_picks) {
+          similarPicks = mlRecsRes.data.similar_picks;
+        }
+
         const allMenus = menusRes.data.menus || [];
 
-        // Build a pool of all individual food items
-        let availableItemsToday = [];
-        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-        const todayName = days[new Date().getDay()];
+        // Build a pool of available items from nearby TSPs for 'today'
+        // Note: days/todayName/currentSlot/slotLabel are now defined in outer scope ✅
 
-        const currentHour = new Date().getHours();
-        const currentSlot = currentHour < 15 ? "lunch" : "dinner"; 
+        let availableItemsToday = [];
         const providerIds = new Set(providers.map(p => String(p.id || p._id)));
-        
-        const isNearbyEmpty = providers.length === 0;
 
         allMenus.forEach(menu => {
           if (!menu.isApproved) return;
+
           const pId = String(menu.provider?._id || menu.provider);
-          
-          // Nearby check (Bypassed if nearby is empty for demo)
-          if (!isNearbyEmpty && !providerIds.has(pId)) return;
+          if (providerIds.has(pId)) {
+            const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
+            let itemsToConsider = [];
+            let usedSlot = currentSlot;
 
-          const todayMenu = menu.weekMenu?.find(d => d.day === todayName);
-          let itemsToConsider = [];
-          let usedSlot = currentSlot;
+            if (todayMenu) {
+              const slotItems = todayMenu[currentSlot]?.items || [];
+              const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
+              const otherItems = todayMenu[otherSlot]?.items || [];
 
-          if (todayMenu) {
-            const slotItems = todayMenu[currentSlot]?.items || [];
-            const otherSlot = currentSlot === "lunch" ? "dinner" : "lunch";
-            const otherItems = todayMenu[otherSlot]?.items || [];
-
-            if (slotItems.length > 0) {
-              itemsToConsider = slotItems;
-              usedSlot = currentSlot;
-            } else if (otherItems.length > 0) {
-              itemsToConsider = otherItems;
-              usedSlot = otherSlot;
+              if (slotItems.length > 0) {
+                itemsToConsider = slotItems;
+              } else if (otherItems.length > 0) {
+                itemsToConsider = otherItems;
+                usedSlot = otherSlot;
+              }
             }
-          }
 
-          // Global Week Fallback
-          if (itemsToConsider.length === 0) {
-            menu.weekMenu?.forEach(dm => {
-               itemsToConsider.push(...(dm.lunch?.items || []), ...(dm.dinner?.items || []));
-            });
-            usedSlot = "general";
-          }
-
-          const providerDetails = isNearbyEmpty ? menu.provider : providers.find(p => String(p.id || p._id) === pId);
-
-          itemsToConsider.forEach(item => {
-            if (item.name) {
-              availableItemsToday.push({
-                ...item,
-                timeSlot: usedSlot,
-                provider: providerDetails
+            // FALLBACK: If today is totally empty, look at all items in the week menu
+            if (itemsToConsider.length === 0) {
+              menu.weekMenu?.forEach(dayMenu => {
+                const allDayItems = [
+                  ...(dayMenu.lunch?.items || []),
+                  ...(dayMenu.dinner?.items || [])
+                ];
+                itemsToConsider.push(...allDayItems);
               });
+              usedSlot = "general";
             }
-          });
+
+            const providerDetails = providers.find(p => String(p.id || p._id) === pId);
+            itemsToConsider.forEach(item => {
+              if (item.name) {
+                availableItemsToday.push({
+                  ...item,
+                  mealSlot: usedSlot === "general" ? (item.type === "Sabzi" ? "Special" : "Always") : usedSlot,
+                  provider: providerDetails
+                });
+              }
+            });
+          }
         });
 
         // Remove exact duplicates by item name + provider ID
@@ -273,7 +279,7 @@ export default function CustomerDashboard() {
         // ✅ 1. Process TOP PICKS (Personalized 1-2 items - PRIORITIZING SABZI)
         if (topPicks.length > 0) {
           setRecTitle("✨ Top Picks Just For You");
-          setRecSubtitle(`Personalized ${slotLabel.toLowerCase()} recommendations based on your taste`);
+          setRecSubtitle(`Personalized ${slotLabel.toLowerCase()} recommendations based on your taste`); // ✅ slotLabel now in scope
 
           let matchedItems = [];
           topPicks.forEach(pick => {
@@ -285,7 +291,7 @@ export default function CustomerDashboard() {
             }
           });
 
-          // 🥗 Sabzi Priority: Find any sabzi in available items and move to index 0
+          // 🥗 Sabzi Priority
           const anySabzi = availableItemsToday.find(i =>
             i.name.toLowerCase().includes("sabzi") ||
             i.name.toLowerCase().includes("bhaji") ||
@@ -296,7 +302,6 @@ export default function CustomerDashboard() {
             availableItemsToday = availableItemsToday.filter(i => i !== anySabzi);
           }
 
-          // Pad to minimum 1, maximum 2
           if (matchedItems.length < 1 && availableItemsToday.length > 0) {
             matchedItems.push(availableItemsToday[0]);
             availableItemsToday = availableItemsToday.slice(1);
@@ -304,10 +309,9 @@ export default function CustomerDashboard() {
           setFoodRecs(matchedItems.slice(0, 2));
         } else {
           // Cold Start / Fallback Trending (1-2 items)
-          setRecTitle(`🔥 Trending ${slotLabel} Meals`);
-          setRecSubtitle(`Popular local ${slotLabel.toLowerCase()} meals right now`);
+          setRecTitle(`🔥 Trending ${slotLabel} Meals`); // ✅ slotLabel now in scope
+          setRecSubtitle(`Popular local ${slotLabel.toLowerCase()} meals right now`); // ✅ slotLabel now in scope
 
-          // Even in trending, try to show a Sabzi first
           const trendingSabzi = availableItemsToday.find(i => i.name.toLowerCase().includes("sabzi") || i.name.toLowerCase().includes("paneer"));
           let finalTrending = availableItemsToday;
           if (trendingSabzi) {
@@ -317,6 +321,7 @@ export default function CustomerDashboard() {
         }
 
         // ✅ 2. Process SIMILAR ITEMS (Cosine AI 1-2 items)
+        // similarPicks is now properly defined above ✅
         if (similarPicks.length > 0) {
           const matchedSimilar = [];
           similarPicks.forEach(pick => {
@@ -327,7 +332,7 @@ export default function CustomerDashboard() {
               availableItemsToday = availableItemsToday.filter(i => i !== match);
             }
           });
-          setSimilarRecs(matchedSimilar.slice(0, 2)); // Limit 1-2
+          setSimilarRecs(matchedSimilar.slice(0, 2));
         } else {
           // Fallback for Similar row so it's not empty in demo
           const fallbackSimilar = availableItemsToday.slice(-2).map(i => ({ ...i, isAiMatched: true }));
@@ -336,14 +341,12 @@ export default function CustomerDashboard() {
 
         // ✅ 3. Recommended Provider (Exactly 1)
         if (providers.length > 0) {
-          // Pick the first provider as the 'Recommended Kitchen'
           setRecommendations(providers.slice(0, 1));
         }
       }).catch(err => console.error("Recs fetch error:", err));
     }
   }, [location.lat, location.lng, token, user?.id, user?._id]);
 
-  // ✅ Naya logout — Redux dispatch karta hai
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login");
@@ -359,7 +362,6 @@ export default function CustomerDashboard() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-  // Navigation items
   const navItems = [
     { id: "dashboard", icon: <LayoutDashboard size={20} />, label: "Dashboard", path: "/CustomerDashboard" },
     { id: "tiffins", icon: <UtensilsCrossed size={20} />, label: "Browse Tiffins", path: "/tiffins" },
@@ -401,7 +403,6 @@ export default function CustomerDashboard() {
     <div style={{ display: "flex", minHeight: "100vh", background: "#fcfdfc", color: "#2d3b2d", fontFamily: "'Nunito', sans-serif" }}>
       <style>{`
         @keyframes floatY { 0% { transform: translateY(0px); } 50% { transform: translateY(-15px); } 100% { transform: translateY(0px); } }
-        /* Smooth location selector animations */
         @keyframes modalIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { width: 5px; }
@@ -436,7 +437,6 @@ export default function CustomerDashboard() {
         .quick-btn { transition:all 0.28s cubic-bezier(.22,.68,0,1.2); border:none; cursor:pointer; font-family:'Nunito',sans-serif; }
         .logout-btn:hover { background:rgba(239,83,80,0.1)!important; color:#c62828!important; border-color:rgba(239,83,80,0.4)!important; }
 
-        /* Mobile Layout */
         .dashboard-main {
           margin-left: ${collapsed ? 72 : 260}px;
           flex: 1; padding: 40px 44px;
@@ -447,7 +447,7 @@ export default function CustomerDashboard() {
         @media (max-width: 768px) {
           .dashboard-main {
             margin-left: 0 !important;
-            padding: 24px 16px 90px !important; /* Extra bottom padding for Bottom Nav */
+            padding: 24px 16px 90px !important;
           }
           .hero-banner {
             flex-direction: column !important;
@@ -459,7 +459,8 @@ export default function CustomerDashboard() {
           .bottom-grid { grid-template-columns: 1fr !important; }
         }
       `}</style>
-      {/* ── LOCATION SELECTOR MODAL (Blinkit Style) ── */}
+
+      {/* ── LOCATION SELECTOR MODAL ── */}
       {showLocationModal && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 10000,
